@@ -56,23 +56,18 @@ def formatar_ranking(valor):
 
   val_str = str(valor).strip()
 
-  # Se já vier formatado com %, mantém como está
   if "%" in val_str:
     return val_str
 
-  # Tenta converter para float caso venha como decimal do Excel (ex: 0.70 ou 70)
   try:
     val_num = float(val_str.replace(",", "."))
-    # Se for um valor decimal <= 1 e > 0 (ex: 0.01, 0.3, 0.5, 0.7, 0.9)
     if 0 < val_num <= 1:
       return f"{int(round(val_num * 100))}%"
-    # Se for número inteiro puro (ex: 70)
     elif val_num.is_integer():
       return f"{int(val_num)}%"
   except ValueError:
     pass
 
-  # Mantém textos como "Adimplente", "Agendado", etc.
   return val_str
 
 
@@ -138,7 +133,6 @@ def carregar_dados():
   df = df.rename(columns=mapeamento)
   df = df.loc[:, ~df.columns.duplicated()]
 
-  # Aplica a formatação específica da coluna Ranking
   if "Ranking" in df.columns:
     df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
@@ -298,7 +292,7 @@ with btn_col1:
   st.write("")
 
 # -----------------------------------------------------------------------------
-# SEÇÃO DE FILTROS DINÂMICOS
+# SEÇÃO DE FILTROS DINÂMICOS (COM OPÇÃO "TODOS")
 # -----------------------------------------------------------------------------
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
@@ -307,36 +301,57 @@ st.markdown(
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
+# Filtro 1: Porte
 with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
   )
-  porte_opcoes = sorted(df_base["Porte"].dropna().unique().tolist())
+  porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
   porte_sel = st.selectbox("", porte_opcoes, label_visibility="collapsed")
 
-df_porte = df_base[df_base["Porte"] == porte_sel]
+if porte_sel == "Todos":
+  df_porte = df_base.copy()
+else:
+  df_porte = df_base[df_base["Porte"] == porte_sel]
 
+# Filtro 2: UF
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-  uf_opcoes = sorted(df_porte["UF"].dropna().unique().tolist())
+  uf_opcoes = ["Todos"] + sorted(df_porte["UF"].dropna().unique().tolist())
   uf_sel = st.selectbox("", uf_opcoes, label_visibility="collapsed")
 
-df_uf = df_porte[df_porte["UF"] == uf_sel]
+if uf_sel == "Todos":
+  df_uf = df_porte.copy()
+else:
+  df_uf = df_porte[df_porte["UF"] == uf_sel]
 
+# Filtro 3: Município
 with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
   )
-  mun_opcoes = sorted(df_uf["Município"].dropna().unique().tolist())
+  mun_opcoes = ["Todos"] + sorted(
+      df_uf["Município"].dropna().unique().tolist()
+  )
   mun_sel = st.selectbox("", mun_opcoes, label_visibility="collapsed")
 
-df_final = df_uf[df_uf["Município"] == mun_sel].iloc[0]
+if mun_sel == "Todos":
+  df_filtrado = df_uf.copy()
+else:
+  df_filtrado = df_uf[df_uf["Município"] == mun_sel]
 
+# Campo 4: Ranking
 with f_col4:
   st.markdown(
       '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
   )
-  ranking_val = df_final["Ranking"] if "Ranking" in df_final else "-"
+  if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns:
+    ranking_val = df_filtrado["Ranking"].iloc[0]
+  elif len(df_filtrado) > 1:
+    ranking_val = "Vários"
+  else:
+    ranking_val = "-"
+
   st.markdown(
       f"""
         <div class="ranking-box">
@@ -394,42 +409,49 @@ with m_col3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Identificação do Status de Filiação
-situacao_municipio = (
-    str(df_final["Situação"]).strip() if "Situação" in df_final else "Filiado"
-)
-eh_filiado = "filiado" in situacao_municipio.lower() and "não" not in situacao_municipio.lower()
+if "Situação" in df_filtrado.columns:
+  situacoes = df_filtrado["Situação"].astype(str).tolist()
+  filiados_count = sum(
+      1
+      for s in situacoes
+      if "filiado" in s.lower() and "não" not in s.lower()
+  )
 
-status_text = f"({situacao_municipio})"
-status_color = "🟢" if eh_filiado else "🔴"
+  if len(df_filtrado) == 1:
+    situacao_municipio = situacoes[0]
+    eh_filiado = (
+        "filiado" in situacao_municipio.lower()
+        and "não" not in situacao_municipio.lower()
+    )
+    status_text = f"({situacao_municipio})"
+    status_color = "🟢" if eh_filiado else "🔴"
+  else:
+    eh_filiado = filiados_count == len(df_filtrado)
+    status_text = f"({filiados_count} de {len(df_filtrado)} filiados)"
+    status_color = "🔵"
+else:
+  eh_filiado = True
+  status_text = "(Filiado)"
+  status_color = "🟢"
+
+nome_exibicao = mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
 
 st.markdown(
     f"""
     <div style="margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
-        Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} {status_text}</span>
+        Painel de Simulação — {nome_exibicao} <span class="badge-light">{status_color} {status_text}</span>
     </div>
 """,
     unsafe_allow_html=True,
 )
 
+# CÁLCULO ACUMULADO DOS VALORES FILTRADOS
+val_integral = df_filtrado["Valor_Integral"].sum()
+val_d10 = df_filtrado["Valor_D10"].sum()
+val_d25 = df_filtrado["Valor_D25"].sum()
+val_d50 = df_filtrado["Valor_D50"].sum()
 
-def extrair_float_seguro(registro, chave):
-  if chave in registro:
-    val = registro[chave]
-    if isinstance(val, pd.Series):
-      val = val.iloc[0]
-    try:
-      return float(val)
-    except Exception:
-      return 0.0
-  return 0.0
-
-
-val_integral = extrair_float_seguro(df_final, "Valor_Integral")
-val_d10 = extrair_float_seguro(df_final, "Valor_D10")
-val_d25 = extrair_float_seguro(df_final, "Valor_D25")
-val_d50 = extrair_float_seguro(df_final, "Valor_D50")
-
-# Fallback automático caso esteja zerado na planilha
+# Fallback automático
 if val_d10 <= 0:
   val_d10 = val_integral * 0.90
 if val_d25 <= 0:
@@ -609,7 +631,7 @@ with res3:
 
 # Ações superiores (PDF dinâmico)
 pdf_bytes = gerar_pdf_simulacao(
-    mun_sel,
+    nome_exibicao,
     uf_sel,
     cenario,
     num_parcelas,
@@ -622,7 +644,7 @@ with btn_col2:
   st.download_button(
       label="📄 Baixar Simulação em PDF",
       data=pdf_bytes,
-      file_name=f"simulacao_{mun_sel}.pdf",
+      file_name=f"simulacao_{nome_exibicao}.pdf",
       mime="application/pdf",
       use_container_width=True,
   )
