@@ -173,7 +173,7 @@ def set_bg_hack(main_bg):
             background-size: cover;
             background-position: top center;
             background-repeat: no-repeat;
-            background-attachment: scroll; /* Permite a imagem rolar revelando o fundo da ponte */
+            background-attachment: scroll;
         }}
         .block-container {{ padding-top: 115px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
@@ -182,7 +182,7 @@ def set_bg_hack(main_bg):
             color: #0A3663;
             font-size: 1.35rem;
             font-weight: 800;
-            margin-top: 0.2rem;
+            margin-top: 2.5rem; /* Ajustado para descer o título */
             margin-bottom: 0.8rem;
         }}
 
@@ -352,7 +352,6 @@ def gerar_pdf_simulacao(
 # -----------------------------------------------------------------------------
 porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
 
-# Pré-processamento dos filtros para preparar os dados
 porte_sel = st.session_state.get("porte_sel", "Todos")
 uf_sel = st.session_state.get("uf_sel", "Todas")
 mun_sel = st.session_state.get("mun_sel", "Digite ou selecione um município")
@@ -428,7 +427,7 @@ if has_data:
       economia=econ_t,
   )
 
-# Cabeçalho Principal (Alinhamento Idêntico ao da Imagem)
+# Cabeçalho Principal
 header_title_col, header_actions_col = st.columns([5.5, 4.5])
 
 with header_title_col:
