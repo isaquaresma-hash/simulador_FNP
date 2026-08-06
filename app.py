@@ -49,6 +49,33 @@ def converter_valor_ptbr(valor):
     return 0.0
 
 
+def formatar_ranking(valor):
+  """Formata os valores da coluna Ranking (porcentagens, inteiros e textos)."""
+  if pd.isna(valor) or str(valor).strip().lower() in ["nan", "none", "", "null", "-"]:
+    return "-"
+
+  val_str = str(valor).strip()
+
+  # Se já vier formatado com %, mantém como está
+  if "%" in val_str:
+    return val_str
+
+  # Tenta converter para float caso venha como decimal do Excel (ex: 0.70 ou 70)
+  try:
+    val_num = float(val_str.replace(",", "."))
+    # Se for um valor decimal <= 1 e > 0 (ex: 0.01, 0.3, 0.5, 0.7, 0.9)
+    if 0 < val_num <= 1:
+      return f"{int(round(val_num * 100))}%"
+    # Se for número inteiro puro (ex: 70)
+    elif val_num.is_integer():
+      return f"{int(val_num)}%"
+  except ValueError:
+    pass
+
+  # Mantém textos como "Adimplente", "Agendado", etc.
+  return val_str
+
+
 @st.cache_data
 def carregar_dados():
   caminho_encontrado = None
@@ -111,15 +138,9 @@ def carregar_dados():
   df = df.rename(columns=mapeamento)
   df = df.loc[:, ~df.columns.duplicated()]
 
-  # Formatação e limpeza do Ranking preservando a string original da planilha
+  # Aplica a formatação específica da coluna Ranking
   if "Ranking" in df.columns:
-    df["Ranking"] = (
-        df["Ranking"]
-        .fillna("-")
-        .astype(str)
-        .str.replace(".0", "", regex=False)
-        .str.strip()
-    )
+    df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
@@ -315,7 +336,7 @@ with f_col4:
   st.markdown(
       '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
   )
-  ranking_val = df_final["Ranking"] if "Ranking" in df_final and pd.notna(df_final["Ranking"]) else "-"
+  ranking_val = df_final["Ranking"] if "Ranking" in df_final else "-"
   st.markdown(
       f"""
         <div class="ranking-box">
