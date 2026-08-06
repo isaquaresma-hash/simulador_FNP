@@ -175,7 +175,6 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
-        /* Espaçamento superior de 110px para revelar a logo original do fundo */
         .block-container {{ padding-top: 110px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
@@ -294,11 +293,11 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. BARRA SUPERIOR DE BOTÕES (ALINHADOS À DIREITA DA LOGO REVELADA)
+# 5. BARRA SUPERIOR DE BOTÕES
 # -----------------------------------------------------------------------------
 header_spacer, header_actions_col = st.columns([6, 4])
 
-# Pré-processamento dos filtros antes de desenhar o topo
+# Pré-processamento dos filtros
 porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
 
 # Título da Aplicação
@@ -381,12 +380,19 @@ else:
 
 # 3. Município
 SELECIONE_MUN_TEXT = "Digite ou selecione um município"
+lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
+
+# Regra: Se a opção 'Capital' / 'Capitais' estiver selecionada no filtro Porte, remove a opção 'Todos'
+eh_porte_capital = "CAPITAL" in str(porte_sel).upper()
+
+if eh_porte_capital:
+  mun_opcoes = [SELECIONE_MUN_TEXT] + lista_municipios
+else:
+  mun_opcoes = [SELECIONE_MUN_TEXT, "Todos"] + lista_municipios
+
 with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
-  )
-  mun_opcoes = [SELECIONE_MUN_TEXT, "Todos"] + sorted(
-      df_uf["Município"].dropna().unique().tolist()
   )
   mun_sel = st.selectbox("", mun_opcoes, label_visibility="collapsed")
 
