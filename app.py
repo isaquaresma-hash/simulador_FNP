@@ -760,7 +760,7 @@ if has_data:
         "",
         opcoes_parcelas,
         index=len(opcoes_parcelas) - 1,
-        format_func=lambda x: f"{x}x ({x} parcelas)",
+        format_func=lambda x: f"{x}x",
         key="num_parcelas_calc",
         label_visibility="collapsed",
     )
