@@ -171,11 +171,12 @@ def set_bg_hack(main_bg):
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
-            background-position: center;
+            background-position: top center;
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
-        .block-container {{ padding-top: 1rem !important; padding-bottom: 2rem !important; }}
+        /* Espaçamento superior de 110px para revelar a logo original do fundo */
+        .block-container {{ padding-top: 110px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
@@ -293,47 +294,14 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. CADASTRAR/VERIFICAR LOGO FNP E HEADER
+# 5. BARRA SUPERIOR DE BOTÕES (ALINHADOS À DIREITA DA LOGO REVELADA)
 # -----------------------------------------------------------------------------
-header_logo_col, header_actions_col = st.columns([6, 4])
+header_spacer, header_actions_col = st.columns([6, 4])
 
-with header_logo_col:
-  # Procura por arquivo de logo no diretório local se existir
-  logo_path = None
-  for arq in [
-      "logo.png",
-      "logo_fnp.png",
-      "fnp_logo.png",
-      "logo.jpeg",
-      "logo.jpg",
-  ]:
-    if os.path.exists(arq):
-      logo_path = arq
-      break
-
-  if logo_path:
-    st.image(logo_path, width=220)
-  else:
-    # Renderização visual limpa de Fallback para a Logo FNP
-    st.markdown(
-        """
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-            <span style="font-size: 2.2rem; font-weight: 900; color: #0A3663; tracking-s: -1px;">FNP</span>
-            <div style="border-left: 2px solid #0A3663; padding-left: 8px; font-size: 0.72rem; font-weight: 800; color: #0A3663; line-height: 1.1;">
-                FRENTE NACIONAL<br>DE PREFEITAS<br>E PREFEITOS
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# -----------------------------------------------------------------------------
-# 6. FILTROS E LÓGICA DE DADOS
-# -----------------------------------------------------------------------------
-# Pré-processamento dos filtros antes de desenhar o topo com o botão de PDF
+# Pré-processamento dos filtros antes de desenhar o topo
 porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
 
-# Rótulos da barra de consulta
+# Título da Aplicação
 st.markdown(
     '<div class="page-title">Simulador de Contribuição e Parcelamento</div>',
     unsafe_allow_html=True,
@@ -450,7 +418,7 @@ with f_col4:
       unsafe_allow_html=True,
   )
 
-# Lógica de cálculo antecipada para alimentar o botão de PDF do topo
+# Lógica de cálculo antecipada para o botão de PDF do topo
 has_data = not df_filtrado.empty
 pdf_bytes_topo = None
 nome_exibicao = mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
@@ -467,7 +435,7 @@ if has_data:
       nome_exibicao, uf_sel, "Desconto 10%", 12, val_neg_t, val_parc_t, econ_t
   )
 
-# Renderiza os Botões Superiores na coluna do Header
+# Renderização dos Botões Superiores no topo
 with header_actions_col:
   b_col1, b_col2 = st.columns(2)
   with b_col1:
