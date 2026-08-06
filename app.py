@@ -357,24 +357,33 @@ def gerar_pdf_simulacao(
 # -----------------------------------------------------------------------------
 # 5. ESTRUTURA DO TOPO (TÍTULO À ESQUERDA E BOTÕES À DIREITA)
 # -----------------------------------------------------------------------------
-# Sem a opção "Todos"
-porte_opcoes = sorted(df_base["Porte"].dropna().unique().tolist())
+porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist())
 
-porte_sel = st.session_state.get(
-    "porte_sel", porte_opcoes[0] if porte_opcoes else None
-)
-df_porte = df_base[df_base["Porte"] == porte_sel]
+porte_sel = st.session_state.get("porte_sel", "-")
 
-uf_opcoes = sorted(df_porte["UF"].dropna().unique().tolist())
-uf_sel = st.session_state.get("uf_sel", uf_opcoes[0] if uf_opcoes else None)
-df_uf = df_porte[df_porte["UF"] == uf_sel]
-
-mun_sel = st.session_state.get("mun_sel", "Digite ou selecione um município")
-
-if mun_sel in ["Digite ou selecione um município", "None", None]:
-  df_filtrado = pd.DataFrame()
+if porte_sel != "-":
+  df_porte = df_base[df_base["Porte"] == porte_sel]
+  uf_opcoes = ["-"] + sorted(df_porte["UF"].dropna().unique().tolist())
 else:
+  df_porte = pd.DataFrame()
+  uf_opcoes = ["-"]
+
+uf_sel = st.session_state.get("uf_sel", "-")
+
+if uf_sel != "-" and not df_porte.empty:
+  df_uf = df_porte[df_porte["UF"] == uf_sel]
+  lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
+  mun_opcoes = ["-"] + lista_municipios
+else:
+  df_uf = pd.DataFrame()
+  mun_opcoes = ["-"]
+
+mun_sel = st.session_state.get("mun_sel", "-")
+
+if mun_sel != "-" and not df_uf.empty:
   df_filtrado = df_uf[df_uf["Município"] == mun_sel]
+else:
+  df_filtrado = pd.DataFrame()
 
 has_data = not df_filtrado.empty
 pdf_bytes_topo = None
@@ -512,7 +521,7 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# CONSULTA E FILTROS
+# CONSULTA E FILTROS (Inicia limpo com '-')
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
     unsafe_allow_html=True,
@@ -520,7 +529,7 @@ st.markdown(
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
-# 1. Porte (Sem a opção Todos)
+# 1. Porte
 with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
@@ -529,23 +538,31 @@ with f_col1:
       "", porte_opcoes, key="porte_sel", label_visibility="collapsed"
   )
 
-df_porte = df_base[df_base["Porte"] == porte_sel]
+# Atualiza DF do Porte
+if porte_sel != "-":
+  df_porte = df_base[df_base["Porte"] == porte_sel]
+  uf_opcoes = ["-"] + sorted(df_porte["UF"].dropna().unique().tolist())
+else:
+  df_porte = pd.DataFrame()
+  uf_opcoes = ["-"]
 
-# 2. UF (Sem a opção Todas)
+# 2. UF
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-  uf_opcoes = sorted(df_porte["UF"].dropna().unique().tolist())
   uf_sel = st.selectbox(
       "", uf_opcoes, key="uf_sel", label_visibility="collapsed"
   )
 
-df_uf = df_porte[df_porte["UF"] == uf_sel]
+# Atualiza DF da UF
+if uf_sel != "-" and not df_porte.empty:
+  df_uf = df_porte[df_porte["UF"] == uf_sel]
+  lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
+  mun_opcoes = ["-"] + lista_municipios
+else:
+  df_uf = pd.DataFrame()
+  mun_opcoes = ["-"]
 
-# 3. Município (Sem a opção Todos)
-SELECIONE_MUN_TEXT = "Digite ou selecione um município"
-lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
-mun_opcoes = [SELECIONE_MUN_TEXT] + lista_municipios
-
+# 3. Município
 with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
@@ -554,10 +571,10 @@ with f_col3:
       "", mun_opcoes, key="mun_sel", label_visibility="collapsed"
   )
 
-if mun_sel == SELECIONE_MUN_TEXT:
-  df_filtrado = pd.DataFrame()
-else:
+if mun_sel != "-" and not df_uf.empty:
   df_filtrado = df_uf[df_uf["Município"] == mun_sel]
+else:
+  df_filtrado = pd.DataFrame()
 
 # 4. Classificação / Ranking
 with f_col4:
@@ -579,7 +596,7 @@ with f_col4:
   )
 
 # -----------------------------------------------------------------------------
-# EXPANSÃO DINÂMICA DA SIMULAÇÃO E CALCULADORA
+# EXPANSÃO DINÂMICA DA SIMULAÇÃO E CALCULADORA (Apenas quando selecionado)
 # -----------------------------------------------------------------------------
 has_data = not df_filtrado.empty
 
