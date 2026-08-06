@@ -16,7 +16,58 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. IMAGEM DE FUNDO E ESTILOS CSS
+# 2. CARREGAMENTO DINÂMICO DA PLANILHA EXCEL
+# -----------------------------------------------------------------------------
+NOME_ARQUIVO_PLANILHA = "dados.xlsx"  # Garanta que o arquivo no GitHub tem esse nome
+
+
+@st.cache_data
+def carregar_dados():
+  # Tenta ler .xlsx ou .csv
+  if os.path.exists(NOME_ARQUIVO_PLANILHA):
+    df = pd.read_excel(NOME_ARQUIVO_PLANILHA)
+  elif os.path.exists("dados.csv"):
+    df = pd.read_csv("dados.csv")
+  else:
+    st.error(f"Arquivo '{NOME_ARQUIVO_PLANILHA}' não encontrado no repositório!")
+    st.stop()
+
+  # Renomeia colunas para o padrão do app caso estejam com variações
+  df.columns = df.columns.str.strip()
+
+  # Mapeamento para garantir retrocompatibilidade de nomes de colunas
+  mapeamento = {
+      "Situação do município": "Situação",
+      "CONTRIBUIÇÃO 2027": "Valor_Integral",
+      "CONTRIBUIÇÃO 2027 COM DESCONTO DE 10%": "Valor_D10",
+      "CONTRIBUIÇÃO 2027 COM DESCONTO DE 50%": "Valor_D50",
+      "CONTRIBUIÇÃO 2027 COM DESCONTO DE 25%": "Valor_D25",
+      "Ranking 2026": "Ranking",
+  }
+  df = df.rename(columns=mapeamento)
+
+  # Tratamento e Limpeza de Valores Monetários (Remove 'R$', pontos de milhar, etc.)
+  colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
+  for col in colunas_valor:
+    if col in df.columns:
+      if df[col].dtype == "object":
+        df[col] = (
+            df[col]
+            .astype(str)
+            .str.replace("R$", "", regex=False)
+            .str.replace(".", "", regex=False)
+            .str.replace(",", ".", regex=False)
+            .str.strip()
+        )
+      df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+
+  return df
+
+
+df_base = carregar_dados()
+
+# -----------------------------------------------------------------------------
+# 3. ESTILOS CSS
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -42,174 +93,58 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
-
-        .block-container {{
-            padding-top: 1rem !important;
-            padding-bottom: 2rem !important;
-        }}
-
+        .block-container {{ padding-top: 1rem !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .badge-main {{
-            background-color: #334155;
-            color: #FFFFFF !important;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            display: inline-block;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            background-color: #334155; color: #FFFFFF !important; padding: 6px 14px;
+            border-radius: 6px; font-weight: bold; font-size: 0.85rem; display: inline-block; margin-bottom: 12px;
         }}
-
         .badge-filter {{
-            background-color: #475569;
-            color: #FFFFFF !important;
-            padding: 3px 10px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.78rem;
-            display: inline-block;
-            margin-bottom: 6px;
+            background-color: #475569; color: #FFFFFF !important; padding: 3px 10px;
+            border-radius: 4px; font-weight: 700; font-size: 0.78rem; display: inline-block; margin-bottom: 6px;
         }}
-
         .badge-light {{
-            background-color: #FFFFFF;
-            color: #1A202C !important;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 0.8rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px;
+            border-radius: 12px; font-weight: bold; font-size: 0.8rem;
         }}
-
         .stSelectbox div[data-baseweb="select"] > div {{
-            background-color: #F1F5F9 !important;
-            color: #0F172A !important;
-            border-radius: 6px !important;
-            border: none !important;
-            min-height: 42px !important;
+            background-color: #F1F5F9 !important; color: #0F172A !important;
+            border-radius: 6px !important; border: none !important; min-height: 42px !important;
         }}
-
         .ranking-box {{
-            background-color: #FFFFFF;
-            color: #0F172A;
-            font-weight: 800;
-            text-align: center;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            font-size: 0.9rem;
+            background-color: #FFFFFF; color: #0F172A; font-weight: 800; text-align: center;
+            height: 42px; display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem;
         }}
-
         .top-card {{
-            background-color: #FFFFFF;
-            padding: 12px 18px;
-            border-radius: 10px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            background-color: #FFFFFF; padding: 12px 18px; border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 15px;
         }}
         .icon-circle {{
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
+            width: 42px; height: 42px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold;
         }}
-        .top-card-title {{
-            color: #718096 !important;
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-        }}
-        .top-card-value {{
-            color: #1A202C !important;
-            font-size: 1.8rem;
-            font-weight: 800;
-            line-height: 1.1;
-        }}
-        .top-card-sub {{
-            color: #38A169 !important;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }}
+        .top-card-title {{ color: #718096 !important; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }}
+        .top-card-value {{ color: #1A202C !important; font-size: 1.8rem; font-weight: 800; line-height: 1.1; }}
+        .top-card-sub {{ color: #38A169 !important; font-size: 0.7rem; font-weight: 600; }}
 
-        .sim-card {{
-            background-color: #FFFFFF;
-            padding: 1rem 1.2rem;
-            border-radius: 8px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-            height: 100%;
-        }}
-        .sim-title {{
-            font-size: 0.72rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 0.2rem;
-        }}
-        .sim-value {{
-            color: #1A202C !important;
-            font-size: 1.6rem;
-            font-weight: 800;
-            margin: 0.2rem 0;
-        }}
-        .sim-sub {{
-            color: #A0AEC0 !important;
-            font-size: 0.72rem;
-        }}
+        .sim-card {{ background-color: #FFFFFF; padding: 1rem 1.2rem; border-radius: 8px; height: 100%; }}
+        .sim-title {{ font-size: 0.72rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.2rem; }}
+        .sim-value {{ color: #1A202C !important; font-size: 1.6rem; font-weight: 800; margin: 0.2rem 0; }}
+        .sim-sub {{ color: #A0AEC0 !important; font-size: 0.72rem; }}
 
-        .res-card-dark {{
-            background-color: #0A3663;
-            color: #FFFFFF !important;
-            padding: 1rem 1.2rem;
-            border-radius: 8px;
-        }}
-        .res-card-blue {{
-            background-color: #3B82F6;
-            color: #FFFFFF !important;
-            padding: 1rem 1.2rem;
-            border-radius: 8px;
-        }}
-        .res-card-green {{
-            background-color: #10B981;
-            color: #FFFFFF !important;
-            padding: 1rem 1.2rem;
-            border-radius: 8px;
-        }}
-        .res-title {{
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: #FFFFFF !important;
-            text-transform: uppercase;
-        }}
-        .res-val {{
-            font-size: 1.7rem;
-            font-weight: 800;
-            color: #FFFFFF !important;
-            margin: 0.2rem 0;
-        }}
-        .res-sub {{
-            font-size: 0.72rem;
-            color: rgba(255,255,255,0.85) !important;
-        }}
+        .res-card-dark {{ background-color: #0A3663; color: #FFFFFF !important; padding: 1rem 1.2rem; border-radius: 8px; }}
+        .res-card-blue {{ background-color: #3B82F6; color: #FFFFFF !important; padding: 1rem 1.2rem; border-radius: 8px; }}
+        .res-card-green {{ background-color: #10B981; color: #FFFFFF !important; padding: 1rem 1.2rem; border-radius: 8px; }}
+        .res-title {{ font-size: 0.72rem; font-weight: 800; color: #FFFFFF !important; text-transform: uppercase; }}
+        .res-val {{ font-size: 1.7rem; font-weight: 800; color: #FFFFFF !important; margin: 0.2rem 0; }}
+        .res-sub {{ font-size: 0.72rem; color: rgba(255,255,255,0.85) !important; }}
 
         .stButton button, .stDownloadButton button {{
-            background-color: #FFFFFF !important;
-            color: #2D3748 !important;
-            border: 1px solid #CBD5E0 !important;
-            border-radius: 6px !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            padding: 0.3rem 0.8rem !important;
+            background-color: #FFFFFF !important; color: #2D3748 !important;
+            border: 1px solid #CBD5E0 !important; border-radius: 6px !important;
+            font-size: 0.8rem !important; font-weight: 600 !important; padding: 0.3rem 0.8rem !important;
         }}
         </style>
         """
@@ -221,212 +156,6 @@ set_bg_hack(CAMINHO_IMAGEM_FUNDO)
 
 def fmt_br(valor):
   return f"{valor:,.0f}".replace(",", ".")
-
-
-# -----------------------------------------------------------------------------
-# 3. BASE DE DADOS REAIS EXTRAÍDA DA PLANILHA
-# -----------------------------------------------------------------------------
-data = {
-    "Situação": [
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-        "Filiado",
-    ],
-    "Porte": [
-        "Capital",
-        "Capital",
-        "Capital",
-        "80 a 150mil hab.",
-        "Capital",
-        "Capital",
-        "Capital",
-        "Capital",
-        "Capital",
-        "350 a 500mil hab.",
-        "Capital",
-        "+500mil hab.",
-        "350 a 500mil hab.",
-        "150 a 350mil hab.",
-        "Capital",
-        "80 a 150mil hab.",
-        "Capital",
-        "+500mil hab.",
-        "Capital",
-        "350 a 500mil hab.",
-        "+500mil hab.",
-        "+500mil hab.",
-        "+500mil hab.",
-        "350 a 500mil hab.",
-        "até 80mil hab.",
-        "+500mil hab.",
-        "+500mil hab.",
-        "até 80mil hab.",
-        "350 a 500mil hab.",
-        "350 a 500mil hab.",
-        "Capital",
-    ],
-    "UF": [
-        "SP",
-        "RJ",
-        "DF",
-        "MG",
-        "MG",
-        "PR",
-        "BA",
-        "AM",
-        "RS",
-        "SP",
-        "PB",
-        "GO",
-        "PR",
-        "MA",
-        "PA",
-        "AM",
-        "SC",
-        "RJ",
-        "AP",
-        "PB",
-        "RJ",
-        "RJ",
-        "SP",
-        "SP",
-        "MG",
-        "PE",
-        "BA",
-        "SP",
-        "PE",
-        "PE",
-        "MT",
-    ],
-    "Município": [
-        "São Paulo",
-        "Rio de Janeiro",
-        "Brasília",
-        "Muriaé",
-        "Belo Horizonte",
-        "Curitiba",
-        "Salvador",
-        "Manaus",
-        "Porto Alegre",
-        "Santos",
-        "João Pessoa",
-        "Aparecida de Goiânia",
-        "Ponta Grossa",
-        "Imperatriz",
-        "Belém",
-        "Parintins",
-        "Florianópolis",
-        "São Gonçalo",
-        "Macapá",
-        "Campina Grande",
-        "Duque de Caxias",
-        "Nova Iguaçu",
-        "São Bernardo do Campo",
-        "Mauá",
-        "Mateus Leme",
-        "Jaboatão dos Guararapes",
-        "Feira de Santana",
-        "Jarinu",
-        "Petrolina",
-        "Caruaru",
-        "Cuiabá",
-    ],
-    "Ranking": [
-        "Adimplente",
-        "Adimplente",
-        "70%",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "90%",
-        "Adimplente",
-        "90%",
-        "Adimplente",
-        "70%",
-        "90%",
-        "Adimplente",
-        "70%",
-        "30%",
-        "70%",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "Adimplente",
-        "70%",
-    ],
-    "Valor_Integral": [
-        5070000.00,
-        1547600.00,
-        1934500.00,
-        110535.00,
-        883063.00,
-        798750.00,
-        197700.00,
-        197700.00,
-        593100.00,
-        447167.00,
-        173256.00,
-        87000.00,
-        70000.00,
-        61970.00,
-        129000.00,
-        51743.00,
-        309811.00,
-        87000.00,
-        70000.00,
-        70000.00,
-        180359.00,
-        87000.00,
-        320970.00,
-        70000.00,
-        50870.00,
-        75000.00,
-        75000.00,
-        83070.00,
-        60000.00,
-        60000.00,
-        274089.00,
-    ],
-}
-df_base = pd.DataFrame(data)
 
 
 # -----------------------------------------------------------------------------
@@ -451,10 +180,8 @@ def gerar_pdf_simulacao(
   pdf = PDF()
   pdf.add_page()
   pdf.set_font("Arial", "B", 12)
-
   pdf.cell(0, 10, f"Relatorio de Simulacao - {municipio} ({uf})", 0, 1)
   pdf.ln(5)
-
   pdf.set_font("Arial", "", 11)
   pdf.cell(0, 8, f"Cenario Selecionado: {cenario}", 0, 1)
   pdf.cell(0, 8, f"Numero de Parcelas: {parcelas}x", 0, 1)
@@ -466,28 +193,24 @@ def gerar_pdf_simulacao(
     temp_filename = tmp_file.name
 
   pdf.output(temp_filename)
-
   with open(temp_filename, "rb") as f:
     pdf_bytes = f.read()
 
   if os.path.exists(temp_filename):
     os.remove(temp_filename)
-
   return pdf_bytes
 
 
 # -----------------------------------------------------------------------------
-# 5. INTERFACE DASHBOARD
+# 5. DASHBOARD INTERFACE
 # -----------------------------------------------------------------------------
-
-# Topo: Botões
 btn_col1, btn_col2, btn_col3 = st.columns([4, 1.3, 1.3])
 
 with btn_col1:
   st.write("")
 
 pdf_bytes = gerar_pdf_simulacao(
-    "Manaus", "AM", "Desconto 10%", 12, 177930.00, 14827.50, 19770.00
+    "Arapiraca", "AL", "Desconto 10%", 12, 54655.00, 4555.00, 6073.00
 )
 
 with btn_col2:
@@ -501,23 +224,19 @@ with btn_col2:
 
 with btn_col3:
   if st.button("🔄 Atualização Base", use_container_width=True):
+    st.cache_data.clear()
     st.success("Base atualizada!")
 
-st.markdown(
-    """
+st.markdown("""
     <h2 style='color: #0F172A; font-weight: 800; font-size: 1.6rem; margin-top: 1rem; margin-bottom: 1rem;'>
         Simulador de Contribuição e Parcelamento
     </h2>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-# Métricas
 m_col1, m_col2, m_col3 = st.columns(3)
 
 with m_col1:
-  st.markdown(
-      """
+  st.markdown("""
         <div class="top-card">
             <div class="icon-circle" style="background-color: #1E40AF;">🏛️</div>
             <div>
@@ -526,13 +245,10 @@ with m_col1:
                 <div class="top-card-sub">↑ Quantidade de capitais no Brasil</div>
             </div>
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
+    """, unsafe_allow_html=True)
 
 with m_col2:
-  st.markdown(
-      """
+  st.markdown("""
         <div class="top-card">
             <div class="icon-circle" style="background-color: #059669;">👥</div>
             <div>
@@ -541,13 +257,10 @@ with m_col2:
                 <div class="top-card-sub">↑ Municípios com mais de 80 mil habitantes</div>
             </div>
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
+    """, unsafe_allow_html=True)
 
 with m_col3:
-  st.markdown(
-      """
+  st.markdown("""
         <div class="top-card">
             <div class="icon-circle" style="background-color: #7C3AED;">💲</div>
             <div>
@@ -556,14 +269,12 @@ with m_col3:
                 <div class="top-card-sub">↑ Potencial total de arrecadação anual</div>
             </div>
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
+    """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# SEÇÃO DE FILTROS DINÂMICOS E CORRIGIDOS
+# SEÇÃO DE FILTROS DINÂMICOS DA PLANILHA
 # -----------------------------------------------------------------------------
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
@@ -572,35 +283,31 @@ st.markdown(
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
-# 1. Filtro Porte
 with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
   )
-  porte_opcoes = sorted(df_base["Porte"].unique().tolist())
+  porte_opcoes = sorted(df_base["Porte"].dropna().unique().tolist())
   porte_sel = st.selectbox("", porte_opcoes, label_visibility="collapsed")
 
 df_porte = df_base[df_base["Porte"] == porte_sel]
 
-# 2. Filtro UF (filtrado pelo Porte)
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-  uf_opcoes = sorted(df_porte["UF"].unique().tolist())
+  uf_opcoes = sorted(df_porte["UF"].dropna().unique().tolist())
   uf_sel = st.selectbox("", uf_opcoes, label_visibility="collapsed")
 
 df_uf = df_porte[df_porte["UF"] == uf_sel]
 
-# 3. Filtro Município
 with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
   )
-  mun_opcoes = sorted(df_uf["Município"].unique().tolist())
+  mun_opcoes = sorted(df_uf["Município"].dropna().unique().tolist())
   mun_sel = st.selectbox("", mun_opcoes, label_visibility="collapsed")
 
 df_final = df_uf[df_uf["Município"] == mun_sel].iloc[0]
 
-# 4. Exibição do Ranking Exato
 with f_col4:
   st.markdown(
       '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
@@ -634,9 +341,21 @@ st.markdown(
 )
 
 val_integral = df_final["Valor_Integral"]
-val_d10 = val_integral * 0.90
-val_d25 = val_integral * 0.75
-val_d50 = val_integral * 0.50
+val_d10 = (
+    df_final["Valor_D10"]
+    if "Valor_D10" in df_final and df_final["Valor_D10"] > 0
+    else val_integral * 0.9
+)
+val_d50 = (
+    df_final["Valor_D50"]
+    if "Valor_D50" in df_final and df_final["Valor_D50"] > 0
+    else val_integral * 0.5
+)
+val_d25 = (
+    df_final["Valor_D25"]
+    if "Valor_D25" in df_final and df_final["Valor_D25"] > 0
+    else val_integral * 0.75
+)
 
 c1, c2, c3, c4 = st.columns(4)
 
@@ -723,7 +442,6 @@ with calc_col2:
       label_visibility="collapsed",
   )
 
-# Cálculos
 if cenario == "Desconto 10%":
   valor_negociado = val_d10
 elif cenario == "Desconto 25%":
@@ -736,7 +454,6 @@ else:
 economia = val_integral - valor_negociado
 valor_parcela = valor_negociado / num_parcelas
 
-# Resultados Inferiores
 res1, res2, res3 = st.columns(3)
 
 with res1:
