@@ -178,7 +178,6 @@ def set_bg_hack(main_bg):
         .block-container {{ padding-top: 1rem !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
-        /* Título Principal estilo Imagem */
         .page-title {{
             color: #0A3663;
             font-size: 1.5rem;
@@ -294,23 +293,53 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. HEADER SUPERIOR E BOTÃO DE ATUALIZAÇÃO
+# 5. CADASTRAR/VERIFICAR LOGO FNP E HEADER
 # -----------------------------------------------------------------------------
-top_spacer, top_btn_col = st.columns([8.2, 1.8])
-with top_btn_col:
-  if st.button("🔄 Atualização Base", use_container_width=True):
-    st.cache_data.clear()
-    st.rerun()
+header_logo_col, header_actions_col = st.columns([6, 4])
 
-# Título da Aplicação
+with header_logo_col:
+  # Procura por arquivo de logo no diretório local se existir
+  logo_path = None
+  for arq in [
+      "logo.png",
+      "logo_fnp.png",
+      "fnp_logo.png",
+      "logo.jpeg",
+      "logo.jpg",
+  ]:
+    if os.path.exists(arq):
+      logo_path = arq
+      break
+
+  if logo_path:
+    st.image(logo_path, width=220)
+  else:
+    # Renderização visual limpa de Fallback para a Logo FNP
+    st.markdown(
+        """
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <span style="font-size: 2.2rem; font-weight: 900; color: #0A3663; tracking-s: -1px;">FNP</span>
+            <div style="border-left: 2px solid #0A3663; padding-left: 8px; font-size: 0.72rem; font-weight: 800; color: #0A3663; line-height: 1.1;">
+                FRENTE NACIONAL<br>DE PREFEITAS<br>E PREFEITOS
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# -----------------------------------------------------------------------------
+# 6. FILTROS E LÓGICA DE DADOS
+# -----------------------------------------------------------------------------
+# Pré-processamento dos filtros antes de desenhar o topo com o botão de PDF
+porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
+
+# Rótulos da barra de consulta
 st.markdown(
     '<div class="page-title">Simulador de Contribuição e Parcelamento</div>',
     unsafe_allow_html=True,
 )
 
-# -----------------------------------------------------------------------------
 # CARDS INFORMATIVOS SUPERIORES
-# -----------------------------------------------------------------------------
 m_col1, m_col2, m_col3 = st.columns(3)
 
 with m_col1:
@@ -351,9 +380,7 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# SEÇÃO DE FILTROS (CONSULTA E FILTROS)
-# -----------------------------------------------------------------------------
+# CONSULTA E FILTROS
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
     unsafe_allow_html=True,
@@ -366,7 +393,6 @@ with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
   )
-  porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
   porte_sel = st.selectbox("", porte_opcoes, label_visibility="collapsed")
 
 if porte_sel == "Todos":
@@ -424,14 +450,55 @@ with f_col4:
       unsafe_allow_html=True,
   )
 
+# Lógica de cálculo antecipada para alimentar o botão de PDF do topo
+has_data = not df_filtrado.empty
+pdf_bytes_topo = None
+nome_exibicao = mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
+
+if has_data:
+  val_integral_t = df_filtrado["Valor_Integral"].sum()
+  val_d10_t = df_filtrado["Valor_D10"].sum()
+  if val_d10_t <= 0:
+    val_d10_t = val_integral_t * 0.90
+  val_neg_t = val_d10_t
+  econ_t = val_integral_t - val_neg_t
+  val_parc_t = val_neg_t / 12
+  pdf_bytes_topo = gerar_pdf_simulacao(
+      nome_exibicao, uf_sel, "Desconto 10%", 12, val_neg_t, val_parc_t, econ_t
+  )
+
+# Renderiza os Botões Superiores na coluna do Header
+with header_actions_col:
+  b_col1, b_col2 = st.columns(2)
+  with b_col1:
+    if has_data and pdf_bytes_topo:
+      st.download_button(
+          label="📄 Baixar Simulação em PDF",
+          data=pdf_bytes_topo,
+          file_name=f"simulacao_{nome_exibicao}.pdf",
+          mime="application/pdf",
+          use_container_width=True,
+      )
+    else:
+      st.button(
+          "📄 Baixar Simulação em PDF",
+          disabled=True,
+          use_container_width=True,
+          help="Selecione um município para habilitar o PDF.",
+      )
+
+  with b_col2:
+    if st.button("🔄 Atualização Base", use_container_width=True):
+      st.cache_data.clear()
+      st.rerun()
+
 # -----------------------------------------------------------------------------
 # EXPANSÃO DINÂMICA DA SIMULAÇÃO E CALCULADORA
 # -----------------------------------------------------------------------------
-# As opções abaixo só serão exibidas/expandidas quando o usuário utilizar a busca/filtro
-if not df_filtrado.empty:
+if has_data:
   st.markdown("<hr style='margin: 1.5rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
-  # Identificação do Status de Filiação
+  # Status de Filiação
   if "Situação" in df_filtrado.columns:
     situacoes = df_filtrado["Situação"].astype(str).tolist()
     filiados_count = sum(
@@ -457,8 +524,6 @@ if not df_filtrado.empty:
     status_text = "(Filiado)"
     status_color = "🟢"
 
-  nome_exibicao = mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
-
   st.markdown(
       f"""
       <div style="margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
@@ -474,7 +539,7 @@ if not df_filtrado.empty:
   val_d25 = df_filtrado["Valor_D25"].sum()
   val_d50 = df_filtrado["Valor_D50"].sum()
 
-  # Fallback automático
+  # Fallback
   if val_d10 <= 0:
     val_d10 = val_integral * 0.90
   if val_d25 <= 0:
@@ -650,27 +715,4 @@ if not df_filtrado.empty:
           </div>
       """,
         unsafe_allow_html=True,
-    )
-
-  st.markdown("<br>", unsafe_allow_html=True)
-
-  # Download em PDF
-  pdf_bytes = gerar_pdf_simulacao(
-      nome_exibicao,
-      uf_sel,
-      cenario,
-      num_parcelas,
-      valor_negociado,
-      valor_parcela,
-      economia,
-  )
-
-  pdf_col, _ = st.columns([3, 7])
-  with pdf_col:
-    st.download_button(
-        label="📄 Baixar Simulação em PDF",
-        data=pdf_bytes,
-        file_name=f"simulacao_{nome_exibicao}.pdf",
-        mime="application/pdf",
-        use_container_width=True,
     )
