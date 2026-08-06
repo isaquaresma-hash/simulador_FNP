@@ -34,10 +34,8 @@ def converter_valor_ptbr(valor):
     if val_str.lower() in ["nan", "none", "", "null", "-", "none"]:
       return 0.0
 
-    # Remove símbolos de moeda e espaços
     val_str = val_str.replace("R$", "").replace(" ", "").strip()
 
-    # Tratamento de pontuação brasileira
     if "," in val_str:
       val_str = val_str.replace(".", "").replace(",", ".")
     else:
@@ -144,7 +142,6 @@ def carregar_dados():
   if "Ranking" in df.columns:
     df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
-  # Converte as colunas numéricas com tratamento de segurança
   for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50"]:
     if col in df.columns:
       df[col] = [converter_valor_ptbr(v) for v in df[col]]
@@ -157,7 +154,7 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. ESTILOS CSS E IMAGEM DE FUNDO
+# 3. ESTILOS CSS E IMAGEM DE FUNDO (ADAPTADO PARA COMPUTADOR E CELULAR)
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -176,6 +173,7 @@ def set_bg_hack(main_bg):
   if bin_str:
     page_bg_img = f"""
         <style>
+        /* Estilo para Computador */
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
@@ -185,6 +183,17 @@ def set_bg_hack(main_bg):
         }}
         .block-container {{ padding-top: 200px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
+
+        /* REGRA EXCLUSIVA PARA CELULARES (Muda apenas em telas menores que 768px) */
+        @media (max-width: 768px) {{
+            .stApp {{
+                background-size: 100% auto !important; /* Ajusta a imagem na largura para não cortar o topo/logo */
+                background-position: top center !important;
+            }}
+            .block-container {{
+                padding-top: 130px !important; /* Ajusta o espaçamento superior no celular */
+            }}
+        }}
 
         .page-title {{
             color: #0A3663;
@@ -270,7 +279,6 @@ def obter_valores_validados(row_or_df):
   val_d25 = row_or_df["Valor_D25"].sum()
   val_d50 = row_or_df["Valor_D50"].sum()
 
-  # 1. Se a planilha estiver sem o valor de desconto, calcula automaticamente
   if val_d10 <= 0 or val_d10 >= val_integral:
     val_d10 = val_integral * 0.90
 
@@ -426,7 +434,6 @@ if has_data:
       else "Filiado"
   )
 
-  # Aplica validação estrita
   val_integral_t, val_d10_t, val_d25_t, val_d50_t = obter_valores_validados(
       df_filtrado
   )
@@ -628,7 +635,6 @@ if has_data:
       unsafe_allow_html=True,
   )
 
-  # Obtenção validada dos valores sem risco de distorção
   val_integral, val_d10, val_d25, val_d50 = obter_valores_validados(df_filtrado)
 
   if eh_filiado:
