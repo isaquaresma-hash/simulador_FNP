@@ -175,15 +175,15 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: scroll;
         }}
-        /* Padding superior reduzido para 40px para subir a visão da logo no topo */
-        .block-container {{ padding-top: 40px !important; padding-bottom: 2rem !important; }}
+        /* Padding de 140px garante que os elementos comecem exatamente abaixo da logo da imagem */
+        .block-container {{ padding-top: 140px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
             color: #0A3663;
             font-size: 1.35rem;
             font-weight: 800;
-            margin-top: 0.5rem;
+            margin-top: 0.8rem;
             margin-bottom: 0.8rem;
         }}
 
@@ -428,7 +428,7 @@ if has_data:
       economia=econ_t,
   )
 
-# Cabeçalho Principal
+# Cabeçalho Principal (Título e Botões na mesma linha horizontal)
 header_title_col, header_actions_col = st.columns([5.5, 4.5])
 
 with header_title_col:
