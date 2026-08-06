@@ -16,9 +16,36 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. CARREGAMENTO DINÂMICO DA PLANILHA EXCEL
+# 2. CARREGAMENTO E LIMPEZA ROBUSTA DA PLANILHA EXCEL
 # -----------------------------------------------------------------------------
 NOME_ARQUIVO_PLANILHA = "Simulador de contribuição .xlsx"
+
+
+def converter_valor_ptbr(valor):
+  """Converte valores em formato monetário BR (ex: 'R$ 75.000', '75.000,00' ou floats) para float puro do Python."""
+  if pd.isna(valor):
+    return 0.0
+  if isinstance(valor, (int, float)):
+    return float(valor)
+
+  val_str = str(valor).strip()
+  val_str = val_str.replace("R$", "").replace(" ", "")
+
+  # Se tem vírgula como separador decimal (ex: 75.000,00 ou 75000,00)
+  if "," in val_str:
+    val_str = val_str.replace(".", "").replace(",", ".")
+  else:
+    # Se tem ponto (ex: 75.000 ou 75.000.00)
+    # Se houver mais de um ponto ou padrão de milhar, remove pontos
+    if val_str.count(".") > 1 or (
+        len(val_str.split(".")[-1]) != 2 and val_str.count(".") == 1
+    ):
+      val_str = val_str.replace(".", "")
+
+  try:
+    return float(val_str)
+  except ValueError:
+    return 0.0
 
 
 @st.cache_data
@@ -43,40 +70,46 @@ def carregar_dados():
       df = pd.read_excel(caminho_encontrado, engine="openpyxl")
   except ImportError:
     st.error(
-        "A biblioteca 'openpyxl' não está instalada. Certifique-se de que ela"
-        " consta no arquivo requirements.txt."
+        "A biblioteca 'openpyxl' não está instalada no ambiente. Adicione"
+        " 'openpyxl' ao seu requirements.txt."
     )
     st.stop()
 
-  # Limpeza dos nomes das colunas
+  # Normaliza nomes de colunas
   df.columns = df.columns.astype(str).str.strip()
 
-  # Mapeamento de colunas
-  mapeamento = {
-      "Situação do município": "Situação",
-      "CONTRIBUIÇÃO 2027": "Valor_Integral",
-      "CONTRIBUIÇÃO 2027 COM DESCONTO DE 10%": "Valor_D10",
-      "CONTRIBUIÇÃO 2027 COM DESCONTO DE 50%": "Valor_D50",
-      "CONTRIBUIÇÃO 2027 COM DESCONTO DE 25%": "Valor_D25",
-      "Ranking 2026": "Ranking",
-      "Ranking 2027": "Ranking",
-  }
+  # Mapeamento flexível de colunas
+  mapeamento = {}
+  for col in df.columns:
+    col_upper = col.upper()
+    if "SITUAÇÃO" in col_upper:
+      mapeamento[col] = "Situação"
+    elif "PORTE" in col_upper:
+      mapeamento[col] = "Porte"
+    elif "UF" in col_upper:
+      mapeamento[col] = "UF"
+    elif "MUNICÍPIO" in col_upper or "MUNICIPIO" in col_upper:
+      mapeamento[col] = "Município"
+    elif "RANKING" in col_upper:
+      mapeamento[col] = "Ranking"
+    elif "10%" in col_upper:
+      mapeamento[col] = "Valor_D10"
+    elif "50%" in col_upper:
+      mapeamento[col] = "Valor_D50"
+    elif "25%" in col_upper:
+      mapeamento[col] = "Valor_D25"
+    elif "CONTRIBUIÇÃO 2027" in col_upper or "CONTRIBUICAO 2027" in col_upper:
+      mapeamento[col] = "Valor_Integral"
+
   df = df.rename(columns=mapeamento)
 
-  # Tratamento e Limpeza de Valores Monetários
+  # Converte todas as colunas numéricas de valores
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
     if col in df.columns:
-      if df[col].dtype == "object":
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.replace("R$", "", regex=False)
-            .str.replace(".", "", regex=False)
-            .str.replace(",", ".", regex=False)
-            .str.strip()
-        )
-      df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+      df[col] = df[col].apply(converter_valor_ptbr)
+    else:
+      df[col] = 0.0
 
   return df
 
@@ -227,7 +260,7 @@ with btn_col1:
   st.write("")
 
 pdf_bytes = gerar_pdf_simulacao(
-    "Arapiraca", "AL", "Desconto 10%", 12, 54655.00, 4555.00, 6073.00
+    "Feira de Santana", "BA", "Desconto 10%", 12, 67500.00, 5625.00, 7500.00
 )
 
 with btn_col2:
@@ -358,23 +391,24 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Resgate e tratamento automático de fallback se algum valor de desconto vier 0 da planilha
 val_integral = (
-    df_final["Valor_Integral"] if "Valor_Integral" in df_final else 0
+    df_final["Valor_Integral"] if "Valor_Integral" in df_final else 0.0
 )
 val_d10 = (
     df_final["Valor_D10"]
-    if "Valor_D10" in df_final and df_final["Valor_D10"] > 0
-    else val_integral * 0.9
-)
-val_d50 = (
-    df_final["Valor_D50"]
-    if "Valor_D50" in df_final and df_final["Valor_D50"] > 0
-    else val_integral * 0.5
+    if ("Valor_D10" in df_final and df_final["Valor_D10"] > 0)
+    else val_integral * 0.90
 )
 val_d25 = (
     df_final["Valor_D25"]
-    if "Valor_D25" in df_final and df_final["Valor_D25"] > 0
+    if ("Valor_D25" in df_final and df_final["Valor_D25"] > 0)
     else val_integral * 0.75
+)
+val_d50 = (
+    df_final["Valor_D50"]
+    if ("Valor_D50" in df_final and df_final["Valor_D50"] > 0)
+    else val_integral * 0.50
 )
 
 c1, c2, c3, c4 = st.columns(4)
