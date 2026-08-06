@@ -66,9 +66,9 @@ def carregar_dados():
 
   try:
     if caminho_encontrado.endswith(".csv"):
-      df = pd.read_csv(caminho_encontrado)
+      df = pd.read_csv(caminho_encontrado, dtype=str)
     else:
-      df = pd.read_excel(caminho_encontrado, engine="openpyxl")
+      df = pd.read_excel(caminho_encontrado, engine="openpyxl", dtype=str)
   except ImportError:
     st.error(
         "A biblioteca 'openpyxl' não está instalada no ambiente. Adicione"
@@ -85,7 +85,7 @@ def carregar_dados():
     if "PARCELA" in col_upper:
       continue
 
-    if "SITUAÇÃO" in col_upper:
+    if "SITUAÇÃO" in col_upper or "SITUACAO" in col_upper:
       mapeamento[col] = "Situação"
     elif "PORTE" in col_upper:
       mapeamento[col] = "Porte"
@@ -93,7 +93,7 @@ def carregar_dados():
       mapeamento[col] = "UF"
     elif "MUNICÍPIO" in col_upper or "MUNICIPIO" in col_upper:
       mapeamento[col] = "Município"
-    elif "RANKING" in col_upper:
+    elif "RANKING" in col_upper or "RANK" in col_upper or "POSIÇÃO" in col_upper or "POSICAO" in col_upper:
       mapeamento[col] = "Ranking"
     elif "10%" in col_upper and "Valor_D10" not in mapeamento.values():
       mapeamento[col] = "Valor_D10"
@@ -110,6 +110,16 @@ def carregar_dados():
 
   df = df.rename(columns=mapeamento)
   df = df.loc[:, ~df.columns.duplicated()]
+
+  # Formatação e limpeza do Ranking preservando a string original da planilha
+  if "Ranking" in df.columns:
+    df["Ranking"] = (
+        df["Ranking"]
+        .fillna("-")
+        .astype(str)
+        .str.replace(".0", "", regex=False)
+        .str.strip()
+    )
 
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
@@ -305,7 +315,7 @@ with f_col4:
   st.markdown(
       '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
   )
-  ranking_val = df_final["Ranking"] if "Ranking" in df_final else "-"
+  ranking_val = df_final["Ranking"] if "Ranking" in df_final and pd.notna(df_final["Ranking"]) else "-"
   st.markdown(
       f"""
         <div class="ranking-box">
@@ -408,7 +418,6 @@ if val_d50 <= 0:
 
 # RENDERIZAÇÃO CONDICIONAL DOS CARDS
 if eh_filiado:
-  # Mostra apenas 2 colunas para Filiados (Valor Integral e Desconto 10%)
   c1, c2 = st.columns(2)
 
   with c1:
@@ -435,7 +444,6 @@ if eh_filiado:
         unsafe_allow_html=True,
     )
 else:
-  # Mostra 4 colunas para Não Filiados
   c1, c2, c3, c4 = st.columns(4)
 
   with c1:
