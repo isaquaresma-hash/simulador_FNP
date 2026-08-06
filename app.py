@@ -78,12 +78,10 @@ def carregar_dados():
 
   df.columns = df.columns.astype(str).str.strip()
 
-  # Mapeamento preciso ignorando colunas de parcelamento
   mapeamento = {}
   for col in df.columns:
     col_upper = col.upper()
 
-    # Ignora colunas que são de parcelas divididas
     if "PARCELA" in col_upper:
       continue
 
@@ -111,8 +109,6 @@ def carregar_dados():
       mapeamento[col] = "Valor_Integral"
 
   df = df.rename(columns=mapeamento)
-
-  # Garante remoção de qualquer coluna duplicada remanescente
   df = df.loc[:, ~df.columns.duplicated()]
 
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
@@ -366,13 +362,14 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Painel de Simulação
-status_text = (
-    f"({df_final['Situação']})"
-    if "Situação" in df_final
-    else "(Filiado)"
+# Identificação do Status de Filiação
+situacao_municipio = (
+    str(df_final["Situação"]).strip() if "Situação" in df_final else "Filiado"
 )
-status_color = "🟢" if "Filiado" in status_text else "🔴"
+eh_filiado = "filiado" in situacao_municipio.lower() and "não" not in situacao_municipio.lower()
+
+status_text = f"({situacao_municipio})"
+status_color = "🟢" if eh_filiado else "🔴"
 
 st.markdown(
     f"""
@@ -385,7 +382,6 @@ st.markdown(
 
 
 def extrair_float_seguro(registro, chave):
-  """Extrai com segurança um escalar numérico do registro."""
   if chave in registro:
     val = registro[chave]
     if isinstance(val, pd.Series):
@@ -402,7 +398,7 @@ val_d10 = extrair_float_seguro(df_final, "Valor_D10")
 val_d25 = extrair_float_seguro(df_final, "Valor_D25")
 val_d50 = extrair_float_seguro(df_final, "Valor_D50")
 
-# Fallback automático caso o valor na planilha esteja zerado
+# Fallback automático caso esteja zerado na planilha
 if val_d10 <= 0:
   val_d10 = val_integral * 0.90
 if val_d25 <= 0:
@@ -437,32 +433,28 @@ with c2:
   )
 
 with c3:
-  st.markdown(
-      f"""
-        <div class="sim-card" style="border-left: 4px solid #7C3AED;">
+  card_d25_html = f"""
+        <div class="sim-card" style="border-left: 4px solid #7C3AED; {'opacity: 0.4;' if eh_filiado else ''}">
             <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
             <div class="sim-value">R$ {fmt_br(val_d25)}</div>
-            <div class="sim-sub">Parcela Padrão: 10x</div>
+            <div class="sim-sub">{'Apenas Não Filiados' if eh_filiado else 'Parcela Padrão: 10x'}</div>
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
+    """
+  st.markdown(card_d25_html, unsafe_allow_html=True)
 
 with c4:
-  st.markdown(
-      f"""
-        <div class="sim-card" style="border-left: 4px solid #10B981;">
+  card_d50_html = f"""
+        <div class="sim-card" style="border-left: 4px solid #10B981; {'opacity: 0.4;' if eh_filiado else ''}">
             <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
             <div class="sim-value">R$ {fmt_br(val_d50)}</div>
-            <div class="sim-sub">Parcela Padrão: 10x</div>
+            <div class="sim-sub">{'Apenas Não Filiados' if eh_filiado else 'Parcela Padrão: 10x'}</div>
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
+    """
+  st.markdown(card_d50_html, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Calculadora de Parcelamento
+# Calculadora de Parcelamento com Filtro Regra de Negócio
 st.markdown(
     '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
     unsafe_allow_html=True,
@@ -476,11 +468,19 @@ with calc_col1:
       " cenário de valor base:</div>",
       unsafe_allow_html=True,
   )
-  cenario = st.selectbox(
-      "",
-      ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"],
-      label_visibility="collapsed",
-  )
+
+  # Regra de negócio aplicada às opções da caixa de seleção
+  if eh_filiado:
+    opcoes_cenario = ["Desconto 10%", "Valor Integral"]
+  else:
+    opcoes_cenario = [
+        "Desconto 10%",
+        "Desconto 25%",
+        "Desconto 50%",
+        "Valor Integral",
+    ]
+
+  cenario = st.selectbox("", opcoes_cenario, label_visibility="collapsed")
 
 with calc_col2:
   st.markdown(
