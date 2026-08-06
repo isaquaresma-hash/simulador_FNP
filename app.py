@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. IMAGEM DE FUNDO E ESTILOS CSS DEFINITIVOS
+# 2. IMAGEM DE FUNDO E ESTILOS CSS
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -35,7 +35,6 @@ def set_bg_hack(main_bg):
   if bin_str:
     page_bg_img = f"""
         <style>
-        /* Fundo em tela cheia */
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
@@ -44,7 +43,6 @@ def set_bg_hack(main_bg):
             background-attachment: fixed;
         }}
 
-        /* Zera paddings topo e fundo */
         .block-container {{
             padding-top: 1rem !important;
             padding-bottom: 2rem !important;
@@ -52,7 +50,6 @@ def set_bg_hack(main_bg):
 
         #MainMenu, footer, header {{ visibility: hidden; }}
 
-        /* Pílula Principal "Consulta e Filtros" */
         .badge-main {{
             background-color: #334155;
             color: #FFFFFF !important;
@@ -65,7 +62,6 @@ def set_bg_hack(main_bg):
             box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }}
 
-        /* Pílulas Pequenas acima dos campos */
         .badge-filter {{
             background-color: #475569;
             color: #FFFFFF !important;
@@ -87,7 +83,6 @@ def set_bg_hack(main_bg):
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
 
-        /* Inputs e Selectboxes do Streamlit */
         .stSelectbox div[data-baseweb="select"] > div {{
             background-color: #F1F5F9 !important;
             color: #0F172A !important;
@@ -96,7 +91,6 @@ def set_bg_hack(main_bg):
             min-height: 42px !important;
         }}
 
-        /* Caixa do Ranking */
         .ranking-box {{
             background-color: #FFFFFF;
             color: #0F172A;
@@ -108,10 +102,9 @@ def set_bg_hack(main_bg):
             justify-content: center;
             border-radius: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }}
 
-        /* Cards Superiores */
         .top-card {{
             background-color: #FFFFFF;
             padding: 12px 18px;
@@ -150,7 +143,6 @@ def set_bg_hack(main_bg):
             font-weight: 600;
         }}
 
-        /* Cards de Simulação */
         .sim-card {{
             background-color: #FFFFFF;
             padding: 1rem 1.2rem;
@@ -175,7 +167,6 @@ def set_bg_hack(main_bg):
             font-size: 0.72rem;
         }}
 
-        /* Cards Inferiores */
         .res-card-dark {{
             background-color: #0A3663;
             color: #FFFFFF !important;
@@ -211,7 +202,6 @@ def set_bg_hack(main_bg):
             color: rgba(255,255,255,0.85) !important;
         }}
 
-        /* Botões Superiores */
         .stButton button, .stDownloadButton button {{
             background-color: #FFFFFF !important;
             color: #2D3748 !important;
@@ -229,27 +219,212 @@ def set_bg_hack(main_bg):
 set_bg_hack(CAMINHO_IMAGEM_FUNDO)
 
 
-# Função para formatar valores no padrão brasileiro (ponto como separador de milhar)
 def fmt_br(valor):
   return f"{valor:,.0f}".replace(",", ".")
 
 
 # -----------------------------------------------------------------------------
-# 3. BASE DE DADOS
+# 3. BASE DE DADOS REAIS EXTRAÍDA DA PLANILHA
 # -----------------------------------------------------------------------------
 data = {
-    "Porte": ["150 a 350mil hab.", "Capital", "Grande", "Médio"],
-    "UF": ["AL", "AM", "SP", "RJ"],
-    "Município": ["Arapiraca", "Manaus", "São Paulo", "Rio de Janeiro"],
-    "Classificação": [
-        "Inadimplente",
-        "Adimplente",
-        "Adimplente",
-        "Inadimplente",
+    "Situação": [
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
+        "Filiado",
     ],
-    "Filiado": [False, True, True, False],
-    "Valor_Integral": [60728.00, 197700.00, 500000.00, 350000.00],
-    "Ranking": [70, 95, 100, 60],
+    "Porte": [
+        "Capital",
+        "Capital",
+        "Capital",
+        "80 a 150mil hab.",
+        "Capital",
+        "Capital",
+        "Capital",
+        "Capital",
+        "Capital",
+        "350 a 500mil hab.",
+        "Capital",
+        "+500mil hab.",
+        "350 a 500mil hab.",
+        "150 a 350mil hab.",
+        "Capital",
+        "80 a 150mil hab.",
+        "Capital",
+        "+500mil hab.",
+        "Capital",
+        "350 a 500mil hab.",
+        "+500mil hab.",
+        "+500mil hab.",
+        "+500mil hab.",
+        "350 a 500mil hab.",
+        "até 80mil hab.",
+        "+500mil hab.",
+        "+500mil hab.",
+        "até 80mil hab.",
+        "350 a 500mil hab.",
+        "350 a 500mil hab.",
+        "Capital",
+    ],
+    "UF": [
+        "SP",
+        "RJ",
+        "DF",
+        "MG",
+        "MG",
+        "PR",
+        "BA",
+        "AM",
+        "RS",
+        "SP",
+        "PB",
+        "GO",
+        "PR",
+        "MA",
+        "PA",
+        "AM",
+        "SC",
+        "RJ",
+        "AP",
+        "PB",
+        "RJ",
+        "RJ",
+        "SP",
+        "SP",
+        "MG",
+        "PE",
+        "BA",
+        "SP",
+        "PE",
+        "PE",
+        "MT",
+    ],
+    "Município": [
+        "São Paulo",
+        "Rio de Janeiro",
+        "Brasília",
+        "Muriaé",
+        "Belo Horizonte",
+        "Curitiba",
+        "Salvador",
+        "Manaus",
+        "Porto Alegre",
+        "Santos",
+        "João Pessoa",
+        "Aparecida de Goiânia",
+        "Ponta Grossa",
+        "Imperatriz",
+        "Belém",
+        "Parintins",
+        "Florianópolis",
+        "São Gonçalo",
+        "Macapá",
+        "Campina Grande",
+        "Duque de Caxias",
+        "Nova Iguaçu",
+        "São Bernardo do Campo",
+        "Mauá",
+        "Mateus Leme",
+        "Jaboatão dos Guararapes",
+        "Feira de Santana",
+        "Jarinu",
+        "Petrolina",
+        "Caruaru",
+        "Cuiabá",
+    ],
+    "Ranking": [
+        "Adimplente",
+        "Adimplente",
+        "70%",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "90%",
+        "Adimplente",
+        "90%",
+        "Adimplente",
+        "70%",
+        "90%",
+        "Adimplente",
+        "70%",
+        "30%",
+        "70%",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "Adimplente",
+        "70%",
+    ],
+    "Valor_Integral": [
+        5070000.00,
+        1547600.00,
+        1934500.00,
+        110535.00,
+        883063.00,
+        798750.00,
+        197700.00,
+        197700.00,
+        593100.00,
+        447167.00,
+        173256.00,
+        87000.00,
+        70000.00,
+        61970.00,
+        129000.00,
+        51743.00,
+        309811.00,
+        87000.00,
+        70000.00,
+        70000.00,
+        180359.00,
+        87000.00,
+        320970.00,
+        70000.00,
+        50870.00,
+        75000.00,
+        75000.00,
+        83070.00,
+        60000.00,
+        60000.00,
+        274089.00,
+    ],
 }
 df_base = pd.DataFrame(data)
 
@@ -302,7 +477,7 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. DASHBOARD INTERFACE
+# 5. INTERFACE DASHBOARD
 # -----------------------------------------------------------------------------
 
 # Topo: Botões
@@ -312,14 +487,14 @@ with btn_col1:
   st.write("")
 
 pdf_bytes = gerar_pdf_simulacao(
-    "Arapiraca", "AL", "Desconto 10%", 12, 54655.00, 4555.00, 6073.00
+    "Manaus", "AM", "Desconto 10%", 12, 177930.00, 14827.50, 19770.00
 )
 
 with btn_col2:
   st.download_button(
       label="📄 Baixar Simulação em PDF",
       data=pdf_bytes,
-      file_name="simulacao_Arapiraca.pdf",
+      file_name="simulacao_FNP.pdf",
       mime="application/pdf",
       use_container_width=True,
   )
@@ -328,7 +503,6 @@ with btn_col3:
   if st.button("🔄 Atualização Base", use_container_width=True):
     st.success("Base atualizada!")
 
-# Título
 st.markdown(
     """
     <h2 style='color: #0F172A; font-weight: 800; font-size: 1.6rem; margin-top: 1rem; margin-bottom: 1rem;'>
@@ -338,7 +512,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Métricas Superiores
+# Métricas
 m_col1, m_col2, m_col3 = st.columns(3)
 
 with m_col1:
@@ -389,7 +563,7 @@ with m_col3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# SEÇÃO DE FILTROS
+# SEÇÃO DE FILTROS DINÂMICOS E CORRIGIDOS
 # -----------------------------------------------------------------------------
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
@@ -398,31 +572,35 @@ st.markdown(
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
+# 1. Filtro Porte
 with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
   )
-  porte_sel = st.selectbox(
-      "", df_base["Porte"].unique(), label_visibility="collapsed"
-  )
-df_filtered = df_base[df_base["Porte"] == porte_sel]
+  porte_opcoes = sorted(df_base["Porte"].unique().tolist())
+  porte_sel = st.selectbox("", porte_opcoes, label_visibility="collapsed")
 
+df_porte = df_base[df_base["Porte"] == porte_sel]
+
+# 2. Filtro UF (filtrado pelo Porte)
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-  uf_sel = st.selectbox(
-      "", df_filtered["UF"].unique(), label_visibility="collapsed"
-  )
-df_filtered = df_filtered[df_filtered["UF"] == uf_sel]
+  uf_opcoes = sorted(df_porte["UF"].unique().tolist())
+  uf_sel = st.selectbox("", uf_opcoes, label_visibility="collapsed")
 
+df_uf = df_porte[df_porte["UF"] == uf_sel]
+
+# 3. Filtro Município
 with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
   )
-  mun_sel = st.selectbox(
-      "", df_filtered["Município"].unique(), label_visibility="collapsed"
-  )
-df_final = df_filtered[df_filtered["Município"] == mun_sel].iloc[0]
+  mun_opcoes = sorted(df_uf["Município"].unique().tolist())
+  mun_sel = st.selectbox("", mun_opcoes, label_visibility="collapsed")
 
+df_final = df_uf[df_uf["Município"] == mun_sel].iloc[0]
+
+# 4. Exibição do Ranking Exato
 with f_col4:
   st.markdown(
       '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
@@ -430,7 +608,7 @@ with f_col4:
   st.markdown(
       f"""
         <div class="ranking-box">
-            {df_final['Ranking']}%
+            {df_final['Ranking']}
         </div>
     """,
       unsafe_allow_html=True,
@@ -439,8 +617,12 @@ with f_col4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Painel de Simulação
-status_text = "(Não Filiado)" if not df_final["Filiado"] else "(Filiado)"
-status_color = "🔴" if not df_final["Filiado"] else "🟢"
+status_text = (
+    f"({df_final['Situação']})"
+    if "Situação" in df_final
+    else "(Filiado)"
+)
+status_color = "🟢" if "Filiado" in status_text else "🔴"
 
 st.markdown(
     f"""
