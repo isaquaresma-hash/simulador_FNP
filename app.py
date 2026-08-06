@@ -173,17 +173,17 @@ def set_bg_hack(main_bg):
             background-size: cover;
             background-position: top center;
             background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-attachment: scroll; /* Permite a imagem rolar revelando o fundo da ponte */
         }}
-        .block-container {{ padding-top: 110px !important; padding-bottom: 2rem !important; }}
+        .block-container {{ padding-top: 115px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
             color: #0A3663;
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 800;
-            margin-bottom: 1.2rem;
-            margin-top: 6rem; /* Aumentado para descer bem mais o título */
+            margin-top: 0.2rem;
+            margin-bottom: 0.8rem;
         }}
 
         .badge-main {{
@@ -348,18 +348,118 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. BARRA SUPERIOR DE BOTÕES
+# 5. ESTRUTURA DO TOPO (TÍTULO À ESQUERDA E BOTÕES À DIREITA)
 # -----------------------------------------------------------------------------
-header_spacer, header_actions_col = st.columns([5.5, 4.5])
-
-# Pré-processamento das opções de porte
 porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
 
-# Título da Aplicação
-st.markdown(
-    '<div class="page-title">Simulador de Contribuição e Parcelamento</div>',
-    unsafe_allow_html=True,
+# Pré-processamento dos filtros para preparar os dados
+porte_sel = st.session_state.get("porte_sel", "Todos")
+uf_sel = st.session_state.get("uf_sel", "Todas")
+mun_sel = st.session_state.get("mun_sel", "Digite ou selecione um município")
+
+df_porte = (
+    df_base.copy()
+    if porte_sel == "Todos"
+    else df_base[df_base["Porte"] == porte_sel]
 )
+df_uf = df_porte.copy() if uf_sel == "Todas" else df_porte[df_porte["UF"] == uf_sel]
+
+if mun_sel in ["Digite ou selecione um município", "None", None]:
+  df_filtrado = pd.DataFrame()
+elif mun_sel == "Todos":
+  df_filtrado = df_uf.copy()
+else:
+  df_filtrado = df_uf[df_uf["Município"] == mun_sel]
+
+has_data = not df_filtrado.empty
+pdf_bytes_topo = None
+nome_exibicao = (
+    mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
+)
+
+if has_data:
+  if "Situação" in df_filtrado.columns:
+    situacoes = df_filtrado["Situação"].astype(str).tolist()
+    filiados_count = sum(
+        1
+        for s in situacoes
+        if "filiado" in s.lower() and "não" not in s.lower()
+    )
+    if len(df_filtrado) == 1:
+      situacao_municipio = situacoes[0]
+      eh_filiado = (
+          "filiado" in situacao_municipio.lower()
+          and "não" not in situacao_municipio.lower()
+      )
+      status_text = situacao_municipio
+    else:
+      eh_filiado = filiados_count == len(df_filtrado)
+      status_text = f"{filiados_count} de {len(df_filtrado)} filiados"
+  else:
+    eh_filiado = True
+    status_text = "Filiado"
+
+  val_integral_t = df_filtrado["Valor_Integral"].sum()
+  val_d10_t = df_filtrado["Valor_D10"].sum()
+  if val_d10_t <= 0:
+    val_d10_t = val_integral_t * 0.90
+
+  val_neg_t = val_d10_t
+  econ_t = val_integral_t - val_neg_t
+  val_parc_t = val_neg_t / 12
+
+  ranking_val = (
+      df_filtrado["Ranking"].iloc[0]
+      if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns
+      else ("Vários" if len(df_filtrado) > 1 else "-")
+  )
+
+  pdf_bytes_topo = gerar_pdf_simulacao(
+      municipio=nome_exibicao,
+      uf=uf_sel,
+      porte=porte_sel,
+      ranking=ranking_val,
+      situacao=status_text,
+      cenario="Desconto 10%",
+      parcelas=12,
+      val_integral=val_integral_t,
+      valor_total=val_neg_t,
+      valor_parcela=val_parc_t,
+      economia=econ_t,
+  )
+
+# Cabeçalho Principal (Alinhamento Idêntico ao da Imagem)
+header_title_col, header_actions_col = st.columns([5.5, 4.5])
+
+with header_title_col:
+  st.markdown(
+      '<div class="page-title">Simulador de Contribuição e Parcelamento</div>',
+      unsafe_allow_html=True,
+  )
+
+with header_actions_col:
+  b_col1, b_col2 = st.columns(2)
+  with b_col1:
+    if has_data and pdf_bytes_topo:
+      st.download_button(
+          label="📄 Baixar Simulação em PDF",
+          data=pdf_bytes_topo,
+          file_name=f"simulacao_{nome_exibicao}.pdf",
+          mime="application/pdf",
+          use_container_width=True,
+      )
+    else:
+      st.button(
+          "📄 Baixar Simulação em PDF",
+          disabled=True,
+          use_container_width=True,
+          help="Selecione um município para habilitar o PDF.",
+      )
+
+  with b_col2:
+    if st.button("🔄 Atualização Base", use_container_width=True):
+      st.cache_data.clear()
+      st.rerun()
 
 # CARDS INFORMATIVOS SUPERIORES
 m_col1, m_col2, m_col3 = st.columns(3)
@@ -415,29 +515,29 @@ with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
   )
-  porte_sel = st.selectbox("", porte_opcoes, label_visibility="collapsed")
+  porte_sel = st.selectbox(
+      "", porte_opcoes, key="porte_sel", label_visibility="collapsed"
+  )
 
-if porte_sel == "Todos":
-  df_porte = df_base.copy()
-else:
-  df_porte = df_base[df_base["Porte"] == porte_sel]
+df_porte = (
+    df_base.copy()
+    if porte_sel == "Todos"
+    else df_base[df_base["Porte"] == porte_sel]
+)
 
 # 2. UF
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
   uf_opcoes = ["Todas"] + sorted(df_porte["UF"].dropna().unique().tolist())
-  uf_sel = st.selectbox("", uf_opcoes, label_visibility="collapsed")
+  uf_sel = st.selectbox(
+      "", uf_opcoes, key="uf_sel", label_visibility="collapsed"
+  )
 
-if uf_sel == "Todas":
-  df_uf = df_porte.copy()
-else:
-  df_uf = df_porte[df_porte["UF"] == uf_sel]
+df_uf = df_porte.copy() if uf_sel == "Todas" else df_porte[df_porte["UF"] == uf_sel]
 
 # 3. Município
 SELECIONE_MUN_TEXT = "Digite ou selecione um município"
 lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
-
-# Regra: Se a opção 'Capital' / 'Capitais' estiver selecionada no Porte, remove a opção 'Todos'
 eh_porte_capital = "CAPITAL" in str(porte_sel).upper()
 
 if eh_porte_capital:
@@ -449,7 +549,9 @@ with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
   )
-  mun_sel = st.selectbox("", mun_opcoes, label_visibility="collapsed")
+  mun_sel = st.selectbox(
+      "", mun_opcoes, key="mun_sel", label_visibility="collapsed"
+  )
 
 if mun_sel == SELECIONE_MUN_TEXT:
   df_filtrado = pd.DataFrame()
@@ -479,13 +581,14 @@ with f_col4:
       unsafe_allow_html=True,
   )
 
-# Processamento dinâmico para gerar os valores do estado e alimentar o PDF do topo
+# -----------------------------------------------------------------------------
+# EXPANSÃO DINÂMICA DA SIMULAÇÃO E CALCULADORA
+# -----------------------------------------------------------------------------
 has_data = not df_filtrado.empty
-pdf_bytes_topo = None
-nome_exibicao = mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
 
 if has_data:
-  # Identificação da Situação/Filiação
+  st.markdown("<hr style='margin: 1.5rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+
   if "Situação" in df_filtrado.columns:
     situacoes = df_filtrado["Situação"].astype(str).tolist()
     filiados_count = sum(
@@ -501,71 +604,18 @@ if has_data:
           and "não" not in situacao_municipio.lower()
       )
       status_text = situacao_municipio
+      status_color = "🟢" if eh_filiado else "🔴"
     else:
       eh_filiado = filiados_count == len(df_filtrado)
       status_text = f"{filiados_count} de {len(df_filtrado)} filiados"
+      status_color = "🔵"
   else:
     eh_filiado = True
     status_text = "Filiado"
+    status_color = "🟢"
 
-  val_integral_t = df_filtrado["Valor_Integral"].sum()
-  val_d10_t = df_filtrado["Valor_D10"].sum()
-  if val_d10_t <= 0:
-    val_d10_t = val_integral_t * 0.90
-
-  val_neg_t = val_d10_t
-  econ_t = val_integral_t - val_neg_t
-  val_parc_t = val_neg_t / 12
-
-  pdf_bytes_topo = gerar_pdf_simulacao(
-      municipio=nome_exibicao,
-      uf=uf_sel,
-      porte=porte_sel,
-      ranking=ranking_val,
-      situacao=status_text,
-      cenario="Desconto 10%",
-      parcelas=12,
-      val_integral=val_integral_t,
-      valor_total=val_neg_t,
-      valor_parcela=val_parc_t,
-      economia=econ_t,
-  )
-
-# Renderização dos Botões Superiores no topo
-with header_actions_col:
-  b_col1, b_col2 = st.columns(2)
-  with b_col1:
-    if has_data and pdf_bytes_topo:
-      st.download_button(
-          label="📄 Baixar Simulação em PDF",
-          data=pdf_bytes_topo,
-          file_name=f"simulacao_{nome_exibicao}.pdf",
-          mime="application/pdf",
-          use_container_width=True,
-      )
-    else:
-      st.button(
-          "📄 Baixar Simulação em PDF",
-          disabled=True,
-          use_container_width=True,
-          help="Selecione um município para habilitar o PDF.",
-      )
-
-  with b_col2:
-    if st.button("🔄 Atualização Base", use_container_width=True):
-      st.cache_data.clear()
-      st.rerun()
-
-# -----------------------------------------------------------------------------
-# EXPANSÃO DINÂMICA DA SIMULAÇÃO E CALCULADORA
-# -----------------------------------------------------------------------------
-if has_data:
-  st.markdown("<hr style='margin: 1.5rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
-
-  status_color = (
-      "🟢"
-      if eh_filiado
-      else ("🔴" if len(df_filtrado) == 1 else "🔵")
+  nome_exibicao = (
+      mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
   )
 
   st.markdown(
@@ -577,13 +627,11 @@ if has_data:
       unsafe_allow_html=True,
   )
 
-  # CÁLCULO ACUMULADO DOS VALORES FILTRADOS
   val_integral = df_filtrado["Valor_Integral"].sum()
   val_d10 = df_filtrado["Valor_D10"].sum()
   val_d25 = df_filtrado["Valor_D25"].sum()
   val_d50 = df_filtrado["Valor_D50"].sum()
 
-  # Fallback
   if val_d10 <= 0:
     val_d10 = val_integral * 0.90
   if val_d25 <= 0:
@@ -591,7 +639,6 @@ if has_data:
   if val_d50 <= 0:
     val_d50 = val_integral * 0.50
 
-  # RENDERIZAÇÃO CONDICIONAL DOS CARDS
   if eh_filiado:
     c1, c2 = st.columns(2)
 
@@ -613,7 +660,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #2563EB;">
                   <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
                   <div class="sim-value">R$ {fmt_br(val_d10)}</div>
-                  <div class="sim-sub">Parcela Padrão: 12x</div>
+                  <div class="sim-sub">Pacote: 12x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -639,7 +686,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #2563EB;">
                   <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
                   <div class="sim-value">R$ {fmt_br(val_d10)}</div>
-                  <div class="sim-sub">Parcela Padrão: 12x</div>
+                  <div class="sim-sub">Pacote: 12x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -651,7 +698,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #7C3AED;">
                   <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
                   <div class="sim-value">R$ {fmt_br(val_d25)}</div>
-                  <div class="sim-sub">Parcela Padrão: 10x</div>
+                  <div class="sim-sub">Pacote: 10x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -663,7 +710,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #10B981;">
                   <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
                   <div class="sim-value">R$ {fmt_br(val_d50)}</div>
-                  <div class="sim-sub">Parcela Padrão: 10x</div>
+                  <div class="sim-sub">Pacote: 10x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -671,7 +718,6 @@ if has_data:
 
   st.markdown("<br>", unsafe_allow_html=True)
 
-  # Calculadora de Parcelamento
   st.markdown(
       '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
       unsafe_allow_html=True,
