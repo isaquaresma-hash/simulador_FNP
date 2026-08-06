@@ -384,7 +384,12 @@ nome_exibicao = (
 )
 
 cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
-parcelas_sel = st.session_state.get("num_parcelas_calc", 12)
+
+# Define parcelas para o PDF de acordo com o cenário ativo
+if cenario_sel in ["Desconto 25%", "Desconto 50%"]:
+  parcelas_sel = st.session_state.get("num_parcelas_calc", 10)
+else:
+  parcelas_sel = st.session_state.get("num_parcelas_calc", 12)
 
 if has_data:
   if "Situação" in df_filtrado.columns:
@@ -520,7 +525,7 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# CONSULTA E FILTROS (Com fonte aumentada)
+# CONSULTA E FILTROS
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
     unsafe_allow_html=True,
@@ -678,7 +683,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #2563EB;">
                   <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
                   <div class="sim-value">R$ {fmt_br(val_d10)}</div>
-                  <div class="sim-sub">Pacote: 12x</div>
+                  <div class="sim-sub">Pacote: Até 12x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -704,7 +709,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #2563EB;">
                   <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
                   <div class="sim-value">R$ {fmt_br(val_d10)}</div>
-                  <div class="sim-sub">Pacote: 12x</div>
+                  <div class="sim-sub">Pacote: Até 12x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -716,7 +721,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #7C3AED;">
                   <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
                   <div class="sim-value">R$ {fmt_br(val_d25)}</div>
-                  <div class="sim-sub">Pacote: 10x</div>
+                  <div class="sim-sub">Pacote: Até 10x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -728,7 +733,7 @@ if has_data:
               <div class="sim-card" style="border-left: 4px solid #10B981;">
                   <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
                   <div class="sim-value">R$ {fmt_br(val_d50)}</div>
-                  <div class="sim-sub">Pacote: 10x</div>
+                  <div class="sim-sub">Pacote: Até 10x</div>
               </div>
           """,
           unsafe_allow_html=True,
@@ -763,6 +768,12 @@ if has_data:
         "", opcoes_cenario, key="cenario_calc", label_visibility="collapsed"
     )
 
+  # Regra Dinâmica: Limita em até 10x para 25% e 50%, e até 12x para os demais
+  if cenario in ["Desconto 25%", "Desconto 50%"]:
+    opcoes_parcelas = list(range(1, 11))
+  else:
+    opcoes_parcelas = list(range(1, 13))
+
   with calc_col2:
     st.markdown(
         '<div class="badge-filter">2. Escolha o número de parcelas'
@@ -771,7 +782,8 @@ if has_data:
     )
     num_parcelas = st.selectbox(
         "",
-        [12, 24, 36, 48],
+        opcoes_parcelas,
+        index=len(opcoes_parcelas) - 1,
         format_func=lambda x: f"{x}x ({x} parcelas)",
         key="num_parcelas_calc",
         label_visibility="collapsed",
