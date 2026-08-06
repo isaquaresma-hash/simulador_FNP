@@ -175,14 +175,15 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: scroll;
         }}
-        .block-container {{ padding-top: 350px !important; padding-bottom: 2rem !important; }}
+        /* Reduzido para 140px para subir o simulador */
+        .block-container {{ padding-top: 140px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
             color: #0A3663;
             font-size: 1.2rem;
             font-weight: 800;
-            margin-top: 1rem;
+            margin-top: 0px !important;
             margin-bottom: 0.5rem;
         }}
 
@@ -208,7 +209,6 @@ def set_bg_hack(main_bg):
             border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.82rem;
         }}
         
-        /* CAIXAS SUPERIORES COMPACTAS */
         .top-card {{
             background-color: #FFFFFF; padding: 6px 12px; border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;
