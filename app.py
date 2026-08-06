@@ -1,4 +1,6 @@
 import base64
+import os
+import tempfile
 from fpdf import FPDF
 import pandas as pd
 import streamlit as st
@@ -66,7 +68,7 @@ df_base = pd.DataFrame(data)
 
 
 # -----------------------------------------------------------------------------
-# 3. FUNÇÃO PARA GERAR O PDF
+# 3. FUNÇÃO PARA GERAR O PDF (Via Arquivo Temporário)
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
 
@@ -100,7 +102,19 @@ def gerar_pdf_simulacao(
   pdf.cell(0, 8, f"Valor de Cada Parcela: R$ {valor_parcela:,.2f}", 0, 1)
   pdf.cell(0, 8, f"Economia para o Municipio: R$ {economia:,.2f}", 0, 1)
 
-  return bytes(pdf.output())
+  # Salva em arquivo temporário para garantir compatibilidade
+  with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+    temp_filename = tmp_file.name
+
+  pdf.output(temp_filename)
+
+  with open(temp_filename, "rb") as f:
+    pdf_bytes = f.read()
+
+  if os.path.exists(temp_filename):
+    os.remove(temp_filename)
+
+  return pdf_bytes
 
 
 # -----------------------------------------------------------------------------
