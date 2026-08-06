@@ -175,15 +175,15 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: scroll;
         }}
-        /* Aumentado o padding para afastar o conteúdo da logo do topo da imagem */
-        .block-container {{ padding-top: 210px !important; padding-bottom: 2rem !important; }}
+        /* Padding alterado para 350px para descer bem mais o conteúdo */
+        .block-container {{ padding-top: 350px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
             color: #0A3663;
             font-size: 1.35rem;
             font-weight: 800;
-            margin-top: 0px;
+            margin-top: 2rem;
             margin-bottom: 0.8rem;
         }}
 
@@ -428,7 +428,7 @@ if has_data:
       economia=econ_t,
   )
 
-# Cabeçalho Principal (Alinhado exatamente na altura dos botões)
+# Cabeçalho Principal
 header_title_col, header_actions_col = st.columns([5.5, 4.5])
 
 with header_title_col:
@@ -806,5 +806,3 @@ if has_data:
       """,
         unsafe_allow_html=True,
     )
-    
-     
