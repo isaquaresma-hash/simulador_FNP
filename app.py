@@ -65,7 +65,7 @@ def set_bg_hack(main_bg):
             box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }}
 
-        /* Pílulas Pequenas acima dos campos (Porte, UF, Município, Ranking) */
+        /* Pílulas Pequenas acima dos campos */
         .badge-filter {{
             background-color: #475569;
             color: #FFFFFF !important;
@@ -228,6 +228,12 @@ def set_bg_hack(main_bg):
 
 set_bg_hack(CAMINHO_IMAGEM_FUNDO)
 
+
+# Função para formatar valores no padrão brasileiro (ponto como separador de milhar)
+def fmt_br(valor):
+  return f"{valor:,.0f}".replace(",", ".")
+
+
 # -----------------------------------------------------------------------------
 # 3. BASE DE DADOS
 # -----------------------------------------------------------------------------
@@ -277,9 +283,9 @@ def gerar_pdf_simulacao(
   pdf.set_font("Arial", "", 11)
   pdf.cell(0, 8, f"Cenario Selecionado: {cenario}", 0, 1)
   pdf.cell(0, 8, f"Numero de Parcelas: {parcelas}x", 0, 1)
-  pdf.cell(0, 8, f"Valor Total da Negociacao: R$ {valor_total:,.2f}", 0, 1)
-  pdf.cell(0, 8, f"Valor de Cada Parcela: R$ {valor_parcela:,.2f}", 0, 1)
-  pdf.cell(0, 8, f"Economia para o Municipio: R$ {economia:,.2f}", 0, 1)
+  pdf.cell(0, 8, f"Valor Total da Negociacao: R$ {fmt_br(valor_total)}", 0, 1)
+  pdf.cell(0, 8, f"Valor de Cada Parcela: R$ {fmt_br(valor_parcela)}", 0, 1)
+  pdf.cell(0, 8, f"Economia para o Municipio: R$ {fmt_br(economia)}", 0, 1)
 
   with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
     temp_filename = tmp_file.name
@@ -383,7 +389,7 @@ with m_col3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# SEÇÃO DE FILTROS (EXATAMENTE COMO NA REFERÊNCIA)
+# SEÇÃO DE FILTROS
 # -----------------------------------------------------------------------------
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
@@ -457,7 +463,7 @@ with c1:
       f"""
         <div class="sim-card" style="border-left: 4px solid #1E3A8A;">
             <div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div>
-            <div class="sim-value">R$ {val_integral:,.0f}</div>
+            <div class="sim-value">R$ {fmt_br(val_integral)}</div>
             <div class="sim-sub">Sem Desconto</div>
         </div>
     """,
@@ -469,7 +475,7 @@ with c2:
       f"""
         <div class="sim-card" style="border-left: 4px solid #2563EB;">
             <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
-            <div class="sim-value">R$ {val_d10:,.0f}</div>
+            <div class="sim-value">R$ {fmt_br(val_d10)}</div>
             <div class="sim-sub">Parcela Padrão: 12x</div>
         </div>
     """,
@@ -481,7 +487,7 @@ with c3:
       f"""
         <div class="sim-card" style="border-left: 4px solid #7C3AED;">
             <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
-            <div class="sim-value">R$ {val_d25:,.0f}</div>
+            <div class="sim-value">R$ {fmt_br(val_d25)}</div>
             <div class="sim-sub">Parcela Padrão: 10x</div>
         </div>
     """,
@@ -493,7 +499,7 @@ with c4:
       f"""
         <div class="sim-card" style="border-left: 4px solid #10B981;">
             <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
-            <div class="sim-value">R$ {val_d50:,.0f}</div>
+            <div class="sim-value">R$ {fmt_br(val_d50)}</div>
             <div class="sim-sub">Parcela Padrão: 10x</div>
         </div>
     """,
@@ -556,7 +562,7 @@ with res1:
       f"""
         <div class="res-card-dark">
             <div class="res-title">VALOR DE CADA PARCELA</div>
-            <div class="res-val">R$ {valor_parcela:,.0f}</div>
+            <div class="res-val">R$ {fmt_br(valor_parcela)}</div>
             <div class="res-sub">Plano em {num_parcelas} parcelas mensais</div>
         </div>
     """,
@@ -568,7 +574,7 @@ with res2:
       f"""
         <div class="res-card-blue">
             <div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div>
-            <div class="res-val">R$ {valor_negociado:,.0f}</div>
+            <div class="res-val">R$ {fmt_br(valor_negociado)}</div>
             <div class="res-sub">Cenário: {cenario}</div>
         </div>
     """,
@@ -580,8 +586,8 @@ with res3:
       f"""
         <div class="res-card-green">
             <div class="res-title">ECONOMIA PARA O MUNICÍPIO</div>
-            <div class="res-val">R$ {economia:,.0f}</div>
-            <div class="res-sub">Em relação ao valor integral de R$ {val_integral:,.0f}</div>
+            <div class="res-val">R$ {fmt_br(economia)}</div>
+            <div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div>
         </div>
     """,
       unsafe_allow_html=True,
