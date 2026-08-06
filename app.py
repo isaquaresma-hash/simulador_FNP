@@ -186,24 +186,14 @@ def set_bg_hack(main_bg):
             margin-bottom: 0.5rem;
         }}
 
+        /* Badges de Títulos Principais de Seção (Consulta e Calculadora) */
         .badge-main {{
-            background-color: #334155; color: #FFFFFF !important; padding: 4px 10px;
-            border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: inline-block; margin-bottom: 8px;
-        }}
-        
-        /* Emblema exclusivo para a Calculadora com fonte maior */
-        .badge-calc-main {{
             background-color: #334155; color: #FFFFFF !important; padding: 6px 12px;
             border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px;
         }}
 
+        /* Badges de Filtros e Subtítulos */
         .badge-filter {{
-            background-color: #475569; color: #FFFFFF !important; padding: 2px 8px;
-            border-radius: 4px; font-weight: 700; font-size: 0.72rem; display: inline-block; margin-bottom: 4px;
-        }}
-
-        /* Rótulos da Calculadora com fonte maior */
-        .badge-calc-filter {{
             background-color: #475569; color: #FFFFFF !important; padding: 4px 10px;
             border-radius: 4px; font-weight: 700; font-size: 0.9rem; display: inline-block; margin-bottom: 6px;
         }}
@@ -530,7 +520,7 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# CONSULTA E FILTROS
+# CONSULTA E FILTROS (Com fonte aumentada)
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
     unsafe_allow_html=True,
@@ -746,9 +736,8 @@ if has_data:
 
   st.markdown("<br>", unsafe_allow_html=True)
 
-  # Título de topo da Calculadora com fonte maior
   st.markdown(
-      '<div class="badge-calc-main">⚙️ Calculadora de parcelamento</div>',
+      '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
       unsafe_allow_html=True,
   )
 
@@ -756,8 +745,7 @@ if has_data:
 
   with calc_col1:
     st.markdown(
-        '<div class="badge-calc-filter">1. Escolha o cenário de valor'
-        " base:</div>",
+        '<div class="badge-filter">1. Escolha o cenário de valor base:</div>',
         unsafe_allow_html=True,
     )
 
@@ -777,7 +765,7 @@ if has_data:
 
   with calc_col2:
     st.markdown(
-        '<div class="badge-calc-filter">2. Escolha o número de parcelas'
+        '<div class="badge-filter">2. Escolha o número de parcelas'
         " desejado:</div>",
         unsafe_allow_html=True,
     )
