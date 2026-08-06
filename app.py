@@ -178,9 +178,10 @@ def set_bg_hack(main_bg):
         .block-container {{ padding-top: 200px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
+        /* Título do topo aumentado de 1.2rem para 1.6rem */
         .page-title {{
             color: #0A3663;
-            font-size: 1.2rem;
+            font-size: 1.6rem;
             font-weight: 800;
             margin-top: 0px !important;
             margin-bottom: 0.5rem;
@@ -194,9 +195,10 @@ def set_bg_hack(main_bg):
             background-color: #475569; color: #FFFFFF !important; padding: 2px 8px;
             border-radius: 4px; font-weight: 700; font-size: 0.72rem; display: inline-block; margin-bottom: 4px;
         }}
+        /* Badge de Situação/Filiado ajustada para acompanhar o título */
         .badge-light {{
-            background-color: #FFFFFF; color: #1A202C !important; padding: 3px 8px;
-            border-radius: 12px; font-weight: bold; font-size: 0.75rem;
+            background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px;
+            border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle;
         }}
         .stSelectbox div[data-baseweb="select"] > div {{
             background-color: #F1F5F9 !important; color: #0F172A !important;
@@ -251,16 +253,14 @@ def fmt_br(valor):
 
 
 # -----------------------------------------------------------------------------
-# 4. GERADOR DE PDF FORMATADO (CORRIGIDO)
+# 4. GERADOR DE PDF FORMATADO
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
 
   def header(self):
-    # Banner Azul Escuro no topo
-    self.set_fill_color(10, 54, 99)  # #0A3663
+    self.set_fill_color(10, 54, 99)
     self.rect(0, 0, 210, 32, "F")
 
-    # Texto centralizado em branco
     self.set_y(10)
     self.set_font("Arial", "B", 14)
     self.set_text_color(255, 255, 255)
@@ -268,7 +268,6 @@ class PDF(FPDF):
         0, 10, "FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO", 0, 1, "C"
     )
 
-    # Margem superior do conteúdo
     self.set_y(40)
 
 
@@ -289,14 +288,12 @@ def gerar_pdf_simulacao(
   pdf.set_auto_page_break(auto=True, margin=15)
   pdf.add_page()
 
-  # 1. Título Principal do Município
   pdf.set_font("Arial", "B", 13)
   pdf.set_text_color(10, 54, 99)
   pdf.cell(
       0, 8, f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})", 0, 1, "L"
   )
 
-  # Subtítulo (Porte | Ranking | Situação)
   pdf.set_font("Arial", "", 10)
   pdf.set_text_color(71, 85, 105)
   pdf.cell(
@@ -308,20 +305,17 @@ def gerar_pdf_simulacao(
       "L",
   )
 
-  # Linha Divisória Cinza (Corrigido para set_line_width)
   pdf.ln(3)
   pdf.set_draw_color(226, 232, 240)
   pdf.set_line_width(0.5)
   pdf.line(10, pdf.get_y(), 200, pdf.get_y())
   pdf.ln(8)
 
-  # 2. Título da Seção
   pdf.set_font("Arial", "B", 11)
   pdf.set_text_color(10, 54, 99)
   pdf.cell(0, 7, "DETALHES DO PARCELAMENTO SELECIONADO", 0, 1, "L")
   pdf.ln(3)
 
-  # 3. Tabela de Dados Formatada
   pdf.set_font("Arial", "", 10)
   pdf.set_text_color(15, 23, 42)
   pdf.set_draw_color(226, 232, 240)
@@ -640,9 +634,10 @@ if has_data:
       mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
   )
 
+  # Título do Painel de Simulação aumentado de 1.1rem para 1.4rem
   st.markdown(
       f"""
-      <div style="margin-bottom: 0.6rem; font-size: 1.1rem; font-weight: 800; color: #0F172A;">
+      <div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #0F172A;">
           Painel de Simulação — {nome_exibicao} <span class="badge-light">{status_color} ({status_text})</span>
       </div>
   """,
