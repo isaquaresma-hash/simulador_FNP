@@ -175,8 +175,8 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: scroll;
         }}
-        /* Reduzido para 140px para subir o simulador */
-        .block-container {{ padding-top: 140px !important; padding-bottom: 2rem !important; }}
+        /* Ajustado para 200px para descer o conteúdo adequadamente */
+        .block-container {{ padding-top: 200px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
