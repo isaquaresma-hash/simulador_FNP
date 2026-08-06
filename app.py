@@ -183,7 +183,7 @@ def set_bg_hack(main_bg):
             font-size: 1.5rem;
             font-weight: 800;
             margin-bottom: 1.2rem;
-            margin-top: 0.5rem;
+            margin-top: 2.5rem; /* Ajustado para descer o título */
         }}
 
         .badge-main {{
@@ -348,7 +348,7 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. BARRA SUPERIOR DE BOTÕES (ALINHADA À DIREITA NO TOPO)
+# 5. BARRA SUPERIOR DE BOTÕES
 # -----------------------------------------------------------------------------
 header_spacer, header_actions_col = st.columns([5.5, 4.5])
 
@@ -735,7 +735,7 @@ if has_data:
           </div>
       """,
         unsafe_allow_html=True,
-    )
+  )
 
   with res2:
     st.markdown(
@@ -760,3 +760,4 @@ if has_data:
       """,
         unsafe_allow_html=True,
     )
+      
