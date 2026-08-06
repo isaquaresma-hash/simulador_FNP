@@ -18,24 +18,37 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 # 2. CARREGAMENTO DINÂMICO DA PLANILHA EXCEL
 # -----------------------------------------------------------------------------
-NOME_ARQUIVO_PLANILHA = "dados.xlsx"  # Garanta que o arquivo no GitHub tem esse nome
+# Nome exato conforme consta na imagem do seu repositório GitHub
+NOME_ARQUIVO_PLANILHA = "Simulador de contribuição .xlsx"
 
 
 @st.cache_data
 def carregar_dados():
-  # Tenta ler .xlsx ou .csv
+  # Tenta localizar o arquivo considerando possíveis variações de nome/espaço
+  caminho_encontrado = None
   if os.path.exists(NOME_ARQUIVO_PLANILHA):
-    df = pd.read_excel(NOME_ARQUIVO_PLANILHA)
-  elif os.path.exists("dados.csv"):
-    df = pd.read_csv("dados.csv")
+    caminho_encontrado = NOME_ARQUIVO_PLANILHA
   else:
-    st.error(f"Arquivo '{NOME_ARQUIVO_PLANILHA}' não encontrado no repositório!")
+    # Procura qualquer arquivo .xlsx no diretório caso o nome mude levemente
+    for f in os.listdir("."):
+      if f.endswith(".xlsx") or f.endswith(".csv"):
+        caminho_encontrado = f
+        break
+
+  if not caminho_encontrado:
+    st.error("Erro: Nenhum arquivo Excel/CSV foi encontrado no repositório!")
     st.stop()
 
-  # Renomeia colunas para o padrão do app caso estejam com variações
-  df.columns = df.columns.str.strip()
+  # Leitura
+  if caminho_encontrado.endswith(".csv"):
+    df = pd.read_csv(caminho_encontrado)
+  else:
+    df = pd.read_excel(caminho_encontrado)
 
-  # Mapeamento para garantir retrocompatibilidade de nomes de colunas
+  # Limpeza dos nomes das colunas
+  df.columns = df.columns.astype(str).str.strip()
+
+  # Mapeamento dinâmico para garantir que todas as colunas sejam encontradas
   mapeamento = {
       "Situação do município": "Situação",
       "CONTRIBUIÇÃO 2027": "Valor_Integral",
@@ -43,10 +56,11 @@ def carregar_dados():
       "CONTRIBUIÇÃO 2027 COM DESCONTO DE 50%": "Valor_D50",
       "CONTRIBUIÇÃO 2027 COM DESCONTO DE 25%": "Valor_D25",
       "Ranking 2026": "Ranking",
+      "Ranking 2027": "Ranking",
   }
   df = df.rename(columns=mapeamento)
 
-  # Tratamento e Limpeza de Valores Monetários (Remove 'R$', pontos de milhar, etc.)
+  # Tratamento e Limpeza de Valores Monetários (Remove 'R$', pontos de milhar, espaços)
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
     if col in df.columns:
@@ -67,7 +81,7 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. ESTILOS CSS
+# 3. IMAGEM DE FUNDO E ESTILOS CSS
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -225,7 +239,7 @@ with btn_col2:
 with btn_col3:
   if st.button("🔄 Atualização Base", use_container_width=True):
     st.cache_data.clear()
-    st.success("Base atualizada!")
+    st.rerun()
 
 st.markdown("""
     <h2 style='color: #0F172A; font-weight: 800; font-size: 1.6rem; margin-top: 1rem; margin-bottom: 1rem;'>
@@ -312,10 +326,11 @@ with f_col4:
   st.markdown(
       '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
   )
+  ranking_val = df_final["Ranking"] if "Ranking" in df_final else "-"
   st.markdown(
       f"""
         <div class="ranking-box">
-            {df_final['Ranking']}
+            {ranking_val}
         </div>
     """,
       unsafe_allow_html=True,
@@ -340,7 +355,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-val_integral = df_final["Valor_Integral"]
+val_integral = (
+    df_final["Valor_Integral"] if "Valor_Integral" in df_final else 0
+)
 val_d10 = (
     df_final["Valor_D10"]
     if "Valor_D10" in df_final and df_final["Valor_D10"] > 0
