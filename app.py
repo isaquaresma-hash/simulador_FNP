@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. IMAGEM DE FUNDO E ESTILOS CSS DEFINITIVOS
+# 2. IMAGEM DE FUNDO E ESTILOS CSS DEFINITIVOS (IDÊNTICOS AO LOCALHOST)
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -33,7 +33,7 @@ def set_bg_hack(main_bg):
     if bin_str:
         page_bg_img = f"""
         <style>
-        /* Fundo em Tela Cheia contendo a logo original */
+        /* Fundo da tela inteira contendo o Logo da FNP */
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
@@ -42,129 +42,154 @@ def set_bg_hack(main_bg):
             background-attachment: fixed;
         }}
 
-        /* Alinhamento superior do container para respeitar a logo de fundo */
+        /* Zera padding do container do Streamlit */
         .block-container {{
             padding-top: 1rem !important;
             padding-bottom: 2rem !important;
         }}
 
-        /* Força a cor padrão do texto para azul escuro */
-        .stApp, p, span, label, .stMarkdown {{
-            color: #1E3A8A !important;
-        }}
+        /* Esconde elementos nativos desnecessários */
+        #MainMenu, footer, header {{ visibility: hidden; }}
 
-        /* Título Principal */
-        .main-title {{
-            color: #0F172A !important;
-            font-size: 1.8rem !important;
-            font-weight: 800 !important;
-            margin-top: 2.5rem !important;
-            margin-bottom: 1.2rem !important;
-        }}
-
-        /* Badges (Consulta e Filtros / Calculadora) */
-        .badge-title {{
-            background-color: #334155;
+        /* Badges e Pílulas Escuras */
+        .badge-dark {{
+            background-color: #2D3748;
             color: #FFFFFF !important;
-            padding: 6px 14px;
+            padding: 5px 12px;
             border-radius: 6px;
             font-weight: bold;
+            font-size: 0.82rem;
             display: inline-block;
-            margin-bottom: 10px;
-            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }}
+        
+        .badge-light {{
+            background-color: #FFFFFF;
+            color: #1A202C !important;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
 
-        /* Cards das Métricas Superiores (Brancos) */
-        div[data-testid="stMetric"] {{
-            background-color: #FFFFFF !important;
-            padding: 12px 20px !important;
-            border-radius: 10px !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.08) !important;
+        /* Estilo dos Cards Superiores de Métricas */
+        .top-card {{
+            background-color: #FFFFFF;
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }}
+        .icon-circle {{
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }}
+        .top-card-title {{
+            color: #718096 !important;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }}
+        .top-card-value {{
+            color: #1A202C !important;
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }}
+        .top-card-sub {{
+            color: #38A169 !important;
+            font-size: 0.7rem;
+            font-weight: 600;
         }}
 
-        div[data-testid="stMetricValue"] > div {{
-            color: #0F172A !important;
-            font-size: 2rem !important;
-            font-weight: 800 !important;
-        }}
-
-        div[data-testid="stMetricLabel"] > div > p {{
-            color: #64748B !important;
-            font-weight: 700 !important;
-            font-size: 0.75rem !important;
-            text-transform: uppercase !important;
-        }}
-
-        div[data-testid="stMetricDelta"] > div > span {{
-            color: #16A34A !important;
-            font-size: 0.75rem !important;
-        }}
-
-        /* Cards de Simulação */
+        /* Estilo dos Cards de Simulação */
         .sim-card {{
             background-color: #FFFFFF;
-            padding: 1.2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
             height: 100%;
         }}
-        .sim-card .title-card {{
-            font-size: 0.75rem;
+        .sim-title {{
+            font-size: 0.72rem;
             font-weight: 800;
-            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            margin-bottom: 0.2rem;
         }}
-        .sim-card h4 {{
-            color: #0F172A !important;
-            font-size: 1.8rem !important;
-            font-weight: bold !important;
-            margin: 0.2rem 0 !important;
+        .sim-value {{
+            color: #1A202C !important;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0.2rem 0;
         }}
-        .sim-card .sub-card {{
-            color: #64748B !important;
-            font-size: 0.75rem !important;
+        .sim-sub {{
+            color: #A0AEC0 !important;
+            font-size: 0.72rem;
         }}
 
-        /* Selectbox e Inputs */
+        /* Inputs e Selectboxes */
         .stSelectbox div[data-baseweb="select"] > div {{
-            background-color: #FFFFFF !important;
-            color: #0F172A !important;
-            border-radius: 8px !important;
+            background-color: #EDF2F7 !important;
+            color: #2D3748 !important;
+            border-radius: 6px !important;
+            border: none !important;
         }}
 
-        /* Cards de Resultado no Rodapé */
-        .result-card-darkblue {{
-            background-color: #003366;
+        /* Cards Inferiores (Calculadora) */
+        .res-card-dark {{
+            background-color: #0A3663;
             color: #FFFFFF !important;
-            padding: 1.2rem;
+            padding: 1rem 1.2rem;
             border-radius: 8px;
         }}
-        .result-card-blue {{
-            background-color: #2563EB;
+        .res-card-blue {{
+            background-color: #3B82F6;
             color: #FFFFFF !important;
-            padding: 1.2rem;
+            padding: 1rem 1.2rem;
             border-radius: 8px;
         }}
-        .result-card-green {{
-            background-color: #059669;
+        .res-card-green {{
+            background-color: #10B981;
             color: #FFFFFF !important;
-            padding: 1.2rem;
+            padding: 1rem 1.2rem;
             border-radius: 8px;
         }}
         .res-title {{
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 800;
             color: #FFFFFF !important;
-            margin-bottom: 0.2rem;
+            text-transform: uppercase;
         }}
-        .res-value {{
-            font-size: 1.8rem;
+        .res-val {{
+            font-size: 1.7rem;
             font-weight: 800;
             color: #FFFFFF !important;
             margin: 0.2rem 0;
         }}
         .res-sub {{
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.8) !important;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.85) !important;
+        }}
+
+        /* Ajuste nos Botões da Barra Superior */
+        .stButton button, .stDownloadButton button {{
+            background-color: #FFFFFF !important;
+            color: #2D3748 !important;
+            border: 1px solid #CBD5E0 !important;
+            border-radius: 6px !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            padding: 0.3rem 0.8rem !important;
         }}
         </style>
         """
@@ -187,7 +212,7 @@ data = {
 df_base = pd.DataFrame(data)
 
 # -----------------------------------------------------------------------------
-# 4. GERADOR DE PDF
+# 4. FUNÇÃO GERAR PDF
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
     def header(self):
@@ -229,18 +254,18 @@ def gerar_pdf_simulacao(municipio, uf, cenario, parcelas, valor_total, valor_par
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 5. ESTRUTURA DA INTERFACE (IDÊNTICA À REFERÊNCIA)
+# 5. ESTRUTURA DO DASHBOARD (EXATAMENTE COMO LOCALHOST)
 # -----------------------------------------------------------------------------
 
-# Topo: Espaçamento para a logo da imagem de fundo + Botões na direita
-header_col1, header_col2, header_col3 = st.columns([3, 1.5, 1.5])
+# --- BARRA SUPERIOR (BOTÕES DE AÇÃO) ---
+btn_col1, btn_col2, btn_col3 = st.columns([4, 1.3, 1.3])
 
-with header_col1:
-    st.write("") # Espaço em branco para deixar visível a logo que já vem na imagem de fundo
+with btn_col1:
+    st.write("") # Reservado para a logo que vem na imagem de fundo
 
 pdf_bytes = gerar_pdf_simulacao("Arapiraca", "AL", "Desconto 10%", 12, 54655.00, 4555.00, 6073.00)
 
-with header_col2:
+with btn_col2:
     st.download_button(
         label="📄 Baixar Simulação em PDF",
         data=pdf_bytes,
@@ -249,26 +274,62 @@ with header_col2:
         use_container_width=True,
     )
 
-with header_col3:
+with btn_col3:
     if st.button("🔄 Atualização Base", use_container_width=True):
         st.success("Base atualizada!")
 
-st.markdown('<div class="main-title">Simulador de Contribuição e Parcelamento</div>', unsafe_allow_html=True)
+# --- TÍTULO PRINCIPAL ---
+st.markdown("""
+    <h2 style='color: #0F172A; font-weight: 800; font-size: 1.6rem; margin-top: 1rem; margin-bottom: 1rem;'>
+        Simulador de Contribuição e Parcelamento
+    </h2>
+""", unsafe_allow_html=True)
 
-# Indicadores do Topo
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("CAPITAIS", "27", "↑ Quantidade de capitais no Brasil")
-with col2:
-    st.metric("MUNICÍPIOS ACIMA DE 80 MIL HABITANTES", "1.227", "↑ Municípios com mais de 80 mil habitantes")
-with col3:
-    st.metric("POTENCIAL DE ARRECADAÇÃO", "R$ 5,63 Bi", "↑ Potencial total de arrecadação anual")
+# --- CARDS DE MÉTRICAS DO TOPO (COM ÍCONES COLORIDOS) ---
+m_col1, m_col2, m_col3 = st.columns(3)
+
+with m_col1:
+    st.markdown("""
+        <div class="top-card">
+            <div class="icon-circle" style="background-color: #1E40AF;">🏛️</div>
+            <div>
+                <div class="top-card-title">CAPITAIS</div>
+                <div class="top-card-value">27</div>
+                <div class="top-card-sub">↑ Quantidade de capitais no Brasil</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with m_col2:
+    st.markdown("""
+        <div class="top-card">
+            <div class="icon-circle" style="background-color: #059669;">👥</div>
+            <div>
+                <div class="top-card-title">MUNICÍPIOS ACIMA DE 80 MIL HABITANTES</div>
+                <div class="top-card-value">1.227</div>
+                <div class="top-card-sub">↑ Municípios com mais de 80 mil habitantes</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with m_col3:
+    st.markdown("""
+        <div class="top-card">
+            <div class="icon-circle" style="background-color: #7C3AED;">💲</div>
+            <div>
+                <div class="top-card-title">POTENCIAL DE ARRECADAÇÃO</div>
+                <div class="top-card-value">R$ 5,63 Bi</div>
+                <div class="top-card-sub">↑ Potencial total de arrecadação anual</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Filtros
-st.markdown('<div class="badge-title">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
-f_col1, f_col2, f_col3, f_col4 = st.columns([1.5, 1, 2.5, 1.2])
+# --- FILTROS ---
+st.markdown('<div class="badge-dark">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
+
+f_col1, f_col2, f_col3, f_col4 = st.columns([1.5, 1, 2.8, 1])
 
 with f_col1:
     porte_sel = st.selectbox("Porte", df_base["Porte"].unique())
@@ -283,83 +344,92 @@ with f_col3:
 df_final = df_filtered[df_filtered["Município"] == mun_sel].iloc[0]
 
 with f_col4:
-    st.markdown("**Ranking**")
+    st.markdown('<div class="badge-dark" style="margin-bottom: 2px;">Ranking</div>', unsafe_allow_html=True)
     st.markdown(f"""
-        <div style="background-color: white; color: #000000; font-weight: 800; text-align: center; padding: 6px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="background-color: white; color: #1A202C; font-weight: 800; text-align: center; padding: 6px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); font-size: 0.9rem;">
             {df_final['Ranking']}%
         </div>
     """, unsafe_allow_html=True)
 
-# Painel de Simulação
-status_text = "(Filiado)" if df_final["Filiado"] else "(Não Filiado)"
-status_color = "🟢" if df_final["Filiado"] else "🔴"
+# --- PAINEL DE SIMULAÇÃO ---
+status_text = "(Não Filiado)" if not df_final["Filiado"] else "(Filiado)"
+status_color = "🔴" if not df_final["Filiado"] else "🟢"
 
-st.markdown(f"#### **Painel de Simulação — {mun_sel}** {status_color} **{status_text}**")
+st.markdown(f"""
+    <div style="margin-top: 1rem; margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
+        Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} {status_text}</span>
+    </div>
+""", unsafe_allow_html=True)
 
 val_integral = df_final["Valor_Integral"]
 val_d10 = val_integral * 0.90
 val_d25 = val_integral * 0.75
 val_d50 = val_integral * 0.50
 
+# --- CARDS DE VALORES ---
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
     st.markdown(f"""
-        <div class="sim-card">
-            <div class="title-card" style="color: #64748B;">VALOR INTEGRAL</div>
-            <h4>R$ {val_integral:,.0f}</h4>
-            <div class="sub-card">Sem Desconto</div>
+        <div class="sim-card" style="border-left: 4px solid #1E3A8A;">
+            <div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div>
+            <div class="sim-value">R$ {val_integral:,.0f}</div>
+            <div class="sim-sub">Sem Desconto</div>
         </div>
     """, unsafe_allow_html=True)
 
 with c2:
     st.markdown(f"""
-        <div class="sim-card" style="border-left: 5px solid #003366;">
-            <div class="title-card" style="color: #003366;">DESCONTO 10%</div>
-            <h4>R$ {val_d10:,.0f}</h4>
-            <div class="sub-card">Parcela Padrão: 12x</div>
+        <div class="sim-card" style="border-left: 4px solid #2563EB;">
+            <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
+            <div class="sim-value">R$ {val_d10:,.0f}</div>
+            <div class="sim-sub">Parcela Padrão: 12x</div>
         </div>
     """, unsafe_allow_html=True)
 
 with c3:
     st.markdown(f"""
-        <div class="sim-card" style="border-left: 5px solid #6B21A8;">
-            <div class="title-card" style="color: #6B21A8;">DESCONTO 25%</div>
-            <h4>R$ {val_d25:,.0f}</h4>
-            <div class="sub-card">Parcela Padrão: 10x</div>
+        <div class="sim-card" style="border-left: 4px solid #7C3AED;">
+            <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
+            <div class="sim-value">R$ {val_d25:,.0f}</div>
+            <div class="sim-sub">Parcela Padrão: 10x</div>
         </div>
     """, unsafe_allow_html=True)
 
 with c4:
     st.markdown(f"""
-        <div class="sim-card" style="border-left: 5px solid #059669;">
-            <div class="title-card" style="color: #059669;">DESCONTO 50%</div>
-            <h4>R$ {val_d50:,.0f}</h4>
-            <div class="sub-card">Parcela Padrão: 10x</div>
+        <div class="sim-card" style="border-left: 4px solid #10B981;">
+            <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
+            <div class="sim-value">R$ {val_d50:,.0f}</div>
+            <div class="sim-sub">Parcela Padrão: 10x</div>
         </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Calculadora de Parcelamento
-st.markdown('<div class="badge-title">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
+# --- CALCULADORA DE PARCELAMENTO ---
+st.markdown('<div class="badge-dark">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
 
 calc_col1, calc_col2 = st.columns(2)
 
 with calc_col1:
+    st.markdown('<div class="badge-dark" style="background-color: #4A5568;">1. Escolha o cenário de valor base:</div>', unsafe_allow_html=True)
     cenario = st.selectbox(
-        "1. Escolha o cenário de valor base:", 
-        ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
+        "", 
+        ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"],
+        label_visibility="collapsed"
     )
 
 with calc_col2:
+    st.markdown('<div class="badge-dark" style="background-color: #4A5568;">2. Escolha o número de parcelas desejado:</div>', unsafe_allow_html=True)
     num_parcelas = st.selectbox(
-        "2. Escolha o número de parcelas desejado:",
+        "",
         [12, 24, 36, 48],
         format_func=lambda x: f"{x}x ({x} parcelas)",
+        label_visibility="collapsed"
     )
 
-# Cálculos da Calculadora
+# Cálculos
 if cenario == "Desconto 10%":
     valor_negociado = val_d10
 elif cenario == "Desconto 25%":
@@ -372,32 +442,32 @@ else:
 economia = val_integral - valor_negociado
 valor_parcela = valor_negociado / num_parcelas
 
-# Cards do Rodapé
+# --- RESULTADOS FINAIS (INFERIORES) ---
 res1, res2, res3 = st.columns(3)
 
 with res1:
     st.markdown(f"""
-        <div class="result-card-darkblue">
+        <div class="res-card-dark">
             <div class="res-title">VALOR DE CADA PARCELA</div>
-            <div class="res-value">R$ {valor_parcela:,.0f}</div>
+            <div class="res-val">R$ {valor_parcela:,.0f}</div>
             <div class="res-sub">Plano em {num_parcelas} parcelas mensais</div>
         </div>
     """, unsafe_allow_html=True)
 
 with res2:
     st.markdown(f"""
-        <div class="result-card-blue">
+        <div class="res-card-blue">
             <div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div>
-            <div class="res-value">R$ {valor_negociado:,.0f}</div>
+            <div class="res-val">R$ {valor_negociado:,.0f}</div>
             <div class="res-sub">Cenário: {cenario}</div>
         </div>
     """, unsafe_allow_html=True)
 
 with res3:
     st.markdown(f"""
-        <div class="result-card-green">
+        <div class="res-card-green">
             <div class="res-title">ECONOMIA PARA O MUNICÍPIO</div>
-            <div class="res-value">R$ {economia:,.0f}</div>
+            <div class="res-val">R$ {economia:,.0f}</div>
             <div class="res-sub">Em relação ao valor integral de R$ {val_integral:,.0f}</div>
         </div>
     """, unsafe_allow_html=True)
