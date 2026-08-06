@@ -6,7 +6,7 @@ import streamlit as st
 from fpdf import FPDF
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURAÇÃO DA PÁGINA (WIDE MODE E FAVICON)
+# 1. CONFIGURAÇÃO DA PÁGINA
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Simulador FNP",
@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. IMAGEM DE FUNDO E CSS PERSONALIZADO (Exatamente como a referência)
+# 2. IMAGEM DE FUNDO E ESTILOS CSS DEFINITIVOS
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -31,127 +31,132 @@ def get_base64_of_bin_file(bin_file):
 def set_bg_hack(main_bg):
     bin_str = get_base64_of_bin_file(main_bg)
     if bin_str:
-        # Define a cor do texto padrão como branco para o fundo
-        text_color = "white"
-        
         page_bg_img = f"""
         <style>
-        /* Imagem de Fundo em tela cheia */
+        /* Fundo em Tela Cheia */
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            color: {text_color};
         }}
 
-        /* Centralizar o container principal e remover paddings padrão excessivos */
-        .block-container {{
-            padding-top: 2rem !important;
-            padding-bottom: 2rem !important;
+        /* Força a cor padrão do texto no Streamlit para azul escuro */
+        .stApp, p, span, label, .stMarkdown {{
+            color: #1E3A8A !important;
         }}
 
-        /* Estilização para o LOGO no topo esquerdo */
-        [data-testid="stHeader"] {{
-            background-color: rgba(0,0,0,0) !important;
-        }}
-        
-        /* Estilização geral de Títulos e Textos */
-        h1, h2, h3, h4, h5, h6, .stMarkdown, p, li, .stCaption {{
-            color: {text_color} !important;
+        /* Títulos do Topo em Azul Escuro FNP */
+        h1, h2, h3, h4 {{
+            color: #0F172A !important;
+            font-weight: 800 !important;
         }}
 
-        /* Estilização específica para os Cards de Métricas (Superiores) */
-        div[data-testid="stMetricValue"] > div {{
-            color: #31333F !important; /* Cor escura para o valor dentro do card branco */
-            font-size: 2.5rem !important;
-        }}
-        div[data-testid="stMetricLabel"] > div > p {{
-            color: #6D6D6D !important; /* Cor cinza para a label dentro do card branco */
-            font-size: 0.8rem !important;
+        /* Seção Badge (Consulta e Filtros / Calculadora) */
+        .badge-title {{
+            background-color: #334155;
+            color: #FFFFFF !important;
+            padding: 6px 14px;
+            border-radius: 6px;
             font-weight: bold;
-        }}
-        div[data-testid="stMetricValue"] ~ div[data-testid="stMetricDelta"] > div > span {{
-            color: #797979 !important; /* Cor do delta */
-            font-size: 0.7rem !important;
-        }}
-        
-        /* Adicionar padding e bordas nos cards de métricas st.metric */
-        div[data-testid="stMetric"] {{
-            background-color: rgba(255, 255, 255, 1);
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            color: #31333F !important;
+            display: inline-block;
             margin-bottom: 10px;
+            font-size: 0.9rem;
         }}
 
-        /* Estilização específica para as linhas de Simulação (Cards Brancos Maiores) */
+        /* Estilo dos Cards das Métricas do Topo */
+        div[data-testid="stMetric"] {{
+            background-color: #FFFFFF !important;
+            padding: 12px 20px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08) !important;
+        }}
+
+        div[data-testid="stMetricValue"] > div {{
+            color: #0F172A !important;
+            font-size: 2rem !important;
+            font-weight: 800 !important;
+        }}
+
+        div[data-testid="stMetricLabel"] > div > p {{
+            color: #64748B !important;
+            font-weight: 700 !important;
+            font-size: 0.75rem !important;
+            text-transform: uppercase !important;
+        }}
+
+        div[data-testid="stMetricDelta"] > div > span {{
+            color: #16A34A !important;
+            font-size: 0.75rem !important;
+        }}
+
+        /* Estilo das caixas de simulação (Brancas com Faixas) */
         .sim-card {{
-            background-color: rgba(255, 255, 255, 1);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            color: #31333F;
-            margin-bottom: 1rem;
+            background-color: #FFFFFF;
+            padding: 1.2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            height: 100%;
         }}
-        .sim-card h4 {{ color: #31333F !important; margin-bottom: 0.5rem; }}
-        .sim-card p {{ color: #31333F !important; margin: 0; }}
-        .sim-card .caption {{ color: #797979 !important; font-size: 0.8rem; margin-top: 0.3rem; }}
-
-        /* Estilização para as labels dos inputs (Selectbox e outros) */
-        .stSelectbox label p {{
-            color: {text_color} !important;
-            font-weight: bold;
+        .sim-card .title-card {{
+            font-size: 0.75rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+        }}
+        .sim-card h4 {{
+            color: #0F172A !important;
+            font-size: 1.8rem !important;
+            font-weight: bold !important;
+            margin: 0.2rem 0 !important;
+        }}
+        .sim-card .sub-card {{
+            color: #64748B !important;
+            font-size: 0.75rem !important;
         }}
 
-        /* Estilização para os inputs brancos */
+        /* Inputs do Streamlit */
         .stSelectbox div[data-baseweb="select"] > div {{
-            background-color: rgba(255, 255, 255, 1) !important;
-            color: #31333F !important;
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border-radius: 8px !important;
+        }}
+
+        /* Cards do Calculador Final */
+        .result-card-darkblue {{
+            background-color: #003366;
+            color: #FFFFFF !important;
+            padding: 1.2rem;
             border-radius: 8px;
         }}
-        
-        /* Cor de fundo para as mensagens de info/success/error */
-        .stAlert {{
-            background-color: rgba(255, 255, 255, 0.8) !important;
-            color: #31333F !important;
-        }}
-        
-        /* Estilização dos Botões Superiores Brancos */
-        .stButton button {{
-            background-color: #FFFFFF !important;
-            color: #31333F !important;
-            border: 1px solid #C4C4C4 !important;
-            border-radius: 8px !important;
-            font-weight: bold !important;
-            padding: 0.5rem 1rem !important;
-        }}
-        
-        /* Estilização dos Cards de Resultado (Azul e Verde no final) */
         .result-card-blue {{
-            background-color: #1A4D96 !important; /* Azul escuro FNP */
+            background-color: #2563EB;
             color: #FFFFFF !important;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+            padding: 1.2rem;
+            border-radius: 8px;
         }}
-        .result-card-blue h4, .result-card-blue p, .result-card-blue span {{
-            color: #FFFFFF !important;
-        }}
-        
         .result-card-green {{
-            background-color: #1E8449 !important; /* Verde FNP */
+            background-color: #059669;
             color: #FFFFFF !important;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+            padding: 1.2rem;
+            border-radius: 8px;
         }}
-        .result-card-green h4, .result-card-green p, .result-card-green span {{
+        .res-title {{
+            font-size: 0.75rem;
+            font-weight: 800;
             color: #FFFFFF !important;
+            margin-bottom: 0.2rem;
         }}
-
+        .res-value {{
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #FFFFFF !important;
+            margin: 0.2rem 0;
+        }}
+        .res-sub {{
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.8) !important;
+        }}
         </style>
         """
         st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -159,7 +164,7 @@ def set_bg_hack(main_bg):
 set_bg_hack(CAMINHO_IMAGEM_FUNDO)
 
 # -----------------------------------------------------------------------------
-# 3. BASE DE DADOS (Exemplo conforme a referência)
+# 3. BASE DE DADOS
 # -----------------------------------------------------------------------------
 data = {
     "Porte": ["150 a 350mil hab.", "Capital", "Grande", "Médio"],
@@ -168,38 +173,38 @@ data = {
     "Classificação": ["Inadimplente", "Adimplente", "Adimplente", "Inadimplente"],
     "Filiado": [False, True, True, False],
     "Valor_Integral": [60728.00, 197700.00, 500000.00, 350000.00],
-    "Ranking": [70, 95, 100, 60] # Valor do ranking em %
+    "Ranking": [70, 95, 100, 60]
 }
 df_base = pd.DataFrame(data)
 
 # -----------------------------------------------------------------------------
-# 4. FUNÇÕES DE PDF E CÁLCULO
+# 4. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
     def header(self):
         self.set_font("Arial", "B", 14)
-        self.cell(0, 10, "FNP - Simulador de Contribuição e Parcelamento", 0, 1, "C")
+        self.cell(0, 10, "FNP - Simulador de Contribuicao e Parcelamento", 0, 1, "C")
         self.ln(5)
 
     def footer(self):
         self.set_y(-15)
         self.set_font("Arial", "I", 8)
-        self.cell(0, 10, f"Página {self.page_no()}", 0, 0, "C")
+        self.cell(0, 10, f"Pagina {self.page_no()}", 0, 0, "C")
 
-def gerar_pdf_simulacao(municipio, uf, filiado, v_integral, v_desc10, v_desc25, v_desc50):
+def gerar_pdf_simulacao(municipio, uf, cenario, parcelas, valor_total, valor_parcela, economia):
     pdf = PDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 12)
 
-    status_f = "Filiado" if filiado else "Não Filiado"
-    pdf.cell(0, 10, f"Relatório de Simulação - {municipio} ({uf}) - {status_f}", 0, 1)
+    pdf.cell(0, 10, f"Relatorio de Simulacao - {municipio} ({uf})", 0, 1)
     pdf.ln(5)
 
     pdf.set_font("Arial", "", 11)
-    pdf.cell(0, 8, f"Valor Integral: R$ {v_integral:,.2f}", 0, 1)
-    pdf.cell(0, 8, f"Cenário Desconto 10%: R$ {v_desc10:,.2f} (Parcela Padrão: 12x)", 0, 1)
-    pdf.cell(0, 8, f"Cenário Desconto 25%: R$ {v_desc25:,.2f} (Parcela Padrão: 10x)", 0, 1)
-    pdf.cell(0, 8, f"Cenário Desconto 50%: R$ {v_desc50:,.2f} (Parcela Padrão: 10x)", 0, 1)
+    pdf.cell(0, 8, f"Cenario Selecionado: {cenario}", 0, 1)
+    pdf.cell(0, 8, f"Numero de Parcelas: {parcelas}x", 0, 1)
+    pdf.cell(0, 8, f"Valor Total da Negociacao: R$ {valor_total:,.2f}", 0, 1)
+    pdf.cell(0, 8, f"Valor de Cada Parcela: R$ {valor_parcela:,.2f}", 0, 1)
+    pdf.cell(0, 8, f"Economia para o Municipio: R$ {economia:,.2f}", 0, 1)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
         temp_filename = tmp_file.name
@@ -215,193 +220,180 @@ def gerar_pdf_simulacao(municipio, uf, filiado, v_integral, v_desc10, v_desc25, 
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 5. ESTRUTURA DO DASHBOARD (Conforme a referência)
+# 5. ESTRUTURA DA INTERFACE (IDÊNTICA À FOTO)
 # -----------------------------------------------------------------------------
 
-# --- TOPO: LOGO E BOTÕES ---
-header_col1, header_col2, header_col3 = st.columns([2, 2, 1])
+# Topo: Logo Textual e Botões de Ação
+header_col1, header_col2, header_col3 = st.columns([3, 1.5, 1.5])
 
 with header_col1:
-    # Insira o link da imagem do logo da FNP aqui ou carregue uma imagem local
-    # Exemplo com placeholder ou link online (substitua se tiver o arquivo local)
-    st.image("https://jornaldosmunicipios.com.br/wp-content/uploads/2021/04/logo-FNP-Prefeitos-Prefeitas.png", width=250)
+    st.markdown("""
+        <div style="line-height: 1.1;">
+            <span style="font-size: 2.8rem; font-weight: 900; color: #002B66;">FNP</span>
+            <span style="font-size: 0.9rem; font-weight: 700; color: #002B66; text-transform: uppercase; margin-left: 8px;">Frente Nacional de Prefeitas e Prefeitos</span>
+        </div>
+    """, unsafe_allow_html=True)
 
-# Simulação dos valores de desconto para Arapiraca para gerar o PDF antecipadamente (opcional)
-v_int = 60728.00
-v_d10 = v_int * 0.90
-v_d25 = v_int * 0.75
-v_d50 = v_int * 0.50
+pdf_bytes = gerar_pdf_simulacao("Arapiraca", "AL", "Desconto 10%", 12, 54655.00, 4555.00, 6073.00)
 
 with header_col2:
-    st.markdown("<br>", unsafe_allow_html=True) # Alinhamento vertical
-    pdf_bytes = gerar_pdf_simulacao("Arapiraca", "AL", False, v_int, v_d10, v_d25, v_d50)
     st.download_button(
         label="📄 Baixar Simulação em PDF",
         data=pdf_bytes,
-        file_name=f"simulacao_Arapiraca.pdf",
+        file_name="simulacao_Arapiraca.pdf",
         mime="application/pdf",
         use_container_width=True,
     )
 
 with header_col3:
-    st.markdown("<br>", unsafe_allow_html=True) # Alinhamento vertical
     if st.button("🔄 Atualização Base", use_container_width=True):
         st.success("Base atualizada!")
 
-# --- TÍTULO PRINCIPAL ---
-st.markdown("## Simulador de Contribuição e Parcelamento")
+st.markdown("### **Simulador de Contribuição e Parcelamento**")
 
-# --- LINHA 1: MÉTRICAS GERAIS (Cards Brancos com Ícones) ---
-metric_col1, metric_col2, metric_col3 = st.columns(3)
+# Indicadores do Topo
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric("CAPITAIS", "27", "↑ Quantidade de capitais no Brasil")
+with col2:
+    st.metric("MUNICÍPIOS ACIMA DE 80 MIL HABITANTES", "1.227", "↑ Municípios com mais de 80 mil habitantes")
+with col3:
+    st.metric("POTENCIAL DE ARRECADAÇÃO", "R$ 5,63 Bi", "↑ Potencial total de arrecadação anual")
 
-# Exemplo de como adicionar ícones simulando a referência usando markdown dentro do st.metric
-# (Ícones reais exigem CSS complexo ou st.image antes da métrica)
-with metric_col1:
-    st.metric(label="CAPITAIS", value="27", delta="Quantidade de capitais no Brasil")
+st.markdown("<br>", unsafe_allow_html=True)
 
-with metric_col2:
-    st.metric(label="MUNICÍPIOS ACIMA DE 80 MIL HABITANTES", value="1.227", delta="Municípios com mais de 80 mil habitantes")
+# Filtros
+st.markdown('<div class="badge-title">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
+f_col1, f_col2, f_col3, f_col4 = st.columns([1.5, 1, 2.5, 1.2])
 
-with metric_col3:
-    st.metric(label="POTENCIAL DE ARRECADAÇÃO", value="R$ 5,63 Bi", delta="Potencial total de arrecadação anual")
+with f_col1:
+    porte_sel = st.selectbox("Porte", df_base["Porte"].unique())
+df_filtered = df_base[df_base["Porte"] == porte_sel]
 
-# --- LINHA 2: FILTROS E RANKING ---
-st.markdown("#### 🔍 Consulta e Filtros")
-filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1.5, 1, 3, 1])
+with f_col2:
+    uf_sel = st.selectbox("UF", df_filtered["UF"].unique())
+df_filtered = df_filtered[df_filtered["UF"] == uf_sel]
 
-with filter_col1:
-    porte_options = df_base["Porte"].unique()
-    porte_sel = st.selectbox("Porte", porte_options, index=list(porte_options).index("150 a 350mil hab.") if "150 a 350mil hab." in porte_options else 0)
-    df_filtered_porte = df_base[df_base["Porte"] == porte_sel]
+with f_col3:
+    mun_sel = st.selectbox("Município", df_filtered["Município"].unique())
+df_final = df_filtered[df_filtered["Município"] == mun_sel].iloc[0]
 
-with filter_col2:
-    uf_options = df_filtered_porte["UF"].unique()
-    uf_sel = st.selectbox("UF", uf_options, index=list(uf_options).index("AL") if "AL" in uf_options else 0)
-    df_filtered_uf = df_filtered_porte[df_filtered_porte["UF"] == uf_sel]
-
-with filter_col3:
-    mun_options = df_filtered_uf["Município"].unique()
-    mun_sel = st.selectbox("Município", mun_options, index=list(mun_options).index("Arapiraca") if "Arapiraca" in mun_options else 0)
-    # Seleção final dos dados do município
-    data_sel = df_filtered_uf[df_filtered_uf["Município"] == mun_sel].iloc[0]
-
-with filter_col4:
-    # Mostra Classificação e Ranking
-    st.markdown("**Classificação**")
-    class_color = "🟢" if data_sel["Classificação"] == "Adimplente" else "🔴"
-    st.markdown(f"{class_color} {data_sel['Classificação']}")
-    
+with f_col4:
     st.markdown("**Ranking**")
-    # Simulação do card de ranking da referência
     st.markdown(f"""
-        <div style="background-color: white; color: #31333F; padding: 10px 15px; border-radius: 8px; font-weight: bold; text-align: center; font-size: 1.2rem;">
-            {data_sel['Ranking']}%
+        <div style="background-color: white; color: #000000; font-weight: 800; text-align: center; padding: 6px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            {df_final['Ranking']}%
         </div>
     """, unsafe_allow_html=True)
 
-# --- LINHA 3: PAINEL DE SIMULAÇÃO ---
-status_filiado_text = "(Filiado)" if data_sel["Filiado"] else "(Não Filiado)"
-status_filiado_color = "🟢" if data_sel["Filiado"] else "🔴"
-st.markdown(f"### Painel de Simulação — {mun_sel} {status_filiado_color} **{status_filiado_text}**")
+# Painel de Simulação
+status_text = "(Filiado)" if df_final["Filiado"] else "(Não Filiado)"
+status_color = "🟢" if df_final["Filiado"] else "🔴"
 
-# Cálculo dos valores baseados na seleção
-valor_integral = data_sel["Valor_Integral"]
-valor_d10 = valor_integral * 0.90
-valor_d25 = valor_integral * 0.75
-valor_d50 = valor_integral * 0.50
+st.markdown(f"#### **Painel de Simulação — {mun_sel}** {status_color} **{status_text}**")
 
-# Cards Brancos de Simulação (Estrutura da Referência)
-sim_col1, sim_col2, sim_col3, sim_col4 = st.columns(4)
+val_integral = df_final["Valor_Integral"]
+val_d10 = val_integral * 0.90
+val_d25 = val_integral * 0.75
+val_d50 = val_integral * 0.50
 
-with sim_col1:
+c1, c2, c3, c4 = st.columns(4)
+
+with c1:
     st.markdown(f"""
         <div class="sim-card">
-            <p class="caption">VALOR INTEGRAL</p>
-            <h4>R$ {valor_integral:,.0f}</h4>
-            <p class="caption">Sem Desconto</p>
+            <div class="title-card" style="color: #64748B;">VALOR INTEGRAL</div>
+            <h4>R$ {val_integral:,.0f}</h4>
+            <div class="sub-card">Sem Desconto</div>
         </div>
     """, unsafe_allow_html=True)
 
-with sim_col2:
+with c2:
     st.markdown(f"""
-        <div class="sim-card" style="border-left: 5px solid #1A4D96;">
-            <p class="caption" style="color: #1A4D96 !important;">DESCONTO 10%</p>
-            <h4>R$ {valor_d10:,.0f}</h4>
-            <p class="caption">Parcela Padrão: 12x</p>
+        <div class="sim-card" style="border-left: 5px solid #003366;">
+            <div class="title-card" style="color: #003366;">DESCONTO 10%</div>
+            <h4>R$ {val_d10:,.0f}</h4>
+            <div class="sub-card">Parcela Padrão: 12x</div>
         </div>
     """, unsafe_allow_html=True)
 
-with sim_col3:
+with c3:
     st.markdown(f"""
-        <div class="sim-card" style="border-left: 5px solid #8E44AD;">
-            <p class="caption" style="color: #8E44AD !important;">DESCONTO 25%</p>
-            <h4>R$ {valor_d25:,.0f}</h4>
-            <p class="caption">Parcela Padrão: 10x</p>
+        <div class="sim-card" style="border-left: 5px solid #6B21A8;">
+            <div class="title-card" style="color: #6B21A8;">DESCONTO 25%</div>
+            <h4>R$ {val_d25:,.0f}</h4>
+            <div class="sub-card">Parcela Padrão: 10x</div>
         </div>
     """, unsafe_allow_html=True)
 
-with sim_col4:
+with c4:
     st.markdown(f"""
-        <div class="sim-card" style="border-left: 5px solid #27AE60;">
-            <p class="caption" style="color: #27AE60 !important;">DESCONTO 50%</p>
-            <h4>R$ {valor_d50:,.0f}</h4>
-            <p class="caption">Parcela Padrão: 10x</p>
+        <div class="sim-card" style="border-left: 5px solid #059669;">
+            <div class="title-card" style="color: #059669;">DESCONTO 50%</div>
+            <h4>R$ {val_d50:,.0f}</h4>
+            <div class="sub-card">Parcela Padrão: 10x</div>
         </div>
     """, unsafe_allow_html=True)
 
-# --- LINHA 4: CALCULADORA DE PARCELAMENTO ---
-st.markdown("#### ⚙️ Calculadora de parcelamento")
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Calculadora de Parcelamento
+st.markdown('<div class="badge-title">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
+
 calc_col1, calc_col2 = st.columns(2)
 
 with calc_col1:
-    # Opções de cenário base baseadas nos cálculos acima
-    cenario_options = {
-        "Desconto 10%": valor_d10,
-        "Desconto 25%": valor_d25,
-        "Desconto 50%": valor_d50,
-        "Valor Integral": valor_integral
-    }
-    cenario_sel = st.selectbox("1. Escolha o cenário de valor base:", list(cenario_options.keys()))
-    valor_base_calculo = cenario_options[cenario_sel]
+    cenario = st.selectbox(
+        "1. Escolha o cenário de valor base:", 
+        ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
+    )
 
 with calc_col2:
     num_parcelas = st.selectbox(
         "2. Escolha o número de parcelas desejado:",
         [12, 24, 36, 48],
-        index=0,
-        format_func=lambda x: f"{x}x ({x} parcelas)"
+        format_func=lambda x: f"{x}x ({x} parcelas)",
     )
 
 # Cálculos da Calculadora
-valor_parcela = valor_base_calculo / num_parcelas
-economia_municipio = valor_integral - valor_base_calculo
+if cenario == "Desconto 10%":
+    valor_negociado = val_d10
+elif cenario == "Desconto 25%":
+    valor_negociado = val_d25
+elif cenario == "Desconto 50%":
+    valor_negociado = val_d50
+else:
+    valor_negociado = val_integral
 
-# --- LINHA 5: RESULTADOS DA CALCULADORA (Cards Azul e Verde) ---
-res_col1, res_col2, res_col3 = st.columns(3)
+economia = val_integral - valor_negociado
+valor_parcela = valor_negociado / num_parcelas
 
-with res_col1:
+# Cards do Rodapé (Escuro, Azul e Verde)
+res1, res2, res3 = st.columns(3)
+
+with res1:
     st.markdown(f"""
-        <div class="result-card-blue">
-            <p style="font-size: 0.8rem; font-weight: bold; opacity: 0.8;">VALOR DE CADA PARCELA</p>
-            <h2 style="margin: 0.5rem 0;">R$ {valor_parcela:,.0f}</h2>
-            <p style="font-size: 0.8rem; opacity: 0.8;">Plano em {num_parcelas} parcelas mensais</p>
+        <div class="result-card-darkblue">
+            <div class="res-title">VALOR DE CADA PARCELA</div>
+            <div class="res-value">R$ {valor_parcela:,.0f}</div>
+            <div class="res-sub">Plano em {num_parcelas} parcelas mensais</div>
         </div>
     """, unsafe_allow_html=True)
 
-with res_col2:
+with res2:
     st.markdown(f"""
         <div class="result-card-blue">
-            <p style="font-size: 0.8rem; font-weight: bold; opacity: 0.8;">VALOR TOTAL DA NEGOCIAÇÃO</p>
-            <h2 style="margin: 0.5rem 0;">R$ {valor_base_calculo:,.0f}</h2>
-            <p style="font-size: 0.8rem; opacity: 0.8;">Cenário: {cenario_sel}</p>
+            <div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div>
+            <div class="res-value">R$ {valor_negociado:,.0f}</div>
+            <div class="res-sub">Cenário: {cenario}</div>
         </div>
     """, unsafe_allow_html=True)
 
-with res_col3:
+with res3:
     st.markdown(f"""
         <div class="result-card-green">
-            <p style="font-size: 0.8rem; font-weight: bold; opacity: 0.8;">ECONOMIA PARA O MUNICÍPIO</p>
-            <h2 style="margin: 0.5rem 0;">R$ {economia_municipio:,.0f}</h2>
-            <p style="font-size: 0.8rem; opacity: 0.8;">Em relação ao valor integral de R$ {valor_integral:,.0f}</p>
+            <div class="res-title">ECONOMIA PARA O MUNICÍPIO</div>
+            <div class="res-value">R$ {economia:,.0f}</div>
+            <div class="res-sub">Em relação ao valor integral de R$ {val_integral:,.0f}</div>
         </div>
     """, unsafe_allow_html=True)
