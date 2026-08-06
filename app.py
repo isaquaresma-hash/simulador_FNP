@@ -22,29 +22,30 @@ NOME_ARQUIVO_PLANILHA = "Simulador de contribuição .xlsx"
 
 
 def converter_valor_ptbr(valor):
-  """Converte valores em formato monetário BR (ex: 'R$ 75.000', '75.000,00' ou floats) para float puro do Python."""
-  if pd.isna(valor):
-    return 0.0
-  if isinstance(valor, (int, float)):
-    return float(valor)
-
-  val_str = str(valor).strip()
-  val_str = val_str.replace("R$", "").replace(" ", "")
-
-  # Se tem vírgula como separador decimal (ex: 75.000,00 ou 75000,00)
-  if "," in val_str:
-    val_str = val_str.replace(".", "").replace(",", ".")
-  else:
-    # Se tem ponto (ex: 75.000 ou 75.000.00)
-    # Se houver mais de um ponto ou padrão de milhar, remove pontos
-    if val_str.count(".") > 1 or (
-        len(val_str.split(".")[-1]) != 2 and val_str.count(".") == 1
-    ):
-      val_str = val_str.replace(".", "")
-
+  """Converte valores em formato monetário BR, inteiros ou floats sem erros de tipo."""
   try:
+    if valor is None:
+      return 0.0
+
+    if isinstance(valor, (int, float)):
+      return float(valor)
+
+    val_str = str(valor).strip()
+    if val_str.lower() in ["nan", "none", "", "null", "-"]:
+      return 0.0
+
+    val_str = val_str.replace("R$", "").replace(" ", "")
+
+    if "," in val_str:
+      val_str = val_str.replace(".", "").replace(",", ".")
+    else:
+      if val_str.count(".") > 1 or (
+          len(val_str.split(".")[-1]) != 2 and val_str.count(".") == 1
+      ):
+        val_str = val_str.replace(".", "")
+
     return float(val_str)
-  except ValueError:
+  except Exception:
     return 0.0
 
 
@@ -75,10 +76,8 @@ def carregar_dados():
     )
     st.stop()
 
-  # Normaliza nomes de colunas
   df.columns = df.columns.astype(str).str.strip()
 
-  # Mapeamento flexível de colunas
   mapeamento = {}
   for col in df.columns:
     col_upper = col.upper()
@@ -103,11 +102,10 @@ def carregar_dados():
 
   df = df.rename(columns=mapeamento)
 
-  # Converte todas as colunas numéricas de valores
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
     if col in df.columns:
-      df[col] = df[col].apply(converter_valor_ptbr)
+      df[col] = [converter_valor_ptbr(v) for v in df[col]]
     else:
       df[col] = 0.0
 
@@ -117,7 +115,7 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. IMAGEM DE FUNDO E ESTILOS CSS
+# 3. ESTILOS CSS E IMAGEM DE FUNDO
 # -----------------------------------------------------------------------------
 CAMINHO_IMAGEM_FUNDO = "simulador.png.jpeg"
 
@@ -209,7 +207,7 @@ def fmt_br(valor):
 
 
 # -----------------------------------------------------------------------------
-# 4. FUNÇÃO GERAR PDF
+# 4. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
 
@@ -252,76 +250,12 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. DASHBOARD INTERFACE
+# 5. DASHBOARD E INTERFACE
 # -----------------------------------------------------------------------------
 btn_col1, btn_col2, btn_col3 = st.columns([4, 1.3, 1.3])
 
 with btn_col1:
   st.write("")
-
-pdf_bytes = gerar_pdf_simulacao(
-    "Feira de Santana", "BA", "Desconto 10%", 12, 67500.00, 5625.00, 7500.00
-)
-
-with btn_col2:
-  st.download_button(
-      label="📄 Baixar Simulação em PDF",
-      data=pdf_bytes,
-      file_name="simulacao_FNP.pdf",
-      mime="application/pdf",
-      use_container_width=True,
-  )
-
-with btn_col3:
-  if st.button("🔄 Atualização Base", use_container_width=True):
-    st.cache_data.clear()
-    st.rerun()
-
-st.markdown("""
-    <h2 style='color: #0F172A; font-weight: 800; font-size: 1.6rem; margin-top: 1rem; margin-bottom: 1rem;'>
-        Simulador de Contribuição e Parcelamento
-    </h2>
-""", unsafe_allow_html=True)
-
-m_col1, m_col2, m_col3 = st.columns(3)
-
-with m_col1:
-  st.markdown("""
-        <div class="top-card">
-            <div class="icon-circle" style="background-color: #1E40AF;">🏛️</div>
-            <div>
-                <div class="top-card-title">CAPITAIS</div>
-                <div class="top-card-value">27</div>
-                <div class="top-card-sub">↑ Quantidade de capitais no Brasil</div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-with m_col2:
-  st.markdown("""
-        <div class="top-card">
-            <div class="icon-circle" style="background-color: #059669;">👥</div>
-            <div>
-                <div class="top-card-title">MUNICÍPIOS ACIMA DE 80 MIL HABITANTES</div>
-                <div class="top-card-value">1.227</div>
-                <div class="top-card-sub">↑ Municípios com mais de 80 mil habitantes</div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-with m_col3:
-  st.markdown("""
-        <div class="top-card">
-            <div class="icon-circle" style="background-color: #7C3AED;">💲</div>
-            <div>
-                <div class="top-card-title">POTENCIAL DE ARRECADAÇÃO</div>
-                <div class="top-card-value">R$ 5,63 Bi</div>
-                <div class="top-card-sub">↑ Potencial total de arrecadação anual</div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # SEÇÃO DE FILTROS DINÂMICOS
@@ -372,6 +306,51 @@ with f_col4:
       unsafe_allow_html=True,
   )
 
+# Cabeçalho da aplicação
+st.markdown("""
+    <h2 style='color: #0F172A; font-weight: 800; font-size: 1.6rem; margin-top: 1rem; margin-bottom: 1rem;'>
+        Simulador de Contribuição e Parcelamento
+    </h2>
+""", unsafe_allow_html=True)
+
+m_col1, m_col2, m_col3 = st.columns(3)
+
+with m_col1:
+  st.markdown("""
+        <div class="top-card">
+            <div class="icon-circle" style="background-color: #1E40AF;">🏛️</div>
+            <div>
+                <div class="top-card-title">CAPITAIS</div>
+                <div class="top-card-value">27</div>
+                <div class="top-card-sub">↑ Quantidade de capitais no Brasil</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with m_col2:
+  st.markdown("""
+        <div class="top-card">
+            <div class="icon-circle" style="background-color: #059669;">👥</div>
+            <div>
+                <div class="top-card-title">MUNICÍPIOS ACIMA DE 80 MIL HABITANTES</div>
+                <div class="top-card-value">1.227</div>
+                <div class="top-card-sub">↑ Municípios com mais de 80 mil habitantes</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with m_col3:
+  st.markdown("""
+        <div class="top-card">
+            <div class="icon-circle" style="background-color: #7C3AED;">💲</div>
+            <div>
+                <div class="top-card-title">POTENCIAL DE ARRECADAÇÃO</div>
+                <div class="top-card-value">R$ 5,63 Bi</div>
+                <div class="top-card-sub">↑ Potencial total de arrecadação anual</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Painel de Simulação
@@ -391,7 +370,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Resgate e tratamento automático de fallback se algum valor de desconto vier 0 da planilha
 val_integral = (
     df_final["Valor_Integral"] if "Valor_Integral" in df_final else 0.0
 )
@@ -545,3 +523,28 @@ with res3:
     """,
       unsafe_allow_html=True,
   )
+
+# Ações superiores (PDF dinâmico)
+pdf_bytes = gerar_pdf_simulacao(
+    mun_sel,
+    uf_sel,
+    cenario,
+    num_parcelas,
+    valor_negociado,
+    valor_parcela,
+    economia,
+)
+
+with btn_col2:
+  st.download_button(
+      label="📄 Baixar Simulação em PDF",
+      data=pdf_bytes,
+      file_name=f"simulacao_{mun_sel}.pdf",
+      mime="application/pdf",
+      use_container_width=True,
+  )
+
+with btn_col3:
+  if st.button("🔄 Atualização Base", use_container_width=True):
+    st.cache_data.clear()
+    st.rerun()
