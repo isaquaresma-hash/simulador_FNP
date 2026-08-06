@@ -33,7 +33,7 @@ def set_bg_hack(main_bg):
     if bin_str:
         page_bg_img = f"""
         <style>
-        /* Fundo em Tela Cheia */
+        /* Fundo em Tela Cheia contendo a logo original */
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
@@ -42,18 +42,27 @@ def set_bg_hack(main_bg):
             background-attachment: fixed;
         }}
 
-        /* Força a cor padrão do texto no Streamlit para azul escuro */
+        /* Alinhamento superior do container para respeitar a logo de fundo */
+        .block-container {{
+            padding-top: 1rem !important;
+            padding-bottom: 2rem !important;
+        }}
+
+        /* Força a cor padrão do texto para azul escuro */
         .stApp, p, span, label, .stMarkdown {{
             color: #1E3A8A !important;
         }}
 
-        /* Títulos do Topo em Azul Escuro FNP */
-        h1, h2, h3, h4 {{
+        /* Título Principal */
+        .main-title {{
             color: #0F172A !important;
+            font-size: 1.8rem !important;
             font-weight: 800 !important;
+            margin-top: 2.5rem !important;
+            margin-bottom: 1.2rem !important;
         }}
 
-        /* Seção Badge (Consulta e Filtros / Calculadora) */
+        /* Badges (Consulta e Filtros / Calculadora) */
         .badge-title {{
             background-color: #334155;
             color: #FFFFFF !important;
@@ -62,10 +71,10 @@ def set_bg_hack(main_bg):
             font-weight: bold;
             display: inline-block;
             margin-bottom: 10px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }}
 
-        /* Estilo dos Cards das Métricas do Topo */
+        /* Cards das Métricas Superiores (Brancos) */
         div[data-testid="stMetric"] {{
             background-color: #FFFFFF !important;
             padding: 12px 20px !important;
@@ -91,7 +100,7 @@ def set_bg_hack(main_bg):
             font-size: 0.75rem !important;
         }}
 
-        /* Estilo das caixas de simulação (Brancas com Faixas) */
+        /* Cards de Simulação */
         .sim-card {{
             background-color: #FFFFFF;
             padding: 1.2rem;
@@ -115,14 +124,14 @@ def set_bg_hack(main_bg):
             font-size: 0.75rem !important;
         }}
 
-        /* Inputs do Streamlit */
+        /* Selectbox e Inputs */
         .stSelectbox div[data-baseweb="select"] > div {{
             background-color: #FFFFFF !important;
             color: #0F172A !important;
             border-radius: 8px !important;
         }}
 
-        /* Cards do Calculador Final */
+        /* Cards de Resultado no Rodapé */
         .result-card-darkblue {{
             background-color: #003366;
             color: #FFFFFF !important;
@@ -220,19 +229,14 @@ def gerar_pdf_simulacao(municipio, uf, cenario, parcelas, valor_total, valor_par
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 5. ESTRUTURA DA INTERFACE (IDÊNTICA À FOTO)
+# 5. ESTRUTURA DA INTERFACE (IDÊNTICA À REFERÊNCIA)
 # -----------------------------------------------------------------------------
 
-# Topo: Logo Textual e Botões de Ação
+# Topo: Espaçamento para a logo da imagem de fundo + Botões na direita
 header_col1, header_col2, header_col3 = st.columns([3, 1.5, 1.5])
 
 with header_col1:
-    st.markdown("""
-        <div style="line-height: 1.1;">
-            <span style="font-size: 2.8rem; font-weight: 900; color: #002B66;">FNP</span>
-            <span style="font-size: 0.9rem; font-weight: 700; color: #002B66; text-transform: uppercase; margin-left: 8px;">Frente Nacional de Prefeitas e Prefeitos</span>
-        </div>
-    """, unsafe_allow_html=True)
+    st.write("") # Espaço em branco para deixar visível a logo que já vem na imagem de fundo
 
 pdf_bytes = gerar_pdf_simulacao("Arapiraca", "AL", "Desconto 10%", 12, 54655.00, 4555.00, 6073.00)
 
@@ -249,7 +253,7 @@ with header_col3:
     if st.button("🔄 Atualização Base", use_container_width=True):
         st.success("Base atualizada!")
 
-st.markdown("### **Simulador de Contribuição e Parcelamento**")
+st.markdown('<div class="main-title">Simulador de Contribuição e Parcelamento</div>', unsafe_allow_html=True)
 
 # Indicadores do Topo
 col1, col2, col3 = st.columns(3)
@@ -368,7 +372,7 @@ else:
 economia = val_integral - valor_negociado
 valor_parcela = valor_negociado / num_parcelas
 
-# Cards do Rodapé (Escuro, Azul e Verde)
+# Cards do Rodapé
 res1, res2, res3 = st.columns(3)
 
 with res1:
