@@ -175,68 +175,69 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: scroll;
         }}
-        /* Padding alterado para 350px para descer bem mais o conteúdo */
         .block-container {{ padding-top: 350px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
         .page-title {{
             color: #0A3663;
-            font-size: 1.35rem;
+            font-size: 1.2rem;
             font-weight: 800;
-            margin-top: 2rem;
-            margin-bottom: 0.8rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
         }}
 
         .badge-main {{
-            background-color: #334155; color: #FFFFFF !important; padding: 6px 14px;
-            border-radius: 6px; font-weight: bold; font-size: 0.85rem; display: inline-block; margin-bottom: 12px;
+            background-color: #334155; color: #FFFFFF !important; padding: 4px 10px;
+            border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: inline-block; margin-bottom: 8px;
         }}
         .badge-filter {{
-            background-color: #475569; color: #FFFFFF !important; padding: 3px 10px;
-            border-radius: 4px; font-weight: 700; font-size: 0.78rem; display: inline-block; margin-bottom: 6px;
+            background-color: #475569; color: #FFFFFF !important; padding: 2px 8px;
+            border-radius: 4px; font-weight: 700; font-size: 0.72rem; display: inline-block; margin-bottom: 4px;
         }}
         .badge-light {{
-            background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px;
-            border-radius: 12px; font-weight: bold; font-size: 0.8rem;
+            background-color: #FFFFFF; color: #1A202C !important; padding: 3px 8px;
+            border-radius: 12px; font-weight: bold; font-size: 0.75rem;
         }}
         .stSelectbox div[data-baseweb="select"] > div {{
             background-color: #F1F5F9 !important; color: #0F172A !important;
-            border-radius: 6px !important; border: none !important; min-height: 42px !important;
+            border-radius: 6px !important; border: none !important; min-height: 34px !important; height: 34px !important;
         }}
         .ranking-box {{
             background-color: #FFFFFF; color: #0F172A; font-weight: 800; text-align: center;
-            height: 42px; display: flex; align-items: center; justify-content: center;
-            border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9rem;
+            height: 34px; display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.82rem;
         }}
+        
+        /* CAIXAS SUPERIORES COMPACTAS */
         .top-card {{
-            background-color: #FFFFFF; padding: 12px 18px; border-radius: 10px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 15px;
-            height: 85px;
+            background-color: #FFFFFF; padding: 6px 12px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;
+            height: 60px;
         }}
         .icon-circle {{
-            width: 42px; height: 42px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold; flex-shrink: 0;
+            width: 32px; height: 32px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; color: white; font-size: 0.95rem; font-weight: bold; flex-shrink: 0;
         }}
-        .top-card-title {{ color: #718096 !important; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }}
-        .top-card-value {{ color: #1A202C !important; font-size: 1.7rem; font-weight: 800; line-height: 1.1; }}
-        .top-card-sub {{ color: #A0AEC0 !important; font-size: 0.65rem; font-weight: 600; }}
+        .top-card-title {{ color: #718096 !important; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1; }}
+        .top-card-value {{ color: #1A202C !important; font-size: 1.25rem; font-weight: 800; line-height: 1.1; margin: 2px 0; }}
+        .top-card-sub {{ color: #A0AEC0 !important; font-size: 0.58rem; font-weight: 600; line-height: 1; }}
 
-        .sim-card {{ background-color: #FFFFFF; padding: 1rem 1.2rem; border-radius: 8px; height: 100%; }}
-        .sim-title {{ font-size: 0.72rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.2rem; }}
-        .sim-value {{ color: #1A202C !important; font-size: 1.6rem; font-weight: 800; margin: 0.2rem 0; }}
-        .sim-sub {{ color: #A0AEC0 !important; font-size: 0.72rem; }}
+        .sim-card {{ background-color: #FFFFFF; padding: 0.7rem 0.9rem; border-radius: 6px; height: 100%; }}
+        .sim-title {{ font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.1rem; }}
+        .sim-value {{ color: #1A202C !important; font-size: 1.3rem; font-weight: 800; margin: 0.1rem 0; }}
+        .sim-sub {{ color: #A0AEC0 !important; font-size: 0.65rem; }}
 
-        .res-card-dark {{ background-color: #0A3663; color: #FFFFFF !important; padding: 1rem 1.2rem; border-radius: 8px; }}
-        .res-card-blue {{ background-color: #3B82F6; color: #FFFFFF !important; padding: 1rem 1.2rem; border-radius: 8px; }}
-        .res-card-green {{ background-color: #10B981; color: #FFFFFF !important; padding: 1rem 1.2rem; border-radius: 8px; }}
-        .res-title {{ font-size: 0.72rem; font-weight: 800; color: #FFFFFF !important; text-transform: uppercase; }}
-        .res-val {{ font-size: 1.7rem; font-weight: 800; color: #FFFFFF !important; margin: 0.2rem 0; }}
-        .res-sub {{ font-size: 0.72rem; color: rgba(255,255,255,0.85) !important; }}
+        .res-card-dark {{ background-color: #0A3663; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-card-blue {{ background-color: #3B82F6; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-card-green {{ background-color: #10B981; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-title {{ font-size: 0.65rem; font-weight: 800; color: #FFFFFF !important; text-transform: uppercase; }}
+        .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
+        .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
 
         .stButton button, .stDownloadButton button {{
             background-color: #FFFFFF !important; color: #2D3748 !important;
             border: 1px solid #CBD5E0 !important; border-radius: 6px !important;
-            font-size: 0.8rem !important; font-weight: 600 !important; padding: 0.3rem 0.8rem !important;
+            font-size: 0.75rem !important; font-weight: 600 !important; padding: 0.2rem 0.6rem !important; min-height: 34px !important;
         }}
         </style>
         """
@@ -461,7 +462,7 @@ with header_actions_col:
       st.cache_data.clear()
       st.rerun()
 
-# CARDS INFORMATIVOS SUPERIORES
+# CARDS INFORMATIVOS SUPERIORES COMPACTOS
 m_col1, m_col2, m_col3 = st.columns(3)
 
 with m_col1:
@@ -587,7 +588,7 @@ with f_col4:
 has_data = not df_filtrado.empty
 
 if has_data:
-  st.markdown("<hr style='margin: 1.5rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+  st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
   if "Situação" in df_filtrado.columns:
     situacoes = df_filtrado["Situação"].astype(str).tolist()
@@ -620,7 +621,7 @@ if has_data:
 
   st.markdown(
       f"""
-      <div style="margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
+      <div style="margin-bottom: 0.6rem; font-size: 1.1rem; font-weight: 800; color: #0F172A;">
           Painel de Simulação — {nome_exibicao} <span class="badge-light">{status_color} ({status_text})</span>
       </div>
   """,
@@ -727,7 +728,7 @@ if has_data:
 
   with calc_col1:
     st.markdown(
-        '<div class="badge-filter" style="margin-bottom: 6px;">1. Escolha o'
+        '<div class="badge-filter" style="margin-bottom: 4px;">1. Escolha o'
         " cenário de valor base:</div>",
         unsafe_allow_html=True,
     )
@@ -746,7 +747,7 @@ if has_data:
 
   with calc_col2:
     st.markdown(
-        '<div class="badge-filter" style="margin-bottom: 6px;">2. Escolha o'
+        '<div class="badge-filter" style="margin-bottom: 4px;">2. Escolha o'
         " número de parcelas desejado:</div>",
         unsafe_allow_html=True,
     )
