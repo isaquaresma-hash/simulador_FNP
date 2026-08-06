@@ -18,18 +18,15 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 # 2. CARREGAMENTO DINÂMICO DA PLANILHA EXCEL
 # -----------------------------------------------------------------------------
-# Nome exato conforme consta na imagem do seu repositório GitHub
 NOME_ARQUIVO_PLANILHA = "Simulador de contribuição .xlsx"
 
 
 @st.cache_data
 def carregar_dados():
-  # Tenta localizar o arquivo considerando possíveis variações de nome/espaço
   caminho_encontrado = None
   if os.path.exists(NOME_ARQUIVO_PLANILHA):
     caminho_encontrado = NOME_ARQUIVO_PLANILHA
   else:
-    # Procura qualquer arquivo .xlsx no diretório caso o nome mude levemente
     for f in os.listdir("."):
       if f.endswith(".xlsx") or f.endswith(".csv"):
         caminho_encontrado = f
@@ -39,16 +36,22 @@ def carregar_dados():
     st.error("Erro: Nenhum arquivo Excel/CSV foi encontrado no repositório!")
     st.stop()
 
-  # Leitura
-  if caminho_encontrado.endswith(".csv"):
-    df = pd.read_csv(caminho_encontrado)
-  else:
-    df = pd.read_excel(caminho_encontrado)
+  try:
+    if caminho_encontrado.endswith(".csv"):
+      df = pd.read_csv(caminho_encontrado)
+    else:
+      df = pd.read_excel(caminho_encontrado, engine="openpyxl")
+  except ImportError:
+    st.error(
+        "A biblioteca 'openpyxl' não está instalada. Certifique-se de que ela"
+        " consta no arquivo requirements.txt."
+    )
+    st.stop()
 
   # Limpeza dos nomes das colunas
   df.columns = df.columns.astype(str).str.strip()
 
-  # Mapeamento dinâmico para garantir que todas as colunas sejam encontradas
+  # Mapeamento de colunas
   mapeamento = {
       "Situação do município": "Situação",
       "CONTRIBUIÇÃO 2027": "Valor_Integral",
@@ -60,7 +63,7 @@ def carregar_dados():
   }
   df = df.rename(columns=mapeamento)
 
-  # Tratamento e Limpeza de Valores Monetários (Remove 'R$', pontos de milhar, espaços)
+  # Tratamento e Limpeza de Valores Monetários
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
     if col in df.columns:
@@ -288,7 +291,7 @@ with m_col3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# SEÇÃO DE FILTROS DINÂMICOS DA PLANILHA
+# SEÇÃO DE FILTROS DINÂMICOS
 # -----------------------------------------------------------------------------
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
