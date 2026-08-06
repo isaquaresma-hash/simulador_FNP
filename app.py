@@ -357,35 +357,31 @@ def gerar_pdf_simulacao(
 # -----------------------------------------------------------------------------
 # 5. ESTRUTURA DO TOPO (TÍTULO À ESQUERDA E BOTÕES À DIREITA)
 # -----------------------------------------------------------------------------
-porte_opcoes = ["Todos"] + sorted(df_base["Porte"].dropna().unique().tolist())
+# Sem a opção "Todos"
+porte_opcoes = sorted(df_base["Porte"].dropna().unique().tolist())
 
-porte_sel = st.session_state.get("porte_sel", "Todos")
-uf_sel = st.session_state.get("uf_sel", "Todas")
-mun_sel = st.session_state.get("mun_sel", "Digite ou selecione um município")
-
-df_porte = (
-    df_base.copy()
-    if porte_sel == "Todos"
-    else df_base[df_base["Porte"] == porte_sel]
+porte_sel = st.session_state.get(
+    "porte_sel", porte_opcoes[0] if porte_opcoes else None
 )
-df_uf = df_porte.copy() if uf_sel == "Todas" else df_porte[df_porte["UF"] == uf_sel]
+df_porte = df_base[df_base["Porte"] == porte_sel]
+
+uf_opcoes = sorted(df_porte["UF"].dropna().unique().tolist())
+uf_sel = st.session_state.get("uf_sel", uf_opcoes[0] if uf_opcoes else None)
+df_uf = df_porte[df_porte["UF"] == uf_sel]
+
+mun_sel = st.session_state.get("mun_sel", "Digite ou selecione um município")
 
 if mun_sel in ["Digite ou selecione um município", "None", None]:
   df_filtrado = pd.DataFrame()
-elif mun_sel == "Todos":
-  df_filtrado = df_uf.copy()
 else:
   df_filtrado = df_uf[df_uf["Município"] == mun_sel]
 
 has_data = not df_filtrado.empty
 pdf_bytes_topo = None
-nome_exibicao = (
-    mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
-)
+nome_exibicao = mun_sel
 
 cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
 
-# Define parcelas para o PDF de acordo com o cenário ativo
 if cenario_sel in ["Desconto 25%", "Desconto 50%"]:
   parcelas_sel = st.session_state.get("num_parcelas_calc", 10)
 else:
@@ -394,16 +390,7 @@ else:
 if has_data:
   if "Situação" in df_filtrado.columns:
     situacoes = df_filtrado["Situação"].astype(str).tolist()
-    filiados_count = sum(
-        1
-        for s in situacoes
-        if "filiado" in s.lower() and "não" not in s.lower()
-    )
-    if len(df_filtrado) == 1:
-      situacao_municipio = situacoes[0]
-      status_text = situacao_municipio
-    else:
-      status_text = f"{filiados_count} de {len(df_filtrado)} filiados"
+    status_text = situacoes[0] if situacoes else "Filiado"
   else:
     status_text = "Filiado"
 
@@ -433,8 +420,8 @@ if has_data:
 
   ranking_val = (
       df_filtrado["Ranking"].iloc[0]
-      if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns
-      else ("Vários" if len(df_filtrado) > 1 else "-")
+      if "Ranking" in df_filtrado.columns
+      else "-"
   )
 
   pdf_bytes_topo = gerar_pdf_simulacao(
@@ -533,7 +520,7 @@ st.markdown(
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
-# 1. Porte
+# 1. Porte (Sem a opção Todos)
 with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
@@ -542,31 +529,22 @@ with f_col1:
       "", porte_opcoes, key="porte_sel", label_visibility="collapsed"
   )
 
-df_porte = (
-    df_base.copy()
-    if porte_sel == "Todos"
-    else df_base[df_base["Porte"] == porte_sel]
-)
+df_porte = df_base[df_base["Porte"] == porte_sel]
 
-# 2. UF
+# 2. UF (Sem a opção Todas)
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-  uf_opcoes = ["Todas"] + sorted(df_porte["UF"].dropna().unique().tolist())
+  uf_opcoes = sorted(df_porte["UF"].dropna().unique().tolist())
   uf_sel = st.selectbox(
       "", uf_opcoes, key="uf_sel", label_visibility="collapsed"
   )
 
-df_uf = df_porte.copy() if uf_sel == "Todas" else df_porte[df_porte["UF"] == uf_sel]
+df_uf = df_porte[df_porte["UF"] == uf_sel]
 
-# 3. Município
+# 3. Município (Sem a opção Todos)
 SELECIONE_MUN_TEXT = "Digite ou selecione um município"
 lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
-eh_porte_capital = "CAPITAL" in str(porte_sel).upper()
-
-if eh_porte_capital:
-  mun_opcoes = [SELECIONE_MUN_TEXT] + lista_municipios
-else:
-  mun_opcoes = [SELECIONE_MUN_TEXT, "Todos"] + lista_municipios
+mun_opcoes = [SELECIONE_MUN_TEXT] + lista_municipios
 
 with f_col3:
   st.markdown(
@@ -578,8 +556,6 @@ with f_col3:
 
 if mun_sel == SELECIONE_MUN_TEXT:
   df_filtrado = pd.DataFrame()
-elif mun_sel == "Todos":
-  df_filtrado = df_uf.copy()
 else:
   df_filtrado = df_uf[df_uf["Município"] == mun_sel]
 
@@ -590,8 +566,6 @@ with f_col4:
   )
   if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns:
     ranking_val = df_filtrado["Ranking"].iloc[0]
-  elif len(df_filtrado) > 1:
-    ranking_val = "Vários"
   else:
     ranking_val = "-"
 
@@ -613,33 +587,19 @@ if has_data:
   st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
   if "Situação" in df_filtrado.columns:
-    situacoes = df_filtrado["Situação"].astype(str).tolist()
-    filiados_count = sum(
-        1
-        for s in situacoes
-        if "filiado" in s.lower() and "não" not in s.lower()
+    situacao_municipio = str(df_filtrado["Situação"].iloc[0])
+    eh_filiado = (
+        "filiado" in situacao_municipio.lower()
+        and "não" not in situacao_municipio.lower()
     )
-
-    if len(df_filtrado) == 1:
-      situacao_municipio = situacoes[0]
-      eh_filiado = (
-          "filiado" in situacao_municipio.lower()
-          and "não" not in situacao_municipio.lower()
-      )
-      status_text = situacao_municipio
-      status_color = "🟢" if eh_filiado else "🔴"
-    else:
-      eh_filiado = filiados_count == len(df_filtrado)
-      status_text = f"{filiados_count} de {len(df_filtrado)} filiados"
-      status_color = "🔵"
+    status_text = situacao_municipio
+    status_color = "🟢" if eh_filiado else "🔴"
   else:
     eh_filiado = True
     status_text = "Filiado"
     status_color = "🟢"
 
-  nome_exibicao = (
-      mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
-  )
+  nome_exibicao = mun_sel
 
   st.markdown(
       f"""
@@ -768,7 +728,6 @@ if has_data:
         "", opcoes_cenario, key="cenario_calc", label_visibility="collapsed"
     )
 
-  # Regra Dinâmica: Limita em até 10x para 25% e 50%, e até 12x para os demais
   if cenario in ["Desconto 25%", "Desconto 50%"]:
     opcoes_parcelas = list(range(1, 11))
   else:
