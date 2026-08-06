@@ -35,7 +35,7 @@ def set_bg_hack(main_bg):
   if bin_str:
     page_bg_img = f"""
         <style>
-        /* Fundo da tela inteira */
+        /* Fundo em tela cheia */
         .stApp {{
             background-image: url("data:image/jpeg;base64,{bin_str}");
             background-size: cover;
@@ -44,7 +44,7 @@ def set_bg_hack(main_bg):
             background-attachment: fixed;
         }}
 
-        /* Zera padding do container */
+        /* Zera paddings topo e fundo */
         .block-container {{
             padding-top: 1rem !important;
             padding-bottom: 2rem !important;
@@ -52,18 +52,31 @@ def set_bg_hack(main_bg):
 
         #MainMenu, footer, header {{ visibility: hidden; }}
 
-        /* Badges e Pílulas Escuras */
-        .badge-dark {{
-            background-color: #2D3748;
+        /* Pílula Principal "Consulta e Filtros" */
+        .badge-main {{
+            background-color: #334155;
             color: #FFFFFF !important;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }}
+
+        /* Pílulas Pequenas acima dos campos (Porte, UF, Município, Ranking) */
+        .badge-filter {{
+            background-color: #475569;
+            color: #FFFFFF !important;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.78rem;
             display: inline-block;
             margin-bottom: 6px;
         }}
-        
+
         .badge-light {{
             background-color: #FFFFFF;
             color: #1A202C !important;
@@ -74,7 +87,31 @@ def set_bg_hack(main_bg):
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
 
-        /* Estilo dos Cards Superiores de Métricas */
+        /* Inputs e Selectboxes do Streamlit */
+        .stSelectbox div[data-baseweb="select"] > div {{
+            background-color: #F1F5F9 !important;
+            color: #0F172A !important;
+            border-radius: 6px !important;
+            border: none !important;
+            min-height: 42px !important;
+        }}
+
+        /* Caixa do Ranking */
+        .ranking-box {{
+            background-color: #FFFFFF;
+            color: #0F172A;
+            font-weight: 800;
+            text-align: center;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.95rem;
+        }}
+
+        /* Cards Superiores */
         .top-card {{
             background-color: #FFFFFF;
             padding: 12px 18px;
@@ -113,7 +150,7 @@ def set_bg_hack(main_bg):
             font-weight: 600;
         }}
 
-        /* Estilo dos Cards de Simulação */
+        /* Cards de Simulação */
         .sim-card {{
             background-color: #FFFFFF;
             padding: 1rem 1.2rem;
@@ -136,14 +173,6 @@ def set_bg_hack(main_bg):
         .sim-sub {{
             color: #A0AEC0 !important;
             font-size: 0.72rem;
-        }}
-
-        /* Inputs e Selectboxes */
-        .stSelectbox div[data-baseweb="select"] > div {{
-            background-color: #EDF2F7 !important;
-            color: #2D3748 !important;
-            border-radius: 6px !important;
-            border: none !important;
         }}
 
         /* Cards Inferiores */
@@ -353,17 +382,19 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Filtros Padronizados com Badges Escuros
+# -----------------------------------------------------------------------------
+# SEÇÃO DE FILTROS (EXATAMENTE COMO NA REFERÊNCIA)
+# -----------------------------------------------------------------------------
 st.markdown(
-    '<div class="badge-dark">🔍 Consulta e Filtros</div>',
+    '<div class="badge-main">🔍 Consulta e Filtros</div>',
     unsafe_allow_html=True,
 )
 
-f_col1, f_col2, f_col3, f_col4 = st.columns([1.5, 0.8, 3, 1.2])
+f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
 with f_col1:
   st.markdown(
-      '<div class="badge-dark">Porte</div>', unsafe_allow_html=True
+      '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
   )
   porte_sel = st.selectbox(
       "", df_base["Porte"].unique(), label_visibility="collapsed"
@@ -371,7 +402,7 @@ with f_col1:
 df_filtered = df_base[df_base["Porte"] == porte_sel]
 
 with f_col2:
-  st.markdown('<div class="badge-dark">UF</div>', unsafe_allow_html=True)
+  st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
   uf_sel = st.selectbox(
       "", df_filtered["UF"].unique(), label_visibility="collapsed"
   )
@@ -379,7 +410,7 @@ df_filtered = df_filtered[df_filtered["UF"] == uf_sel]
 
 with f_col3:
   st.markdown(
-      '<div class="badge-dark">Município</div>', unsafe_allow_html=True
+      '<div class="badge-filter">Município</div>', unsafe_allow_html=True
   )
   mun_sel = st.selectbox(
       "", df_filtered["Município"].unique(), label_visibility="collapsed"
@@ -388,16 +419,18 @@ df_final = df_filtered[df_filtered["Município"] == mun_sel].iloc[0]
 
 with f_col4:
   st.markdown(
-      '<div class="badge-dark">Ranking</div>', unsafe_allow_html=True
+      '<div class="badge-filter">Ranking</div>', unsafe_allow_html=True
   )
   st.markdown(
       f"""
-        <div style="background-color: #FFFFFF; color: #1A202C; font-weight: 800; text-align: center; padding: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); font-size: 0.95rem; line-height: 1;">
+        <div class="ranking-box">
             {df_final['Ranking']}%
         </div>
     """,
       unsafe_allow_html=True,
   )
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Painel de Simulação
 status_text = "(Não Filiado)" if not df_final["Filiado"] else "(Filiado)"
@@ -405,7 +438,7 @@ status_color = "🔴" if not df_final["Filiado"] else "🟢"
 
 st.markdown(
     f"""
-    <div style="margin-top: 1rem; margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
+    <div style="margin-bottom: 0.8rem; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
         Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} {status_text}</span>
     </div>
 """,
@@ -471,7 +504,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # Calculadora de Parcelamento
 st.markdown(
-    '<div class="badge-dark">⚙️ Calculadora de parcelamento</div>',
+    '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
     unsafe_allow_html=True,
 )
 
@@ -479,8 +512,8 @@ calc_col1, calc_col2 = st.columns(2)
 
 with calc_col1:
   st.markdown(
-      '<div class="badge-dark" style="background-color: #4A5568;">1. Escolha'
-      " o cenário de valor base:</div>",
+      '<div class="badge-filter" style="margin-bottom: 6px;">1. Escolha o'
+      " cenário de valor base:</div>",
       unsafe_allow_html=True,
   )
   cenario = st.selectbox(
@@ -491,8 +524,8 @@ with calc_col1:
 
 with calc_col2:
   st.markdown(
-      '<div class="badge-dark" style="background-color: #4A5568;">2. Escolha'
-      " o número de parcelas desejado:</div>",
+      '<div class="badge-filter" style="margin-bottom: 6px;">2. Escolha o'
+      " número de parcelas desejado:</div>",
       unsafe_allow_html=True,
   )
   num_parcelas = st.selectbox(
