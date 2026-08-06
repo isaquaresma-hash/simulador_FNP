@@ -406,55 +406,89 @@ if val_d25 <= 0:
 if val_d50 <= 0:
   val_d50 = val_integral * 0.50
 
-c1, c2, c3, c4 = st.columns(4)
+# RENDERIZAÇÃO CONDICIONAL DOS CARDS
+if eh_filiado:
+  # Mostra apenas 2 colunas para Filiados (Valor Integral e Desconto 10%)
+  c1, c2 = st.columns(2)
 
-with c1:
-  st.markdown(
-      f"""
-        <div class="sim-card" style="border-left: 4px solid #1E3A8A;">
-            <div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div>
-            <div class="sim-value">R$ {fmt_br(val_integral)}</div>
-            <div class="sim-sub">Sem Desconto</div>
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
+  with c1:
+    st.markdown(
+        f"""
+            <div class="sim-card" style="border-left: 4px solid #1E3A8A;">
+                <div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div>
+                <div class="sim-value">R$ {fmt_br(val_integral)}</div>
+                <div class="sim-sub">Sem Desconto</div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-with c2:
-  st.markdown(
-      f"""
-        <div class="sim-card" style="border-left: 4px solid #2563EB;">
-            <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
-            <div class="sim-value">R$ {fmt_br(val_d10)}</div>
-            <div class="sim-sub">Parcela Padrão: 12x</div>
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
+  with c2:
+    st.markdown(
+        f"""
+            <div class="sim-card" style="border-left: 4px solid #2563EB;">
+                <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
+                <div class="sim-value">R$ {fmt_br(val_d10)}</div>
+                <div class="sim-sub">Parcela Padrão: 12x</div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+else:
+  # Mostra 4 colunas para Não Filiados
+  c1, c2, c3, c4 = st.columns(4)
 
-with c3:
-  card_d25_html = f"""
-        <div class="sim-card" style="border-left: 4px solid #7C3AED; {'opacity: 0.4;' if eh_filiado else ''}">
-            <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
-            <div class="sim-value">R$ {fmt_br(val_d25)}</div>
-            <div class="sim-sub">{'Apenas Não Filiados' if eh_filiado else 'Parcela Padrão: 10x'}</div>
-        </div>
-    """
-  st.markdown(card_d25_html, unsafe_allow_html=True)
+  with c1:
+    st.markdown(
+        f"""
+            <div class="sim-card" style="border-left: 4px solid #1E3A8A;">
+                <div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div>
+                <div class="sim-value">R$ {fmt_br(val_integral)}</div>
+                <div class="sim-sub">Sem Desconto</div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-with c4:
-  card_d50_html = f"""
-        <div class="sim-card" style="border-left: 4px solid #10B981; {'opacity: 0.4;' if eh_filiado else ''}">
-            <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
-            <div class="sim-value">R$ {fmt_br(val_d50)}</div>
-            <div class="sim-sub">{'Apenas Não Filiados' if eh_filiado else 'Parcela Padrão: 10x'}</div>
-        </div>
-    """
-  st.markdown(card_d50_html, unsafe_allow_html=True)
+  with c2:
+    st.markdown(
+        f"""
+            <div class="sim-card" style="border-left: 4px solid #2563EB;">
+                <div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div>
+                <div class="sim-value">R$ {fmt_br(val_d10)}</div>
+                <div class="sim-sub">Parcela Padrão: 12x</div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+  with c3:
+    st.markdown(
+        f"""
+            <div class="sim-card" style="border-left: 4px solid #7C3AED;">
+                <div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div>
+                <div class="sim-value">R$ {fmt_br(val_d25)}</div>
+                <div class="sim-sub">Parcela Padrão: 10x</div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+  with c4:
+    st.markdown(
+        f"""
+            <div class="sim-card" style="border-left: 4px solid #10B981;">
+                <div class="sim-title" style="color: #10B981;">DESCONTO 50%</div>
+                <div class="sim-value">R$ {fmt_br(val_d50)}</div>
+                <div class="sim-sub">Parcela Padrão: 10x</div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Calculadora de Parcelamento com Filtro Regra de Negócio
+# Calculadora de Parcelamento
 st.markdown(
     '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
     unsafe_allow_html=True,
@@ -469,7 +503,6 @@ with calc_col1:
       unsafe_allow_html=True,
   )
 
-  # Regra de negócio aplicada às opções da caixa de seleção
   if eh_filiado:
     opcoes_cenario = ["Desconto 10%", "Valor Integral"]
   else:
