@@ -22,7 +22,7 @@ NOME_ARQUIVO_PLANILHA = "Simulador de contribuição .xlsx"
 
 
 def converter_valor_ptbr(valor):
-  """Converte valores em formato monetário BR ou números para float puro."""
+  """Converte com segurança valores em formato monetário BR ou números para float puro."""
   try:
     if valor is None:
       return 0.0
@@ -31,11 +31,13 @@ def converter_valor_ptbr(valor):
       return float(valor)
 
     val_str = str(valor).strip()
-    if val_str.lower() in ["nan", "none", "", "null", "-"]:
+    if val_str.lower() in ["nan", "none", "", "null", "-", "none"]:
       return 0.0
 
-    val_str = val_str.replace("R$", "").replace(" ", "")
+    # Remove símbolos de moeda e espaços
+    val_str = val_str.replace("R$", "").replace(" ", "").strip()
 
+    # Tratamento de pontuação brasileira
     if "," in val_str:
       val_str = val_str.replace(".", "").replace(",", ".")
     else:
@@ -115,7 +117,13 @@ def carregar_dados():
       mapeamento[col] = "UF"
     elif "MUNICÍPIO" in col_upper or "MUNICIPIO" in col_upper:
       mapeamento[col] = "Município"
-    elif "RANKING" in col_upper or "RANK" in col_upper or "CLASSIFICAÇÃO" in col_upper or "CLASSIFICACAO" in col_upper or "POSIÇÃO" in col_upper:
+    elif (
+        "RANKING" in col_upper
+        or "RANK" in col_upper
+        or "CLASSIFICAÇÃO" in col_upper
+        or "CLASSIFICACAO" in col_upper
+        or "POSIÇÃO" in col_upper
+    ):
       mapeamento[col] = "Ranking"
     elif "10%" in col_upper and "Valor_D10" not in mapeamento.values():
       mapeamento[col] = "Valor_D10"
@@ -126,7 +134,7 @@ def carregar_dados():
     elif "25%" in col_upper and "Valor_D25" not in mapeamento.values():
       mapeamento[col] = "Valor_D25"
     elif (
-        "CONTRIBUIÇÃO 2027" in col_upper or "CONTRIBUICAO 2027" in col_upper
+        "CONTRIBUIÇÃO" in col_upper or "INTEGRAL" in col_upper
     ) and "Valor_Integral" not in mapeamento.values():
       mapeamento[col] = "Valor_Integral"
 
@@ -136,8 +144,8 @@ def carregar_dados():
   if "Ranking" in df.columns:
     df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
-  colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
-  for col in colunas_valor:
+  # Converte as colunas numéricas com tratamento de segurança
+  for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50"]:
     if col in df.columns:
       df[col] = [converter_valor_ptbr(v) for v in df[col]]
     else:
@@ -186,13 +194,11 @@ def set_bg_hack(main_bg):
             margin-bottom: 0.5rem;
         }}
 
-        /* Badges de Títulos Principais de Seção (Consulta e Calculadora) */
         .badge-main {{
             background-color: #334155; color: #FFFFFF !important; padding: 6px 12px;
             border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px;
         }}
 
-        /* Badges de Filtros e Subtítulos */
         .badge-filter {{
             background-color: #475569; color: #FFFFFF !important; padding: 4px 10px;
             border-radius: 4px; font-weight: 700; font-size: 0.9rem; display: inline-block; margin-bottom: 6px;
@@ -255,21 +261,42 @@ def fmt_br(valor):
 
 
 # -----------------------------------------------------------------------------
-# 4. GERADOR DE PDF FORMATADO
+# 4. FUNÇÃO DE REGRAS DE NEGÓCIO E VALIDAÇÃO DOS DESCONTOS
+# -----------------------------------------------------------------------------
+def obter_valores_validados(row_or_df):
+  """Garante prioridade à planilha e valida a integridade matemática dos descontos."""
+  val_integral = row_or_df["Valor_Integral"].sum()
+  val_d10 = row_or_df["Valor_D10"].sum()
+  val_d25 = row_or_df["Valor_D25"].sum()
+  val_d50 = row_or_df["Valor_D50"].sum()
+
+  # 1. Se a planilha estiver sem o valor de desconto, calcula automaticamente
+  if val_d10 <= 0 or val_d10 >= val_integral:
+    val_d10 = val_integral * 0.90
+
+  if val_d25 <= 0 or val_d25 >= val_integral:
+    val_d25 = val_integral * 0.75
+
+  if val_d50 <= 0 or val_d50 >= val_integral:
+    val_d50 = val_integral * 0.50
+
+  return val_integral, val_d10, val_d25, val_d50
+
+
+# -----------------------------------------------------------------------------
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
 
   def header(self):
     self.set_fill_color(10, 54, 99)
     self.rect(0, 0, 210, 32, "F")
-
     self.set_y(10)
     self.set_font("Arial", "B", 14)
     self.set_text_color(255, 255, 255)
     self.cell(
         0, 10, "FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO", 0, 1, "C"
     )
-
     self.set_y(40)
 
 
@@ -332,10 +359,7 @@ def gerar_pdf_simulacao(
       ("Economia Gerada para o Município:", f"R$ {fmt_br(economia)}"),
   ]
 
-  col_w1 = 95
-  col_w2 = 95
-  row_height = 9
-
+  col_w1, col_w2, row_height = 95, 95, 9
   for rotulo, valor in dados:
     pdf.set_font("Arial", "", 10)
     pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
@@ -355,10 +379,9 @@ def gerar_pdf_simulacao(
 
 
 # -----------------------------------------------------------------------------
-# 5. ESTRUTURA DO TOPO (TÍTULO À ESQUERDA E BOTÕES À DIREITA)
+# 6. FILTROS E LÓGICA DE INTERFACE
 # -----------------------------------------------------------------------------
 porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist())
-
 porte_sel = st.session_state.get("porte_sel", "-")
 
 if porte_sel != "-":
@@ -390,30 +413,23 @@ pdf_bytes_topo = None
 nome_exibicao = mun_sel
 
 cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
-
-if cenario_sel in ["Desconto 25%", "Desconto 50%"]:
-  parcelas_sel = st.session_state.get("num_parcelas_calc", 10)
-else:
-  parcelas_sel = st.session_state.get("num_parcelas_calc", 12)
+parcelas_sel = (
+    st.session_state.get("num_parcelas_calc", 10)
+    if cenario_sel in ["Desconto 25%", "Desconto 50%"]
+    else st.session_state.get("num_parcelas_calc", 12)
+)
 
 if has_data:
-  if "Situação" in df_filtrado.columns:
-    situacoes = df_filtrado["Situação"].astype(str).tolist()
-    status_text = situacoes[0] if situacoes else "Filiado"
-  else:
-    status_text = "Filiado"
+  status_text = (
+      df_filtrado["Situação"].iloc[0]
+      if "Situação" in df_filtrado.columns
+      else "Filiado"
+  )
 
-  val_integral_t = df_filtrado["Valor_Integral"].sum()
-  val_d10_t = df_filtrado["Valor_D10"].sum()
-  val_d25_t = df_filtrado["Valor_D25"].sum()
-  val_d50_t = df_filtrado["Valor_D50"].sum()
-
-  if val_d10_t <= 0:
-    val_d10_t = val_integral_t * 0.90
-  if val_d25_t <= 0:
-    val_d25_t = val_integral_t * 0.75
-  if val_d50_t <= 0:
-    val_d50_t = val_integral_t * 0.50
+  # Aplica validação estrita
+  val_integral_t, val_d10_t, val_d25_t, val_d50_t = obter_valores_validados(
+      df_filtrado
+  )
 
   if cenario_sel == "Desconto 10%":
     val_neg_t = val_d10_t
@@ -480,9 +496,8 @@ with header_actions_col:
       st.cache_data.clear()
       st.rerun()
 
-# CARDS INFORMATIVOS SUPERIORES COMPACTOS
+# Cards do Topo
 m_col1, m_col2, m_col3 = st.columns(3)
-
 with m_col1:
   st.markdown("""
         <div class="top-card">
@@ -521,15 +536,13 @@ with m_col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# CONSULTA E FILTROS (Inicia limpo com '-')
+# Filtros
 st.markdown(
     '<div class="badge-main">🔍 Consulta e Filtros</div>',
     unsafe_allow_html=True,
 )
-
 f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
 
-# 1. Porte
 with f_col1:
   st.markdown(
       '<div class="badge-filter">Porte</div>', unsafe_allow_html=True
@@ -538,7 +551,6 @@ with f_col1:
       "", porte_opcoes, key="porte_sel", label_visibility="collapsed"
   )
 
-# Atualiza DF do Porte
 if porte_sel != "-":
   df_porte = df_base[df_base["Porte"] == porte_sel]
   uf_opcoes = ["-"] + sorted(df_porte["UF"].dropna().unique().tolist())
@@ -546,14 +558,12 @@ else:
   df_porte = pd.DataFrame()
   uf_opcoes = ["-"]
 
-# 2. UF
 with f_col2:
   st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
   uf_sel = st.selectbox(
       "", uf_opcoes, key="uf_sel", label_visibility="collapsed"
   )
 
-# Atualiza DF da UF
 if uf_sel != "-" and not df_porte.empty:
   df_uf = df_porte[df_porte["UF"] == uf_sel]
   lista_municipios = sorted(df_uf["Município"].dropna().unique().tolist())
@@ -562,7 +572,6 @@ else:
   df_uf = pd.DataFrame()
   mun_opcoes = ["-"]
 
-# 3. Município
 with f_col3:
   st.markdown(
       '<div class="badge-filter">Município</div>', unsafe_allow_html=True
@@ -576,72 +585,54 @@ if mun_sel != "-" and not df_uf.empty:
 else:
   df_filtrado = pd.DataFrame()
 
-# 4. Classificação / Ranking
 with f_col4:
   st.markdown(
       '<div class="badge-filter">Classificação</div>', unsafe_allow_html=True
   )
-  if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns:
-    ranking_val = df_filtrado["Ranking"].iloc[0]
-  else:
-    ranking_val = "-"
-
+  ranking_val = (
+      df_filtrado["Ranking"].iloc[0]
+      if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns
+      else "-"
+  )
   st.markdown(
-      f"""
-        <div class="ranking-box">
-            {ranking_val}
-        </div>
-    """,
-      unsafe_allow_html=True,
+      f'<div class="ranking-box">{ranking_val}</div>', unsafe_allow_html=True
   )
 
 # -----------------------------------------------------------------------------
-# EXPANSÃO DINÂMICA DA SIMULAÇÃO E CALCULADORA (Apenas quando selecionado)
+# SIMULAÇÃO E CALCULADORA
 # -----------------------------------------------------------------------------
 has_data = not df_filtrado.empty
 
 if has_data:
-  st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+  st.markdown(
+      "<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True
+  )
 
-  if "Situação" in df_filtrado.columns:
-    situacao_municipio = str(df_filtrado["Situação"].iloc[0])
-    eh_filiado = (
-        "filiado" in situacao_municipio.lower()
-        and "não" not in situacao_municipio.lower()
-    )
-    status_text = situacao_municipio
-    status_color = "🟢" if eh_filiado else "🔴"
-  else:
-    eh_filiado = True
-    status_text = "Filiado"
-    status_color = "🟢"
-
-  nome_exibicao = mun_sel
+  situacao_municipio = (
+      str(df_filtrado["Situação"].iloc[0])
+      if "Situação" in df_filtrado.columns
+      else "Filiado"
+  )
+  eh_filiado = (
+      "filiado" in situacao_municipio.lower()
+      and "não" not in situacao_municipio.lower()
+  )
+  status_color = "🟢" if eh_filiado else "🔴"
 
   st.markdown(
       f"""
       <div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #0F172A;">
-          Painel de Simulação — {nome_exibicao} <span class="badge-light">{status_color} ({status_text})</span>
+          Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} ({situacao_municipio})</span>
       </div>
   """,
       unsafe_allow_html=True,
   )
 
-  val_integral = df_filtrado["Valor_Integral"].sum()
-  val_d10 = df_filtrado["Valor_D10"].sum()
-  val_d25 = df_filtrado["Valor_D25"].sum()
-  val_d50 = df_filtrado["Valor_D50"].sum()
-
-  if val_d10 <= 0:
-    val_d10 = val_integral * 0.90
-  if val_d25 <= 0:
-    val_d25 = val_integral * 0.75
-  if val_d50 <= 0:
-    val_d50 = val_integral * 0.50
+  # Obtenção validada dos valores sem risco de distorção
+  val_integral, val_d10, val_d25, val_d50 = obter_valores_validados(df_filtrado)
 
   if eh_filiado:
     c1, c2 = st.columns(2)
-
     with c1:
       st.markdown(
           f"""
@@ -653,7 +644,6 @@ if has_data:
           """,
           unsafe_allow_html=True,
       )
-
     with c2:
       st.markdown(
           f"""
@@ -667,7 +657,6 @@ if has_data:
       )
   else:
     c1, c2, c3, c4 = st.columns(4)
-
     with c1:
       st.markdown(
           f"""
@@ -679,7 +668,6 @@ if has_data:
           """,
           unsafe_allow_html=True,
       )
-
     with c2:
       st.markdown(
           f"""
@@ -691,7 +679,6 @@ if has_data:
           """,
           unsafe_allow_html=True,
       )
-
     with c3:
       st.markdown(
           f"""
@@ -703,7 +690,6 @@ if has_data:
           """,
           unsafe_allow_html=True,
       )
-
     with c4:
       st.markdown(
           f"""
@@ -717,7 +703,6 @@ if has_data:
       )
 
   st.markdown("<br>", unsafe_allow_html=True)
-
   st.markdown(
       '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
       unsafe_allow_html=True,
@@ -730,25 +715,20 @@ if has_data:
         '<div class="badge-filter">1. Escolha o cenário de valor base:</div>',
         unsafe_allow_html=True,
     )
-
-    if eh_filiado:
-      opcoes_cenario = ["Desconto 10%", "Valor Integral"]
-    else:
-      opcoes_cenario = [
-          "Desconto 10%",
-          "Desconto 25%",
-          "Desconto 50%",
-          "Valor Integral",
-      ]
-
+    opcoes_cenario = (
+        ["Desconto 10%", "Valor Integral"]
+        if eh_filiado
+        else ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
+    )
     cenario = st.selectbox(
         "", opcoes_cenario, key="cenario_calc", label_visibility="collapsed"
     )
 
-  if cenario in ["Desconto 25%", "Desconto 50%"]:
-    opcoes_parcelas = list(range(1, 11))
-  else:
-    opcoes_parcelas = list(range(1, 13))
+  opcoes_parcelas = (
+      list(range(1, 11))
+      if cenario in ["Desconto 25%", "Desconto 50%"]
+      else list(range(1, 13))
+  )
 
   with calc_col2:
     st.markdown(
@@ -778,7 +758,6 @@ if has_data:
   valor_parcela = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
 
   res1, res2, res3 = st.columns(3)
-
   with res1:
     st.markdown(
         f"""
