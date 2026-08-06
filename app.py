@@ -178,7 +178,6 @@ def set_bg_hack(main_bg):
         .block-container {{ padding-top: 200px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
-        /* Título do topo aumentado de 1.2rem para 1.6rem */
         .page-title {{
             color: #0A3663;
             font-size: 1.6rem;
@@ -191,11 +190,24 @@ def set_bg_hack(main_bg):
             background-color: #334155; color: #FFFFFF !important; padding: 4px 10px;
             border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: inline-block; margin-bottom: 8px;
         }}
+        
+        /* Emblema exclusivo para a Calculadora com fonte maior */
+        .badge-calc-main {{
+            background-color: #334155; color: #FFFFFF !important; padding: 6px 12px;
+            border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px;
+        }}
+
         .badge-filter {{
             background-color: #475569; color: #FFFFFF !important; padding: 2px 8px;
             border-radius: 4px; font-weight: 700; font-size: 0.72rem; display: inline-block; margin-bottom: 4px;
         }}
-        /* Badge de Situação/Filiado ajustada para acompanhar o título */
+
+        /* Rótulos da Calculadora com fonte maior */
+        .badge-calc-filter {{
+            background-color: #475569; color: #FFFFFF !important; padding: 4px 10px;
+            border-radius: 4px; font-weight: 700; font-size: 0.9rem; display: inline-block; margin-bottom: 6px;
+        }}
+
         .badge-light {{
             background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px;
             border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle;
@@ -634,7 +646,6 @@ if has_data:
       mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
   )
 
-  # Título do Painel de Simulação aumentado de 1.1rem para 1.4rem
   st.markdown(
       f"""
       <div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #0F172A;">
@@ -735,8 +746,9 @@ if has_data:
 
   st.markdown("<br>", unsafe_allow_html=True)
 
+  # Título de topo da Calculadora com fonte maior
   st.markdown(
-      '<div class="badge-main">⚙️ Calculadora de parcelamento</div>',
+      '<div class="badge-calc-main">⚙️ Calculadora de parcelamento</div>',
       unsafe_allow_html=True,
   )
 
@@ -744,8 +756,8 @@ if has_data:
 
   with calc_col1:
     st.markdown(
-        '<div class="badge-filter" style="margin-bottom: 4px;">1. Escolha o'
-        " cenário de valor base:</div>",
+        '<div class="badge-calc-filter">1. Escolha o cenário de valor'
+        " base:</div>",
         unsafe_allow_html=True,
     )
 
@@ -765,8 +777,8 @@ if has_data:
 
   with calc_col2:
     st.markdown(
-        '<div class="badge-filter" style="margin-bottom: 4px;">2. Escolha o'
-        " número de parcelas desejado:</div>",
+        '<div class="badge-calc-filter">2. Escolha o número de parcelas'
+        " desejado:</div>",
         unsafe_allow_html=True,
     )
     num_parcelas = st.selectbox(
