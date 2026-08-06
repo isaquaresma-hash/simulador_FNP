@@ -64,6 +64,7 @@ data = {
 }
 df_base = pd.DataFrame(data)
 
+
 # -----------------------------------------------------------------------------
 # 3. FUNÇÃO PARA GERAR O PDF
 # -----------------------------------------------------------------------------
@@ -82,7 +83,9 @@ class PDF(FPDF):
     self.cell(0, 10, f"Pagina {self.page_no()}", 0, 0, "C")
 
 
-def gerar_pdf_simulacao(municipio, uf, cenario, parcelas, valor_total, valor_parcela, economia):
+def gerar_pdf_simulacao(
+    municipio, uf, cenario, parcelas, valor_total, valor_parcela, economia
+):
   pdf = PDF()
   pdf.add_page()
   pdf.set_font("Arial", "B", 12)
@@ -97,7 +100,7 @@ def gerar_pdf_simulacao(municipio, uf, cenario, parcelas, valor_total, valor_par
   pdf.cell(0, 8, f"Valor de Cada Parcela: R$ {valor_parcela:,.2f}", 0, 1)
   pdf.cell(0, 8, f"Economia para o Municipio: R$ {economia:,.2f}", 0, 1)
 
-  return pdf.output(dest="S").encode("latin1")
+  return bytes(pdf.output())
 
 
 # -----------------------------------------------------------------------------
