@@ -183,7 +183,7 @@ def set_bg_hack(main_bg):
             font-size: 1.5rem;
             font-weight: 800;
             margin-bottom: 1.2rem;
-            margin-top: 2.5rem; /* Ajustado para descer o título */
+            margin-top: 6rem; /* Aumentado para descer bem mais o título */
         }}
 
         .badge-main {{
@@ -735,7 +735,7 @@ if has_data:
           </div>
       """,
         unsafe_allow_html=True,
-  )
+    )
 
   with res2:
     st.markdown(
@@ -760,4 +760,3 @@ if has_data:
       """,
         unsafe_allow_html=True,
     )
-      
