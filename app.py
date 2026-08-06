@@ -175,7 +175,6 @@ def set_bg_hack(main_bg):
             background-repeat: no-repeat;
             background-attachment: scroll;
         }}
-        /* Ajustado para 200px para descer o conteúdo adequadamente */
         .block-container {{ padding-top: 200px !important; padding-bottom: 2rem !important; }}
         #MainMenu, footer, header {{ visibility: hidden; }}
 
@@ -252,31 +251,25 @@ def fmt_br(valor):
 
 
 # -----------------------------------------------------------------------------
-# 4. GERADOR DE PDF
+# 4. GERADOR DE PDF FORMATADO (IGUAL À IMAGEM)
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
 
   def header(self):
-    self.set_font("Arial", "B", 13)
-    self.set_text_color(10, 54, 99)
-    self.cell(
-        0, 8, "FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO", 0, 1, "L"
-    )
-    self.ln(2)
+    # Banner Azul Escuro no topo
+    self.set_fill_color(10, 54, 99)  # #0A3663
+    self.rect(0, 0, 210, 32, "F")
 
-  def footer(self):
-    self.set_y(-18)
-    self.set_font("Arial", "", 8)
-    self.set_text_color(100, 116, 139)
+    # Texto centralizado em branco
+    self.set_y(10)
+    self.set_font("Arial", "B", 14)
+    self.set_text_color(255, 255, 255)
     self.cell(
-        0,
-        5,
-        "Este documento é apenas uma simulação baseada nas regras de"
-        " contribuição da FNP.",
-        0,
-        1,
-        "L",
+        0, 10, "FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO", 0, 1, "C"
     )
+
+    # Margem superior do conteúdo
+    self.set_y(40)
 
 
 def gerar_pdf_simulacao(
@@ -293,32 +286,48 @@ def gerar_pdf_simulacao(
     economia,
 ):
   pdf = PDF()
+  pdf.set_auto_page_break(auto=True, margin=15)
   pdf.add_page()
 
-  pdf.set_font("Arial", "B", 11)
-  pdf.set_text_color(15, 23, 42)
+  # 1. Título Principal do Município
+  pdf.set_font("Arial", "B", 13)
+  pdf.set_text_color(10, 54, 99)
   pdf.cell(
-      0, 6, f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})", 0, 1, "L"
+      0, 8, f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})", 0, 1, "L"
   )
 
-  pdf.set_font("Arial", "", 9)
+  # Subtítulo (Porte | Ranking | Situação)
+  pdf.set_font("Arial", "", 10)
   pdf.set_text_color(71, 85, 105)
   pdf.cell(
       0,
-      5,
-      f"Porte: {porte}  |  Ranking: {ranking}  |  Situação: {situacao}",
+      6,
+      f"Porte: {porte}   |   Ranking: {ranking}   |   Situação: {situacao}",
       0,
       1,
       "L",
   )
-  pdf.ln(5)
 
-  pdf.set_font("Arial", "B", 10)
+  # Linha Divisória Cinza
+  pdf.ln(3)
+  pdf.set_draw_color(226, 232, 240)
+  pdf.set_linewidth(0.5)
+  pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+  pdf.ln(8)
+
+  # 2. Título da Seção
+  pdf.set_font("Arial", "B", 11)
   pdf.set_text_color(10, 54, 99)
-  pdf.cell(0, 6, "DETALHES DO PARCELAMENTO SELECIONADO", 0, 1, "L")
-  pdf.ln(2)
+  pdf.cell(0, 7, "DETALHES DO PARCELAMENTO SELECIONADO", 0, 1, "L")
+  pdf.ln(3)
 
-  itens = [
+  # 3. Tabela de Dados Formatada
+  pdf.set_font("Arial", "", 10)
+  pdf.set_text_color(15, 23, 42)
+  pdf.set_draw_color(226, 232, 240)
+  pdf.set_linewidth(0.3)
+
+  dados = [
       ("Cenário Selecionado:", f"{cenario}"),
       ("Número de Parcelas:", f"{parcelas}x"),
       ("Valor Integral (Sem Desconto):", f"R$ {fmt_br(val_integral)}"),
@@ -327,15 +336,14 @@ def gerar_pdf_simulacao(
       ("Economia Gerada para o Município:", f"R$ {fmt_br(economia)}"),
   ]
 
-  for rotulo, valor in itens:
-    pdf.set_font("Arial", "", 9)
-    pdf.set_text_color(51, 65, 85)
-    pdf.cell(0, 5, rotulo, 0, 1, "L")
+  col_w1 = 95
+  col_w2 = 95
+  row_height = 9
 
-    pdf.set_font("Arial", "B", 9)
-    pdf.set_text_color(15, 23, 42)
-    pdf.cell(0, 5, f" | {valor}", 0, 1, "L")
-    pdf.ln(2)
+  for rotulo, valor in dados:
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
+    pdf.cell(col_w2, row_height, f" {valor}", 1, 1, "L")
 
   with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
     temp_filename = tmp_file.name
@@ -346,6 +354,7 @@ def gerar_pdf_simulacao(
 
   if os.path.exists(temp_filename):
     os.remove(temp_filename)
+
   return pdf_bytes
 
 
@@ -378,6 +387,10 @@ nome_exibicao = (
     mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
 )
 
+# Valores iniciais padrão da simulação
+cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
+parcelas_sel = st.session_state.get("num_parcelas_calc", 12)
+
 if has_data:
   if "Situação" in df_filtrado.columns:
     situacoes = df_filtrado["Situação"].astype(str).tolist()
@@ -388,26 +401,35 @@ if has_data:
     )
     if len(df_filtrado) == 1:
       situacao_municipio = situacoes[0]
-      eh_filiado = (
-          "filiado" in situacao_municipio.lower()
-          and "não" not in situacao_municipio.lower()
-      )
       status_text = situacao_municipio
     else:
-      eh_filiado = filiados_count == len(df_filtrado)
       status_text = f"{filiados_count} de {len(df_filtrado)} filiados"
   else:
-    eh_filiado = True
     status_text = "Filiado"
 
   val_integral_t = df_filtrado["Valor_Integral"].sum()
   val_d10_t = df_filtrado["Valor_D10"].sum()
+  val_d25_t = df_filtrado["Valor_D25"].sum()
+  val_d50_t = df_filtrado["Valor_D50"].sum()
+
   if val_d10_t <= 0:
     val_d10_t = val_integral_t * 0.90
+  if val_d25_t <= 0:
+    val_d25_t = val_integral_t * 0.75
+  if val_d50_t <= 0:
+    val_d50_t = val_integral_t * 0.50
 
-  val_neg_t = val_d10_t
+  if cenario_sel == "Desconto 10%":
+    val_neg_t = val_d10_t
+  elif cenario_sel == "Desconto 25%":
+    val_neg_t = val_d25_t
+  elif cenario_sel == "Desconto 50%":
+    val_neg_t = val_d50_t
+  else:
+    val_neg_t = val_integral_t
+
   econ_t = val_integral_t - val_neg_t
-  val_parc_t = val_neg_t / 12
+  val_parc_t = val_neg_t / parcelas_sel if parcelas_sel > 0 else 0.0
 
   ranking_val = (
       df_filtrado["Ranking"].iloc[0]
@@ -421,8 +443,8 @@ if has_data:
       porte=porte_sel,
       ranking=ranking_val,
       situacao=status_text,
-      cenario="Desconto 10%",
-      parcelas=12,
+      cenario=cenario_sel,
+      parcelas=parcelas_sel,
       val_integral=val_integral_t,
       valor_total=val_neg_t,
       valor_parcela=val_parc_t,
@@ -743,7 +765,9 @@ if has_data:
           "Valor Integral",
       ]
 
-    cenario = st.selectbox("", opcoes_cenario, label_visibility="collapsed")
+    cenario = st.selectbox(
+        "", opcoes_cenario, key="cenario_calc", label_visibility="collapsed"
+    )
 
   with calc_col2:
     st.markdown(
@@ -755,6 +779,7 @@ if has_data:
         "",
         [12, 24, 36, 48],
         format_func=lambda x: f"{x}x ({x} parcelas)",
+        key="num_parcelas_calc",
         label_visibility="collapsed",
     )
 
