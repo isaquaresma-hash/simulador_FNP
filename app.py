@@ -251,7 +251,7 @@ def fmt_br(valor):
 
 
 # -----------------------------------------------------------------------------
-# 4. GERADOR DE PDF FORMATADO (IGUAL À IMAGEM)
+# 4. GERADOR DE PDF FORMATADO (CORRIGIDO)
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
 
@@ -308,10 +308,10 @@ def gerar_pdf_simulacao(
       "L",
   )
 
-  # Linha Divisória Cinza
+  # Linha Divisória Cinza (Corrigido para set_line_width)
   pdf.ln(3)
   pdf.set_draw_color(226, 232, 240)
-  pdf.set_linewidth(0.5)
+  pdf.set_line_width(0.5)
   pdf.line(10, pdf.get_y(), 200, pdf.get_y())
   pdf.ln(8)
 
@@ -325,7 +325,7 @@ def gerar_pdf_simulacao(
   pdf.set_font("Arial", "", 10)
   pdf.set_text_color(15, 23, 42)
   pdf.set_draw_color(226, 232, 240)
-  pdf.set_linewidth(0.3)
+  pdf.set_line_width(0.3)
 
   dados = [
       ("Cenário Selecionado:", f"{cenario}"),
@@ -387,7 +387,6 @@ nome_exibicao = (
     mun_sel if mun_sel != "Todos" else f"Todos ({len(df_filtrado)} municípios)"
 )
 
-# Valores iniciais padrão da simulação
 cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
 parcelas_sel = st.session_state.get("num_parcelas_calc", 12)
 
