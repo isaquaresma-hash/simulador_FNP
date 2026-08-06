@@ -22,7 +22,7 @@ NOME_ARQUIVO_PLANILHA = "Simulador de contribuição .xlsx"
 
 
 def converter_valor_ptbr(valor):
-  """Converte valores em formato monetário BR, inteiros ou floats sem erros de tipo."""
+  """Converte valores em formato monetário BR ou números para float puro."""
   try:
     if valor is None:
       return 0.0
@@ -78,9 +78,15 @@ def carregar_dados():
 
   df.columns = df.columns.astype(str).str.strip()
 
+  # Mapeamento preciso ignorando colunas de parcelamento
   mapeamento = {}
   for col in df.columns:
     col_upper = col.upper()
+
+    # Ignora colunas que são de parcelas divididas
+    if "PARCELA" in col_upper:
+      continue
+
     if "SITUAÇÃO" in col_upper:
       mapeamento[col] = "Situação"
     elif "PORTE" in col_upper:
@@ -91,16 +97,23 @@ def carregar_dados():
       mapeamento[col] = "Município"
     elif "RANKING" in col_upper:
       mapeamento[col] = "Ranking"
-    elif "10%" in col_upper:
+    elif "10%" in col_upper and "Valor_D10" not in mapeamento.values():
       mapeamento[col] = "Valor_D10"
-    elif "50%" in col_upper:
+    elif (
+        "50%" in col_upper or "60%" in col_upper
+    ) and "Valor_D50" not in mapeamento.values():
       mapeamento[col] = "Valor_D50"
-    elif "25%" in col_upper:
+    elif "25%" in col_upper and "Valor_D25" not in mapeamento.values():
       mapeamento[col] = "Valor_D25"
-    elif "CONTRIBUIÇÃO 2027" in col_upper or "CONTRIBUICAO 2027" in col_upper:
+    elif (
+        "CONTRIBUIÇÃO 2027" in col_upper or "CONTRIBUICAO 2027" in col_upper
+    ) and "Valor_Integral" not in mapeamento.values():
       mapeamento[col] = "Valor_Integral"
 
   df = df.rename(columns=mapeamento)
+
+  # Garante remoção de qualquer coluna duplicada remanescente
+  df = df.loc[:, ~df.columns.duplicated()]
 
   colunas_valor = ["Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25"]
   for col in colunas_valor:
@@ -370,24 +383,32 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-val_integral = (
-    df_final["Valor_Integral"] if "Valor_Integral" in df_final else 0.0
-)
-val_d10 = (
-    df_final["Valor_D10"]
-    if ("Valor_D10" in df_final and df_final["Valor_D10"] > 0)
-    else val_integral * 0.90
-)
-val_d25 = (
-    df_final["Valor_D25"]
-    if ("Valor_D25" in df_final and df_final["Valor_D25"] > 0)
-    else val_integral * 0.75
-)
-val_d50 = (
-    df_final["Valor_D50"]
-    if ("Valor_D50" in df_final and df_final["Valor_D50"] > 0)
-    else val_integral * 0.50
-)
+
+def extrair_float_seguro(registro, chave):
+  """Extrai com segurança um escalar numérico do registro."""
+  if chave in registro:
+    val = registro[chave]
+    if isinstance(val, pd.Series):
+      val = val.iloc[0]
+    try:
+      return float(val)
+    except Exception:
+      return 0.0
+  return 0.0
+
+
+val_integral = extrair_float_seguro(df_final, "Valor_Integral")
+val_d10 = extrair_float_seguro(df_final, "Valor_D10")
+val_d25 = extrair_float_seguro(df_final, "Valor_D25")
+val_d50 = extrair_float_seguro(df_final, "Valor_D50")
+
+# Fallback automático caso o valor na planilha esteja zerado
+if val_d10 <= 0:
+  val_d10 = val_integral * 0.90
+if val_d25 <= 0:
+  val_d25 = val_integral * 0.75
+if val_d50 <= 0:
+  val_d50 = val_integral * 0.50
 
 c1, c2, c3, c4 = st.columns(4)
 
@@ -484,7 +505,7 @@ else:
   valor_negociado = val_integral
 
 economia = val_integral - valor_negociado
-valor_parcela = valor_negociado / num_parcelas
+valor_parcela = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
 
 res1, res2, res3 = st.columns(3)
 
