@@ -122,20 +122,28 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. ESTILOS CSS
+# 3. ESTILOS CSS E DETECÇÃO DE IMAGEM DE FUNDO
 # -----------------------------------------------------------------------------
 def set_bg_hack():
     bin_str = None
+    mime_type = "image/png"
+    
+    # Procura qualquer arquivo de imagem na pasta do projeto
     for f in os.listdir("."):
         if f.lower().endswith(('.png', '.jpg', '.jpeg')):
             try:
+                if f.lower().endswith(('.jpg', '.jpeg')):
+                    mime_type = "image/jpeg"
+                else:
+                    mime_type = "image/png"
+                    
                 with open(f, "rb") as img_file:
                     bin_str = base64.b64encode(img_file.read()).decode()
                 break
             except Exception:
                 pass
 
-    bg_css = f'background-image: url("data:image/jpeg;base64,{bin_str}");' if bin_str else 'background-color: #F8FAFC;'
+    bg_css = f'background-image: url("data:{mime_type};base64,{bin_str}");' if bin_str else 'background-color: #F8FAFC;'
 
     page_bg_img = f"""
         <style>
@@ -157,7 +165,7 @@ def set_bg_hack():
             .block-container {{ padding-top: 100px !important; }}
         }}
 
-        .page-title {{ color: #0A3663; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }}
+        .page-title {{ color: #FFFFFF; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }}
         .badge-main {{ background-color: #334155; color: #FFFFFF !important; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px; }}
         .badge-filter {{ background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.9rem; display: inline-block; margin-bottom: 6px; }}
         .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; }}
@@ -392,7 +400,7 @@ if has_data:
     eh_filiado = "filiado" in situacao_municipio.lower() and "não" not in situacao_municipio.lower()
     status_color = "🟢" if eh_filiado else "🔴"
 
-    st.markdown(f'<div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #0F172A;">Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} ({situacao_municipio})</span></div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #FFFFFF;">Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} ({situacao_municipio})</span></div>', unsafe_allow_html=True)
 
     val_integral, val_d10, val_d25, val_d50 = obter_valores_validados(df_filtrado)
 
