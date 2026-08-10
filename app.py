@@ -18,7 +18,7 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 # 2. CARREGAMENTO E LIMPEZA ROBUSTA DA PLANILHA EXCEL
 # -----------------------------------------------------------------------------
-NOME_ARQUIVO_PLANILHA = "Simulador.xlsx"
+NOME_ARQUIVO_PLANILHA = "simulador.xlsx"
 
 
 def converter_valor_ptbr(valor):
