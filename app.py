@@ -361,13 +361,11 @@ with header_actions_col:
             st.rerun()
 
 # Cards do Topo
-m_col1, m_col2, m_col3 = st.columns(3)
+m_col1, m_col2 = st.columns(2)
 with m_col1:
     st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #1E40AF;">🏛️</div><div><div class="top-card-title">CAPITAIS</div><div class="top-card-value">27</div><div class="top-card-sub">Quantidade de capitais no Brasil</div></div></div>', unsafe_allow_html=True)
 with m_col2:
     st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #059669;">👥</div><div><div class="top-card-title">MUNICÍPIOS ACIMA DE 80 MIL HABITANTES</div><div class="top-card-value">435</div><div class="top-card-sub">Municípios recorte FNP</div></div></div>', unsafe_allow_html=True)
-with m_col3:
-    st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #7C3AED;">💲</div><div><div class="top-card-title">POTENCIAL DE ARRECADAÇÃO</div><div class="top-card-value">R$ 5,63 Bi</div><div class="top-card-sub">Potencial total de arrecadação anual</div></div></div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
