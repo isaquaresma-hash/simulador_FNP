@@ -128,7 +128,6 @@ def set_bg_hack():
     bin_str = None
     mime_type = "image/png"
     
-    # Procura qualquer arquivo de imagem na pasta do projeto
     for f in os.listdir("."):
         if f.lower().endswith(('.png', '.jpg', '.jpeg')):
             try:
@@ -293,29 +292,26 @@ def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcel
 # -----------------------------------------------------------------------------
 # 6. FILTROS E INTERFACE
 # -----------------------------------------------------------------------------
-porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist())
+# Filtros Dinâmicos e Independentes
+porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
 porte_sel = st.session_state.get("porte_sel", "-")
 
-if porte_sel != "-":
-    df_porte = df_base[df_base["Porte"] == porte_sel]
-    uf_opcoes = ["-"] + sorted(df_porte["UF"].dropna().unique().tolist())
-else:
-    df_porte = pd.DataFrame()
-    uf_opcoes = ["-"]
+# Permite ver todos os UFs da base inteira, ou filtra por Porte se selecionado
+df_para_uf = df_base[df_base["Porte"] == porte_sel] if porte_sel != "-" else df_base
+uf_opcoes = ["-"] + sorted(df_para_uf["UF"].dropna().unique().tolist()) if "UF" in df_para_uf.columns else ["-"]
 
 uf_sel = st.session_state.get("uf_sel", "-")
 
-if uf_sel != "-" and not df_porte.empty:
-    df_uf = df_porte[df_porte["UF"] == uf_sel]
-    mun_opcoes = ["-"] + sorted(df_uf["Município"].dropna().unique().tolist())
-else:
-    df_uf = pd.DataFrame()
-    mun_opcoes = ["-"]
+# Filtra municípios com base na combinação de Porte e UF selecionados
+df_para_mun = df_para_uf.copy()
+if uf_sel != "-":
+    df_para_mun = df_para_mun[df_para_mun["UF"] == uf_sel]
 
+mun_opcoes = ["-"] + sorted(df_para_mun["Município"].dropna().unique().tolist()) if "Município" in df_para_mun.columns else ["-"]
 mun_sel = st.session_state.get("mun_sel", "-")
 
-if mun_sel != "-" and not df_uf.empty:
-    df_filtrado = df_uf[df_uf["Município"] == mun_sel]
+if mun_sel != "-":
+    df_filtrado = df_para_mun[df_para_mun["Município"] == mun_sel]
 else:
     df_filtrado = pd.DataFrame()
 
@@ -328,6 +324,9 @@ parcelas_sel = st.session_state.get("num_parcelas_calc", 10 if cenario_sel in ["
 
 if has_data:
     status_text = df_filtrado["Situação"].iloc[0] if "Situação" in df_filtrado.columns else "Filiado"
+    porte_exibicao = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else porte_sel
+    uf_exibicao = df_filtrado["UF"].iloc[0] if "UF" in df_filtrado.columns else uf_sel
+    
     val_integral_t, val_d10_t, val_d25_t, val_d50_t = obter_valores_validados(df_filtrado)
 
     val_neg_t = val_d10_t if cenario_sel == "Desconto 10%" else (val_d25_t if cenario_sel == "Desconto 25%" else (val_d50_t if cenario_sel == "Desconto 50%" else val_integral_t))
@@ -336,7 +335,7 @@ if has_data:
     ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns else "-"
 
     pdf_bytes_topo = gerar_pdf_simulacao(
-        municipio=nome_exibicao, uf=uf_sel, porte=porte_sel, ranking=ranking_val,
+        municipio=nome_exibicao, uf=uf_exibicao, porte=porte_exibicao, ranking=ranking_val,
         situacao=status_text, cenario=cenario_sel, parcelas=parcelas_sel,
         val_integral=val_integral_t, valor_total=val_neg_t, valor_parcela=val_parc_t, economia=econ_t
     )
@@ -407,17 +406,17 @@ if has_data:
         with c1:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub">Sem Desconto</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub">Pacote: Até 12x</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div></div>', unsafe_allow_html=True)
     else:
         c1, c2, c3, c4 = st.columns(4)
         with c1:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub">Sem Desconto</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub">Pacote: Até 12x</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div></div>', unsafe_allow_html=True)
         with c3:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {fmt_br(val_d25)}</div><div class="sim-sub">Pacote: Até 10x</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {fmt_br(val_d25)}</div></div>', unsafe_allow_html=True)
         with c4:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div><div class="sim-sub">Pacote: Até 10x</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
