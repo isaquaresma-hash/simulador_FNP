@@ -167,7 +167,7 @@ def set_bg_hack():
         .page-title {{ color: #FFFFFF; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }}
         .badge-main {{ background-color: #334155; color: #FFFFFF !important; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px; }}
         .badge-filter {{ background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.9rem; display: inline-block; margin-bottom: 6px; }}
-        .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; }}
+        .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; }}
         
         .stSelectbox div[data-baseweb="select"] > div {{ background-color: #F1F5F9 !important; color: #0F172A !important; border-radius: 6px !important; border: none !important; min-height: 34px !important; height: 34px !important; }}
         .ranking-box {{ background-color: #FFFFFF; color: #0F172A; font-weight: 800; text-align: center; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.82rem; }}
@@ -178,10 +178,10 @@ def set_bg_hack():
         .top-card-value {{ color: #1A202C !important; font-size: 1.25rem; font-weight: 800; line-height: 1.1; margin: 2px 0; }}
         .top-card-sub {{ color: #A0AEC0 !important; font-size: 0.58rem; font-weight: 600; line-height: 1; }}
 
-        .sim-card {{ background-color: #FFFFFF; padding: 0.7rem 0.9rem; border-radius: 6px; height: 100%; }}
+        .sim-card {{ background-color: #FFFFFF; padding: 0.7rem 0.9rem; border-radius: 6px; min-height: 85px; display: flex; flex-direction: column; justify-content: center; }}
         .sim-title {{ font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.1rem; }}
         .sim-value {{ color: #1A202C !important; font-size: 1.3rem; font-weight: 800; margin: 0.1rem 0; }}
-        .sim-sub {{ color: #A0AEC0 !important; font-size: 0.65rem; }}
+        .sim-sub {{ color: #A0AEC0 !important; font-size: 0.65rem; min-height: 1rem; }}
 
         .res-card-dark {{ background-color: #0A3663; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
         .res-card-blue {{ background-color: #3B82F6; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
@@ -292,17 +292,14 @@ def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcel
 # -----------------------------------------------------------------------------
 # 6. FILTROS E INTERFACE
 # -----------------------------------------------------------------------------
-# Filtros Dinâmicos e Independentes
 porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
 porte_sel = st.session_state.get("porte_sel", "-")
 
-# Permite ver todos os UFs da base inteira, ou filtra por Porte se selecionado
 df_para_uf = df_base[df_base["Porte"] == porte_sel] if porte_sel != "-" else df_base
 uf_opcoes = ["-"] + sorted(df_para_uf["UF"].dropna().unique().tolist()) if "UF" in df_para_uf.columns else ["-"]
 
 uf_sel = st.session_state.get("uf_sel", "-")
 
-# Filtra municípios com base na combinação de Porte e UF selecionados
 df_para_mun = df_para_uf.copy()
 if uf_sel != "-":
     df_para_mun = df_para_mun[df_para_mun["UF"] == uf_sel]
@@ -323,7 +320,7 @@ cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
 parcelas_sel = st.session_state.get("num_parcelas_calc", 10 if cenario_sel in ["Desconto 25%", "Desconto 50%"] else 12)
 
 if has_data:
-    status_text = df_filtrado["Situação"].iloc[0] if "Situação" in df_filtrado.columns else "Filiado"
+    status_text = df_filtrado["Situação"].iloc[0].strip() if "Situação" in df_filtrado.columns else "Filiado"
     porte_exibicao = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else porte_sel
     uf_exibicao = df_filtrado["UF"].iloc[0] if "UF" in df_filtrado.columns else uf_sel
     
@@ -393,11 +390,11 @@ with f_col4:
 if has_data:
     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
-    situacao_municipio = str(df_filtrado["Situação"].iloc[0]) if "Situação" in df_filtrado.columns else "Filiado"
+    situacao_municipio = str(df_filtrado["Situação"].iloc[0]).strip() if "Situação" in df_filtrado.columns else "Filiado"
     eh_filiado = "filiado" in situacao_municipio.lower() and "não" not in situacao_municipio.lower()
     status_color = "🟢" if eh_filiado else "🔴"
 
-    st.markdown(f'<div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #FFFFFF;">Painel de Simulação — {mun_sel} <span class="badge-light">{status_color} ({situacao_municipio})</span></div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #FFFFFF;">Painel de Simulação — {mun_sel} <span class="badge-light">{status_color}({situacao_municipio})</span></div>', unsafe_allow_html=True)
 
     val_integral, val_d10, val_d25, val_d50 = obter_valores_validados(df_filtrado)
 
@@ -406,17 +403,17 @@ if has_data:
         with c1:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub">Sem Desconto</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
     else:
         c1, c2, c3, c4 = st.columns(4)
         with c1:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub">Sem Desconto</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
         with c3:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {fmt_br(val_d25)}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {fmt_br(val_d25)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
         with c4:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
