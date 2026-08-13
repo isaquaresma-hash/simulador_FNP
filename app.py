@@ -170,7 +170,7 @@ def set_bg_hack():
         .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; }}
         
         .stSelectbox div[data-baseweb="select"] > div {{ background-color: #F1F5F9 !important; color: #0F172A !important; border-radius: 6px !important; border: none !important; min-height: 34px !important; height: 34px !important; }}
-        .ranking-box {{ background-color: #FFFFFF; color: #0F172A; font-weight: 800; text-align: center; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.82rem; }}
+        .info-auto-box {{ background-color: #FFFFFF; color: #0F172A; font-weight: 800; text-align: center; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.82rem; }}
         
         .top-card {{ background-color: #FFFFFF; padding: 6px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px; height: 60px; }}
         .icon-circle {{ width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; font-weight: bold; flex-shrink: 0; }}
@@ -290,12 +290,8 @@ def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcel
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 6. FILTROS E INTERFACE
+# 6. CABEÇALHO E TOP CARDS
 # -----------------------------------------------------------------------------
-# Inicialização de opções de Porte
-porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
-
-# Cabeçalho Principal
 header_title_col, header_actions_col = st.columns([5.5, 4.5])
 
 with header_title_col:
@@ -304,7 +300,6 @@ with header_title_col:
 with header_actions_col:
     b_col1, b_col2 = st.columns(2)
     with b_col1:
-        # Espaço reservado para o botão de PDF que será gerado abaixo
         pdf_placeholder = st.empty()
 
     with b_col2:
@@ -312,7 +307,6 @@ with header_actions_col:
             st.cache_data.clear()
             st.rerun()
 
-# Cards do Topo
 m_col1, m_col2 = st.columns(2)
 with m_col1:
     st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #1E40AF;">🏛️</div><div><div class="top-card-title">CAPITAIS</div><div class="top-card-value">27</div><div class="top-card-sub">Quantidade de capitais no Brasil</div></div></div>', unsafe_allow_html=True)
@@ -321,44 +315,52 @@ with m_col2:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Filtros
+# -----------------------------------------------------------------------------
+# 7. FILTROS AUTOMÁTICOS (UF -> MUNICÍPIO -> PORTE AUTOMÁTICO)
+# -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
-f_col1, f_col2, f_col3, f_col4 = st.columns([2, 1.5, 4.5, 2])
+f_col1, f_col2, f_col3, f_col4 = st.columns([1.5, 3.5, 2.5, 2.5])
 
+# 1. Escolhe a UF
+uf_opcoes = ["-"] + sorted(df_base["UF"].dropna().unique().tolist()) if "UF" in df_base.columns else ["-"]
 with f_col1:
-    st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
-    porte_sel = st.selectbox("", porte_opcoes, key="porte_sel", label_visibility="collapsed")
-
-# Filtragem encadeada de UF
-df_para_uf = df_base[df_base["Porte"] == porte_sel] if porte_sel != "-" else df_base
-uf_opcoes = ["-"] + sorted(df_para_uf["UF"].dropna().unique().tolist()) if "UF" in df_para_uf.columns else ["-"]
-
-with f_col2:
     st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
     uf_sel = st.selectbox("", uf_opcoes, key="uf_sel", label_visibility="collapsed")
 
-# Filtragem encadeada de Municípios
-df_para_mun = df_para_uf.copy()
+# 2. Carrega Municípios da UF escolhida
 if uf_sel != "-":
-    df_para_mun = df_para_mun[df_para_mun["UF"] == uf_sel]
+    df_uf = df_base[df_base["UF"] == uf_sel]
+    mun_opcoes = ["-"] + sorted(df_uf["Município"].dropna().unique().tolist())
+else:
+    mun_opcoes = ["-"]
 
-mun_opcoes = ["-"] + sorted(df_para_mun["Município"].dropna().unique().tolist()) if "Município" in df_para_mun.columns else ["-"]
-
-with f_col3:
+with f_col2:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
     mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", label_visibility="collapsed")
 
-if mun_sel != "-":
-    df_filtrado = df_para_mun[df_para_mun["Município"] == mun_sel]
+# 3. Busca automática de Porte e Ranking do Município
+if mun_sel != "-" and uf_sel != "-":
+    df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
+    porte_val = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns and not df_filtrado.empty else "-"
+    ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns and not df_filtrado.empty else "-"
 else:
     df_filtrado = pd.DataFrame()
+    porte_val = "-"
+    ranking_val = "-"
 
+# 4. Exibe o Porte carregado automaticamente
+with f_col3:
+    st.markdown('<div class="badge-filter">Porte (Automático)</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-auto-box">{porte_val}</div>', unsafe_allow_html=True)
+
+# 5. Exibe a Classificação/Ranking carregada automaticamente
 with f_col4:
     st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
-    ranking_val = df_filtrado["Ranking"].iloc[0] if len(df_filtrado) == 1 and "Ranking" in df_filtrado.columns else "-"
-    st.markdown(f'<div class="ranking-box">{ranking_val}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
 
-# Simulador
+# -----------------------------------------------------------------------------
+# 8. SIMULADOR E CALCULADORA
+# -----------------------------------------------------------------------------
 has_data = not df_filtrado.empty
 
 if has_data:
@@ -417,11 +419,11 @@ if has_data:
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">ECONOMIA PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
-    # Gera o PDF dinâmico com base nas escolhas da Calculadora
+    # Gera o PDF dinâmico
     pdf_bytes_topo = gerar_pdf_simulacao(
         municipio=mun_sel,
-        uf=df_filtrado["UF"].iloc[0] if "UF" in df_filtrado.columns else uf_sel,
-        porte=df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else porte_sel,
+        uf=uf_sel,
+        porte=porte_val,
         ranking=ranking_val,
         situacao=situacao_municipio,
         cenario=cenario,
