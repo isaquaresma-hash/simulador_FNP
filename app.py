@@ -166,11 +166,33 @@ def set_bg_hack():
 
         .page-title {{ color: #FFFFFF; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }}
         .badge-main {{ background-color: #334155; color: #FFFFFF !important; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px; }}
-        .badge-filter {{ background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.9rem; display: inline-block; margin-bottom: 6px; }}
+        .badge-filter {{ background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px; text-align: left; }}
         .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; }}
         
-        .stSelectbox div[data-baseweb="select"] > div {{ background-color: #F1F5F9 !important; color: #0F172A !important; border-radius: 6px !important; border: none !important; min-height: 34px !important; height: 34px !important; }}
-        .info-auto-box {{ background-color: #FFFFFF; color: #0F172A; font-weight: 800; text-align: center; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.82rem; }}
+        /* Padronização exata da altura dos campos do filtro */
+        .stSelectbox div[data-baseweb="select"] > div {{ 
+            background-color: #F1F5F9 !important; 
+            color: #0F172A !important; 
+            border-radius: 6px !important; 
+            border: none !important; 
+            min-height: 38px !important; 
+            height: 38px !important; 
+        }}
+        .info-auto-box {{ 
+            background-color: #F1F5F9; 
+            color: #0F172A; 
+            font-weight: 800; 
+            text-align: center; 
+            height: 38px; 
+            min-height: 38px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 6px; 
+            box-shadow: none; 
+            font-size: 0.88rem; 
+            box-sizing: border-box;
+        }}
         
         .top-card {{ background-color: #FFFFFF; padding: 6px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px; height: 60px; }}
         .icon-circle {{ width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; font-weight: bold; flex-shrink: 0; }}
@@ -190,7 +212,7 @@ def set_bg_hack():
         .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
         .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
 
-        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.75rem !important; font-weight: 600 !important; padding: 0.2rem 0.6rem !important; min-height: 34px !important; }}
+        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.75rem !important; font-weight: 600 !important; padding: 0.2rem 0.6rem !important; min-height: 38px !important; }}
         </style>
         """
     st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -316,44 +338,72 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 7. FILTROS AUTOMÁTICOS (UF -> MUNICÍPIO -> PORTE AUTOMÁTICO)
+# 7. FILTROS BIDIRECIONAIS E ALINHO (PORTE, UF, MUNICÍPIO, CLASSIFICAÇÃO)
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
-f_col1, f_col2, f_col3, f_col4 = st.columns([1.5, 3.5, 2.5, 2.5])
 
-# 1. Escolhe a UF
-uf_opcoes = ["-"] + sorted(df_base["UF"].dropna().unique().tolist()) if "UF" in df_base.columns else ["-"]
+# Proporção ajustada para equilíbrio perfeito
+f_col1, f_col2, f_col3, f_col4 = st.columns([2.5, 1.2, 3.8, 2.5])
+
+# Inicialização do state se não existir
+if "porte_sel" not in st.session_state:
+    st.session_state.porte_sel = "-"
+if "uf_sel" not in st.session_state:
+    st.session_state.uf_sel = "-"
+if "mun_sel" not in st.session_state:
+    st.session_state.mun_sel = "-"
+
+# 1. Opções do Porte
+porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
+
+def on_porte_change():
+    st.session_state.uf_sel = "-"
+    st.session_state.mun_sel = "-"
+
 with f_col1:
-    st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-    uf_sel = st.selectbox("", uf_opcoes, key="uf_sel", label_visibility="collapsed")
+    st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
+    porte_sel = st.selectbox("", porte_opcoes, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
 
-# 2. Carrega Municípios da UF escolhida
-if uf_sel != "-":
-    df_uf = df_base[df_base["UF"] == uf_sel]
-    mun_opcoes = ["-"] + sorted(df_uf["Município"].dropna().unique().tolist())
-else:
-    mun_opcoes = ["-"]
+# Base temporária filtrada pelo Porte
+df_temp = df_base.copy()
+if porte_sel != "-":
+    df_temp = df_temp[df_temp["Porte"] == porte_sel]
+
+# 2. Opções da UF
+uf_opcoes = ["-"] + sorted(df_temp["UF"].dropna().unique().tolist()) if "UF" in df_temp.columns else ["-"]
+
+def on_uf_change():
+    st.session_state.mun_sel = "-"
 
 with f_col2:
+    st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
+    uf_sel = st.selectbox("", uf_opcoes, key="uf_sel", on_change=on_uf_change, label_visibility="collapsed")
+
+if uf_sel != "-":
+    df_temp = df_temp[df_temp["UF"] == uf_sel]
+
+# 3. Opções do Município
+mun_opcoes = ["-"] + sorted(df_temp["Município"].dropna().unique().tolist()) if "Município" in df_temp.columns else ["-"]
+
+with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
     mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", label_visibility="collapsed")
 
-# 3. Busca automática de Porte e Ranking do Município
+# 4. Atualização Automática do Porte/Ranking quando seleciona o Município
 if mun_sel != "-" and uf_sel != "-":
     df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
-    porte_val = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns and not df_filtrado.empty else "-"
-    ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns and not df_filtrado.empty else "-"
+    if not df_filtrado.empty:
+        porte_val = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else "-"
+        ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns else "-"
+    else:
+        porte_val = "-"
+        ranking_val = "-"
 else:
     df_filtrado = pd.DataFrame()
-    porte_val = "-"
+    porte_val = porte_sel if porte_sel != "-" else "-"
     ranking_val = "-"
 
-# 4. Exibe o Porte carregado automaticamente
-with f_col3:
-    st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="info-auto-box">{porte_val}</div>', unsafe_allow_html=True)
-
-# 5. Exibe a Classificação/Ranking carregada automaticamente
+# 5. Exibe a Classificação/Ranking alinhada
 with f_col4:
     st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
