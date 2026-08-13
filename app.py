@@ -350,7 +350,7 @@ else:
 
 # 4. Exibe o Porte carregado automaticamente
 with f_col3:
-    st.markdown('<div class="badge-filter">Porte (Automático)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="info-auto-box">{porte_val}</div>', unsafe_allow_html=True)
 
 # 5. Exibe a Classificação/Ranking carregada automaticamente
