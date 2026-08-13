@@ -169,7 +169,6 @@ def set_bg_hack():
         .badge-filter {{ background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px; text-align: left; }}
         .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; }}
         
-        /* Padronização exata da altura dos campos do filtro */
         .stSelectbox div[data-baseweb="select"] > div {{ 
             background-color: #F1F5F9 !important; 
             color: #0F172A !important; 
@@ -338,14 +337,12 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 7. FILTROS BIDIRECIONAIS E ALINHO (PORTE, UF, MUNICÍPIO, CLASSIFICAÇÃO)
+# 7. FILTROS INTEGRIFICADOS (SINCRONIZAÇÃO AUTOMÁTICA DE PORTE)
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
 
-# Proporção ajustada para equilíbrio perfeito
 f_col1, f_col2, f_col3, f_col4 = st.columns([2.5, 1.2, 3.8, 2.5])
 
-# Inicialização do state se não existir
 if "porte_sel" not in st.session_state:
     st.session_state.porte_sel = "-"
 if "uf_sel" not in st.session_state:
@@ -353,27 +350,35 @@ if "uf_sel" not in st.session_state:
 if "mun_sel" not in st.session_state:
     st.session_state.mun_sel = "-"
 
-# 1. Opções do Porte
+# Listas de opções
 porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
 
+# Callbacks para sincronização imediata do state
 def on_porte_change():
     st.session_state.uf_sel = "-"
     st.session_state.mun_sel = "-"
+
+def on_uf_change():
+    st.session_state.mun_sel = "-"
+
+def on_mun_change():
+    mun = st.session_state.mun_sel
+    uf = st.session_state.uf_sel
+    if mun != "-" and uf != "-":
+        match = df_base[(df_base["UF"] == uf) & (df_base["Município"] == mun)]
+        if not match.empty and "Porte" in match.columns:
+            st.session_state.porte_sel = match["Porte"].iloc[0]
 
 with f_col1:
     st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
     porte_sel = st.selectbox("", porte_opcoes, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
 
-# Base temporária filtrada pelo Porte
+# Base filtrada por porte se selecionado diretamente
 df_temp = df_base.copy()
 if porte_sel != "-":
     df_temp = df_temp[df_temp["Porte"] == porte_sel]
 
-# 2. Opções da UF
 uf_opcoes = ["-"] + sorted(df_temp["UF"].dropna().unique().tolist()) if "UF" in df_temp.columns else ["-"]
-
-def on_uf_change():
-    st.session_state.mun_sel = "-"
 
 with f_col2:
     st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
@@ -382,14 +387,13 @@ with f_col2:
 if uf_sel != "-":
     df_temp = df_temp[df_temp["UF"] == uf_sel]
 
-# 3. Opções do Município
 mun_opcoes = ["-"] + sorted(df_temp["Município"].dropna().unique().tolist()) if "Município" in df_temp.columns else ["-"]
 
 with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
-    mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", label_visibility="collapsed")
+    mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
 
-# 4. Atualização Automática do Porte/Ranking quando seleciona o Município
+# Dados do município selecionado
 if mun_sel != "-" and uf_sel != "-":
     df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
     if not df_filtrado.empty:
@@ -403,7 +407,6 @@ else:
     porte_val = porte_sel if porte_sel != "-" else "-"
     ranking_val = "-"
 
-# 5. Exibe a Classificação/Ranking alinhada
 with f_col4:
     st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
