@@ -292,50 +292,8 @@ def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcel
 # -----------------------------------------------------------------------------
 # 6. FILTROS E INTERFACE
 # -----------------------------------------------------------------------------
+# Inicialização de opções de Porte
 porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
-porte_sel = st.session_state.get("porte_sel", "-")
-
-df_para_uf = df_base[df_base["Porte"] == porte_sel] if porte_sel != "-" else df_base
-uf_opcoes = ["-"] + sorted(df_para_uf["UF"].dropna().unique().tolist()) if "UF" in df_para_uf.columns else ["-"]
-
-uf_sel = st.session_state.get("uf_sel", "-")
-
-df_para_mun = df_para_uf.copy()
-if uf_sel != "-":
-    df_para_mun = df_para_mun[df_para_mun["UF"] == uf_sel]
-
-mun_opcoes = ["-"] + sorted(df_para_mun["Município"].dropna().unique().tolist()) if "Município" in df_para_mun.columns else ["-"]
-mun_sel = st.session_state.get("mun_sel", "-")
-
-if mun_sel != "-":
-    df_filtrado = df_para_mun[df_para_mun["Município"] == mun_sel]
-else:
-    df_filtrado = pd.DataFrame()
-
-has_data = not df_filtrado.empty
-pdf_bytes_topo = None
-nome_exibicao = mun_sel
-
-cenario_sel = st.session_state.get("cenario_calc", "Desconto 10%")
-parcelas_sel = st.session_state.get("num_parcelas_calc", 10 if cenario_sel in ["Desconto 25%", "Desconto 50%"] else 12)
-
-if has_data:
-    status_text = df_filtrado["Situação"].iloc[0].strip() if "Situação" in df_filtrado.columns else "Filiado"
-    porte_exibicao = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else porte_sel
-    uf_exibicao = df_filtrado["UF"].iloc[0] if "UF" in df_filtrado.columns else uf_sel
-    
-    val_integral_t, val_d10_t, val_d25_t, val_d50_t = obter_valores_validados(df_filtrado)
-
-    val_neg_t = val_d10_t if cenario_sel == "Desconto 10%" else (val_d25_t if cenario_sel == "Desconto 25%" else (val_d50_t if cenario_sel == "Desconto 50%" else val_integral_t))
-    econ_t = val_integral_t - val_neg_t
-    val_parc_t = val_neg_t / parcelas_sel if parcelas_sel > 0 else 0.0
-    ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns else "-"
-
-    pdf_bytes_topo = gerar_pdf_simulacao(
-        municipio=nome_exibicao, uf=uf_exibicao, porte=porte_exibicao, ranking=ranking_val,
-        situacao=status_text, cenario=cenario_sel, parcelas=parcelas_sel,
-        val_integral=val_integral_t, valor_total=val_neg_t, valor_parcela=val_parc_t, economia=econ_t
-    )
 
 # Cabeçalho Principal
 header_title_col, header_actions_col = st.columns([5.5, 4.5])
@@ -346,10 +304,8 @@ with header_title_col:
 with header_actions_col:
     b_col1, b_col2 = st.columns(2)
     with b_col1:
-        if has_data and pdf_bytes_topo:
-            st.download_button("📄 Baixar Simulação em PDF", data=pdf_bytes_topo, file_name=f"simulacao_{nome_exibicao}.pdf", mime="application/pdf", use_container_width=True)
-        else:
-            st.button("📄 Baixar Simulação em PDF", disabled=True, use_container_width=True)
+        # Espaço reservado para o botão de PDF que será gerado abaixo
+        pdf_placeholder = st.empty()
 
     with b_col2:
         if st.button("🔄 Atualização Base", use_container_width=True):
@@ -373,13 +329,29 @@ with f_col1:
     st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
     porte_sel = st.selectbox("", porte_opcoes, key="porte_sel", label_visibility="collapsed")
 
+# Filtragem encadeada de UF
+df_para_uf = df_base[df_base["Porte"] == porte_sel] if porte_sel != "-" else df_base
+uf_opcoes = ["-"] + sorted(df_para_uf["UF"].dropna().unique().tolist()) if "UF" in df_para_uf.columns else ["-"]
+
 with f_col2:
     st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
     uf_sel = st.selectbox("", uf_opcoes, key="uf_sel", label_visibility="collapsed")
 
+# Filtragem encadeada de Municípios
+df_para_mun = df_para_uf.copy()
+if uf_sel != "-":
+    df_para_mun = df_para_mun[df_para_mun["UF"] == uf_sel]
+
+mun_opcoes = ["-"] + sorted(df_para_mun["Município"].dropna().unique().tolist()) if "Município" in df_para_mun.columns else ["-"]
+
 with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
     mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", label_visibility="collapsed")
+
+if mun_sel != "-":
+    df_filtrado = df_para_mun[df_para_mun["Município"] == mun_sel]
+else:
+    df_filtrado = pd.DataFrame()
 
 with f_col4:
     st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
@@ -387,6 +359,8 @@ with f_col4:
     st.markdown(f'<div class="ranking-box">{ranking_val}</div>', unsafe_allow_html=True)
 
 # Simulador
+has_data = not df_filtrado.empty
+
 if has_data:
     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
@@ -442,3 +416,22 @@ if has_data:
         st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">Cenário: {cenario}</div></div>', unsafe_allow_html=True)
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">ECONOMIA PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
+
+    # Gera o PDF dinâmico com base nas escolhas da Calculadora
+    pdf_bytes_topo = gerar_pdf_simulacao(
+        municipio=mun_sel,
+        uf=df_filtrado["UF"].iloc[0] if "UF" in df_filtrado.columns else uf_sel,
+        porte=df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else porte_sel,
+        ranking=ranking_val,
+        situacao=situacao_municipio,
+        cenario=cenario,
+        parcelas=num_parcelas,
+        val_integral=val_integral,
+        valor_total=valor_negociado,
+        valor_parcela=valor_parcela,
+        economia=economia
+    )
+
+    pdf_placeholder.download_button("📄 Baixar Simulação em PDF", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+else:
+    pdf_placeholder.button("📄 Baixar Simulação em PDF", disabled=True, use_container_width=True)
