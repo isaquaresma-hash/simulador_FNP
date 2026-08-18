@@ -284,8 +284,13 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.set_draw_color(226, 232, 240)
     pdf.set_line_width(0.3)
 
+    # Formatação descritiva para o PDF caso seja 25% ou 50%
+    cenario_pdf = cenario
+    if cenario in ["Desconto 25%", "Desconto 50%"]:
+        cenario_pdf = f"{cenario} (Novos Filiados)"
+
     dados = [
-        ("Cenário Selecionado:", f"{cenario}"),
+        ("Cenário Selecionado:", f"{cenario_pdf}"),
         ("Número de Parcelas:", f"{parcelas}x"),
         ("Valor Integral:", f"R$ {fmt_br(val_integral)}"),
         ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
@@ -468,7 +473,8 @@ if has_data:
     with res1:
         st.markdown(f'<div class="res-card-dark"><div class="res-title">VALOR DE CADA PARCELA</div><div class="res-val">R$ {fmt_br(valor_parcela)}</div><div class="res-sub">Plano em {num_parcelas} parcelas mensais</div></div>', unsafe_allow_html=True)
     with res2:
-        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">Cenário: {cenario}</div></div>', unsafe_allow_html=True)
+        sub_cenario = f"Cenário: {cenario} (Novos Filiados)" if cenario in ["Desconto 25%", "Desconto 50%"] else f"Cenário: {cenario}"
+        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">{sub_cenario}</div></div>', unsafe_allow_html=True)
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
