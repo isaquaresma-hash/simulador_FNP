@@ -255,7 +255,7 @@ class PDF(FPDF):
         self.set_y(40)
 
 
-def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
+def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -266,7 +266,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcel
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(71, 85, 105)
-    pdf.cell(0, 6, f"Porte: {porte}   |   Ranking: {ranking}   |   Situação: {situacao}", 0, 1, "L")
+    pdf.cell(0, 6, f"Porte: {porte}", 0, 1, "L")
 
     pdf.ln(3)
     pdf.set_draw_color(226, 232, 240)
@@ -287,10 +287,10 @@ def gerar_pdf_simulacao(municipio, uf, porte, ranking, situacao, cenario, parcel
     dados = [
         ("Cenário Selecionado:", f"{cenario}"),
         ("Número de Parcelas:", f"{parcelas}x"),
-        ("Valor Integral (Sem Desconto):", f"R$ {fmt_br(val_integral)}"),
+        ("Valor Integral:", f"R$ {fmt_br(val_integral)}"),
         ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
         ("Valor de Cada Parcela Mensal:", f"R$ {fmt_br(valor_parcela)}"),
-        ("Economia Gerada para o Município:", f"R$ {fmt_br(economia)}"),
+        ("Desconto para o Município:", f"R$ {fmt_br(economia)}"),
     ]
 
     col_w1, col_w2, row_height = 95, 95, 9
@@ -430,13 +430,13 @@ if has_data:
     if eh_filiado:
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub">Sem Desconto</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
         with c2:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
     else:
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub">Sem Desconto</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
         with c2:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
         with c3:
@@ -470,15 +470,13 @@ if has_data:
     with res2:
         st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">Cenário: {cenario}</div></div>', unsafe_allow_html=True)
     with res3:
-        st.markdown(f'<div class="res-card-green"><div class="res-title">ECONOMIA PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
     # Gera o PDF dinâmico
     pdf_bytes_topo = gerar_pdf_simulacao(
         municipio=mun_sel,
         uf=uf_sel,
         porte=porte_val,
-        ranking=ranking_val,
-        situacao=situacao_municipio,
         cenario=cenario,
         parcelas=num_parcelas,
         val_integral=val_integral,
