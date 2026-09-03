@@ -95,6 +95,7 @@ def carregar_dados():
             mapeamento[col] = "Município"
         elif any(k in col_upper for k in ["RANKING", "RANK", "CLASSIFICAÇÃO", "CLASSIFICACAO", "POSIÇÃO"]):
             mapeamento[col] = "Ranking"
+        # INCLUSÃO: Novos campos mapeados sem alterar os existentes
         elif "POPU" in col_upper:
             mapeamento[col] = "População"
         elif "RCL" in col_upper:
@@ -118,6 +119,7 @@ def carregar_dados():
     if "Ranking" in df.columns:
         df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
+    # INCLUSÃO: Trata RCL e Per Capita na conversão monetária
     for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50", "RCL", "Per Capita"]:
         if col in df.columns:
             df[col] = [converter_valor_ptbr(v) for v in df[col]]
@@ -219,7 +221,8 @@ def set_bg_hack():
         .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
         .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
 
-        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.4rem !important; min-height: 38px !important; text-align: center !important; }}
+        /* Ajuste de centralização e layout compacto dos botões superiores */
+        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.3rem !important; min-height: 38px !important; text-align: center !important; }}
         </style>
         """
     st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -250,7 +253,7 @@ def obter_valores_validados(row_or_df):
     return val_integral, val_d10, val_d25, val_d50
 
 # -----------------------------------------------------------------------------
-# 5. GERADORES DE PDF
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
     def header(self):
@@ -263,7 +266,7 @@ class PDF(FPDF):
         self.set_y(40)
 
 
-def gerar_pdf_simulacao(municipio, uf, porte, populacao, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
+def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -274,9 +277,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, populacao, cenario, parcelas, val_
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(71, 85, 105)
-    
-    pop_str = f" | População: {populacao}" if populacao and str(populacao) != "-" else ""
-    pdf.cell(0, 6, f"Porte: {porte}{pop_str}", 0, 1, "L")
+    pdf.cell(0, 6, f"Porte: {porte}", 0, 1, "L")
 
     pdf.ln(3)
     pdf.set_draw_color(226, 232, 240)
@@ -294,6 +295,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, populacao, cenario, parcelas, val_
     pdf.set_draw_color(226, 232, 240)
     pdf.set_line_width(0.3)
 
+    # Adiciona a especificação para novo filiado nos descontos de 25% e 50%
     cenario_pdf = cenario
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
@@ -325,6 +327,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, populacao, cenario, parcelas, val_
     return pdf_bytes
 
 
+# INCLUSÃO: Função para gerar o relatório em PDF da Memória de Cálculo
 def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, per_capita, decil, val_contribuicao):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -383,12 +386,14 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, per_capita, decil, 
 # -----------------------------------------------------------------------------
 # 6. CABEÇALHO E TOP CARDS
 # -----------------------------------------------------------------------------
-header_title_col, header_actions_col = st.columns([6.5, 3.5])
+# Redução das colunas superiores para otimizar tamanho dos botões e acomodar o 3º botão
+header_title_col, header_actions_col = st.columns([6.3, 3.7])
 
 with header_title_col:
     st.markdown('<div class="page-title">Simulador de Contribuição e Parcelamento</div>', unsafe_allow_html=True)
 
 with header_actions_col:
+    # Divisão em 3 colunas iguais para os 3 botões do topo
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     with b_col1:
         pdf_placeholder = st.empty()
@@ -397,7 +402,7 @@ with header_actions_col:
         pdf_memoria_placeholder = st.empty()
 
     with b_col3:
-        if st.button("🔄 Atualizar", use_container_width=True):
+        if st.button("🔄 Atualização Base", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
@@ -466,7 +471,7 @@ with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
     mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
 
-# Dados do município selecionado
+# INCLUSÃO: Captura dos novos campos adicionais para a Memória de Cálculo
 if mun_sel != "-" and uf_sel != "-":
     df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
     if not df_filtrado.empty:
@@ -563,7 +568,6 @@ if has_data:
         municipio=mun_sel,
         uf=uf_sel,
         porte=porte_val,
-        populacao=pop_val,
         cenario=cenario,
         parcelas=num_parcelas,
         val_integral=val_integral,
@@ -574,7 +578,7 @@ if has_data:
 
     pdf_placeholder.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
 
-    # Gera o PDF da Memória de Cálculo
+    # INCLUSÃO: Gera o PDF da Memória de Cálculo
     pdf_memoria_bytes = gerar_pdf_memoria_calculo(
         uf=uf_sel,
         municipio=mun_sel,
@@ -585,7 +589,7 @@ if has_data:
         val_contribuicao=val_integral
     )
 
-    pdf_memoria_placeholder.download_button("📊 Memória Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+    pdf_memoria_placeholder.download_button("📊 Memória de Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
 else:
     pdf_placeholder.button("📄 PDF Simulação", disabled=True, use_container_width=True)
-    pdf_memoria_placeholder.button("📊 Memória Cálculo", disabled=True, use_container_width=True)
+    pdf_memoria_placeholder.button("📊 Memória de Cálculo", disabled=True, use_container_width=True)
