@@ -74,6 +74,19 @@ def fmt_br(valor):
     return str(valor)
 
 
+def formatar_bilhoes_milhoes(valor):
+    """Auxiliar para formatar texto descritivo de RCL (ex: R$ 2,119 bilhões)."""
+    if not isinstance(valor, (int, float)) or valor <= 0:
+        return "R$ 0,00"
+    if valor >= 1_000_000_000:
+        val_bi = valor / 1_000_000_000
+        return f"R$ {val_bi:,.3f}".replace(",", "X").replace(".", ",").replace("X", ".") + " bilhões"
+    elif valor >= 1_000_000:
+        val_mi = valor / 1_000_000
+        return f"R$ {val_mi:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " milhões"
+    return f"R$ {fmt_br(valor)}"
+
+
 @st.cache_data
 def carregar_dados():
     caminho_encontrado = None
@@ -246,7 +259,6 @@ set_bg_hack()
 # 4. ENQUADRAMENTO DA TABELA MANUAL FNP 2027 (RCL X RCLpc)
 # -----------------------------------------------------------------------------
 def obter_grupo_rclpc(rcl_pc):
-    """Mapeia a RCL per capita para o Grupo (1 a 10) de acordo com o Manual 2027 v2.0."""
     if rcl_pc <= 4832.71:
         return 1
     elif rcl_pc <= 5354.64:
@@ -287,7 +299,7 @@ def obter_valores_validados(row_or_df):
 # -----------------------------------------------------------------------------
 # 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
-class PDF(FPDF):
+class PDFSimulacao(FPDF):
     def header(self):
         self.set_fill_color(10, 54, 99)
         self.rect(0, 0, 210, 32, "F")
@@ -298,8 +310,19 @@ class PDF(FPDF):
         self.set_y(40)
 
 
+class PDFMemoria(FPDF):
+    def header(self):
+        self.set_fill_color(10, 54, 99)
+        self.rect(0, 0, 210, 32, "F")
+        self.set_y(10)
+        self.set_font("Arial", "B", 16)
+        self.set_text_color(255, 255, 255)
+        self.cell(0, 10, "MEMORIA DE CALCULO DE CONTRIBUICAO", 0, 1, "C")
+        self.set_y(40)
+
+
 def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
-    pdf = PDF()
+    pdf = PDFSimulacao()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
@@ -359,67 +382,77 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
 
 
 def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita, grupo_rclpc, val_contribuicao):
-    pdf = PDF()
+    pdf = PDFMemoria()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    pdf.set_font("Arial", "B", 13)
+    # Subtítulo com formato Município/UF
+    pdf.set_font("Arial", "B", 14)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 8, f"MEMORIA DE CALCULO - {municipio.upper()} ({uf})", 0, 1, "L")
+    pdf.cell(0, 8, f"{municipio}/{uf}", 0, 1, "L")
 
-    pdf.ln(3)
+    pdf.ln(2)
     pdf.set_draw_color(226, 232, 240)
     pdf.set_line_width(0.5)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(8)
+    pdf.ln(6)
 
-    pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 7, "INDICADORES E VALOR DA CONTRIBUICAO (MANUAL 2027 V2.0)", 0, 1, "L")
-    pdf.ln(3)
-
-    pdf.set_font("Arial", "", 10)
-    pdf.set_text_color(15, 23, 42)
-    pdf.set_draw_color(226, 232, 240)
-    pdf.set_line_width(0.3)
-
+    # Formatação de dados
     pop_fmt = formatar_inteiro_ptbr(populacao)
     rcl_fmt = f"R$ {fmt_br(rcl)}" if isinstance(rcl, (int, float)) and rcl > 0 else str(rcl)
     receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita)}" if isinstance(receita_per_capita, (int, float)) else str(receita_per_capita)
+    rcl_descritiva = formatar_bilhoes_milhoes(rcl)
 
-    dados = [
-        ("UF:", str(uf)),
-        ("Municipio:", str(municipio)),
-        ("Populacao (IBGE):", pop_fmt),
-        ("RCL (Receita Corrente Liquida 2025):", rcl_fmt),
-        ("RCL per capita (RCLpc):", receita_per_capita_fmt),
-        ("Grupo de RCLpc (Coluna da Tabela):", f"Grupo {grupo_rclpc}"),
-        ("Valor da Contribuicao Anual Integral (2027):", f"R$ {fmt_br(val_contribuicao)}"),
-    ]
-
-    col_w1, col_w2, row_height = 95, 95, 9
-    for rotulo, valor in dados:
-        pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
-        pdf.cell(col_w2, row_height, f" {valor}", 1, 1, "L")
-
-    pdf.ln(8)
+    # Bloco 1: Dados do município
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 7, "METODOLOGIA DE CALCULO APLICADA", 0, 1, "L")
+    pdf.cell(0, 6, "Dados do municipio:", 0, 1, "L")
+    pdf.ln(1)
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(0, 5, f"Populacao (IBGE): {pop_fmt} habitantes", 0, 1, "L")
+    pdf.cell(0, 5, f"RCL 2025: {rcl_fmt}", 0, 1, "L")
+    pdf.cell(0, 5, f"RCL per capita: {receita_per_capita_fmt}", 0, 1, "L")
+    pdf.cell(0, 5, f"Grupo de RCLpc: Grupo {grupo_rclpc}", 0, 1, "L")
+
+    pdf.ln(5)
+
+    # Bloco 2: Metodologia
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 6, "Metodologia", 0, 1, "L")
+    pdf.ln(1)
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(0, 5, "O valor da contribuicao e definido a partir do cruzamento de dois indicadores:", 0, 1, "L")
     pdf.ln(2)
 
-    pdf.set_font("Arial", "", 9)
-    pdf.set_text_color(50, 50, 50)
-    explicacao_texto = (
-        f"Conforme o Manual de calculo das contribuicoes 2027 v2.0.pptx.pdf, o valor da contribuicao anual "
-        f"do municipio de {municipio} ({uf}) e obtido por meio do cruzamento matricial direto (Linha x Coluna):\n\n"
-        f"1. Calculo da RCLpc: A Receita Corrente Liquida (R$ {fmt_br(rcl)}) e dividida pela populacao ({pop_fmt} hab.), "
-        f"resultando na RCL per capita de R$ {fmt_br(receita_per_capita)}.\n"
-        f"2. Grupo de RCLpc (Coluna): Com esse valor, o municipio enquadra-se no Grupo {grupo_rclpc} das colunas da Tabela de Contribuicao.\n"
-        f"3. Faixa de RCL (Linha): O montante da RCL total define a linha correspondente aos intervalos de arrecadacao orcamentaria.\n"
-        f"4. Intersecao: O ponto de encontro entre a Faixa de RCL e o Grupo {grupo_rclpc} determina o valor anual devido de R$ {fmt_br(val_contribuicao)}."
-    )
-    pdf.multi_cell(0, 5, explicacao_texto)
+    pdf.cell(0, 5, f"- RCL: determina a faixa de receita do municipio na tabela;", 0, 1, "L")
+    pdf.cell(0, 5, f"- RCL per capita (RCL / populacao): determina o grupo de RCLpc.", 0, 1, "L")
+
+    pdf.ln(5)
+
+    # Bloco 3: Aplicação Específica para o Município
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 6, f"Para {municipio}:", 0, 1, "L")
+    pdf.ln(1)
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(0, 5, f"{rcl_fmt} / {pop_fmt} = {receita_per_capita_fmt} de RCL per capita", 0, 1, "L")
+    
+    texto_enquadramento = f"Com a RCL de {rcl_descritiva} e a RCLpc de {receita_per_capita_fmt} (Grupo {grupo_rclpc}), o municipio e enquadrado na tabela da FNP."
+    pdf.multi_cell(0, 5, texto_enquadramento)
+
+    pdf.ln(6)
+
+    # Destaque do Valor da Contribuição
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 7, f"Contribuição Anual Integral 2027: R$ {fmt_br(val_contribuicao)}", 0, 1, "L")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
         temp_filename = tmp_file.name
@@ -603,27 +636,39 @@ if has_data:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
     # -----------------------------------------------------------------------------
-    # 9. SEÇÃO DE EXPLICAÇÃO DO CÁLCULO (MANUAL 2027 V2.0)
+    # 9. SEÇÃO DE EXPLICAÇÃO DO CÁLCULO
     # -----------------------------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="badge-main">📘 Memória e Metodologia de Cálculo (Manual 2027 v2.0)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="badge-main">📘 Memória de Cálculo</div>', unsafe_allow_html=True)
 
     pop_fmt = formatar_inteiro_ptbr(pop_val)
     rcl_fmt = f"R$ {fmt_br(rcl_val)}" if isinstance(rcl_val, (int, float)) and rcl_val > 0 else str(rcl_val)
     receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita_val)}" if isinstance(receita_per_capita_val, (int, float)) else str(receita_per_capita_val)
     grupo_rclpc_val = obter_grupo_rclpc(receita_per_capita_val) if isinstance(receita_per_capita_val, (int, float)) else "-"
+    rcl_descritiva = formatar_bilhoes_milhoes(rcl_val)
 
     st.markdown(f"""
     <div class="explicacao-card">
-        <h4 style="margin-top: 0; color: #0A3663;">Como o valor da contribuição de {mun_sel} ({uf_sel}) foi calculado?</h4>
-        <p>De acordo com as diretrizes do <b>Manual de cálculo das contribuições 2027 v2.0.pptx.pdf</b>, a contribuição anual é apurada através de um cruzamento direto de matriz na Tabela de Contribuição (Linha x Coluna) com base nos dados de 2025:</p>
-        <ol>
-            <li><b>Apuração da RCL per capita (RCLpc):</b> Dividindo a Receita Corrente Líquida (<b>{rcl_fmt}</b>) pela população de <b>{pop_fmt} habitantes</b>, obtém-se a RCLpc de <b>{receita_per_capita_fmt}</b>.</li>
-            <li><b>Identificação do Grupo de RCLpc (Coluna):</b> Com uma RCLpc de {receita_per_capita_fmt}, o município enquadra-se no <b>Grupo {grupo_rclpc_val}</b> (das colunas de capacidade fiscal).</li>
-            <li><b>Identificação da Faixa de RCL (Linha):</b> A RCL total de {rcl_fmt} localiza a faixa orçamentária correspondente nas linhas da tabela.</li>
-            <li><b>Cruzamento e Valor Final:</b> O ponto de interseção entre a linha da Faixa de RCL e a coluna do Grupo {grupo_rclpc_val} resulta no valor integral anual devido de <b>R$ {fmt_br(val_integral)}</b>.</li>
-        </ol>
-        <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 0;"><i>Nota: A metodologia FNP concede uma redução progressiva no valor final quanto menor for a RCLpc do município, promovendo equidade fiscal.</i></p>
+        <h3 style="margin-top: 0; color: #0A3663;">{mun_sel}/{uf_sel}</h3>
+        <p><b>Dados do município:</b></p>
+        <ul>
+            <li><b>População (IBGE):</b> {pop_fmt} habitantes</li>
+            <li><b>RCL 2025:</b> {rcl_fmt}</li>
+            <li><b>RCL per capita:</b> {receita_per_capita_fmt}</li>
+            <li><b>Grupo de RCLpc:</b> Grupo {grupo_rclpc_val}</li>
+        </ul>
+        <p><b>Metodologia</b><br>
+        O valor da contribuição é definido a partir do cruzamento de dois indicadores:</p>
+        <ul>
+            <li><b>RCL:</b> determina a faixa de receita do município na tabela;</li>
+            <li><b>RCL per capita (RCL ÷ população):</b> determina o grupo de RCLpc.</li>
+        </ul>
+        <p><b>Para {mun_sel}:</b><br>
+        {rcl_fmt} ÷ {pop_fmt} = {receita_per_capita_fmt} de RCL per capita<br>
+        Com a RCL de {rcl_descritiva} e a RCLpc de {receita_per_capita_fmt} (Grupo {grupo_rclpc_val}), o município é enquadrado na tabela da FNP.</p>
+        <p style="font-size: 1.1rem; font-weight: bold; color: #0A3663; margin-top: 10px;">
+            Contribuição Anual Integral 2027: R$ {fmt_br(val_integral)}
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
