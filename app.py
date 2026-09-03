@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. DADOS DA TABELA FNP 2027
+# 2. DADOS DA TABELA FNP 2027 (Fidelidade total à imagem)
 # -----------------------------------------------------------------------------
 DADOS_TABELA_FNP = [
     {"Faixa": 1, "De": "até", "Ate": "218.758.762", "D1": "40.000", "D2": "40.577", "D3": "44.951", "D4": "48.053", "D5": "65.590", "D6": "66.758", "D7": "67.752", "D8": "68.621", "D9": "69.396", "D10": "70.096"},
@@ -188,8 +188,11 @@ def set_bg_hack():
     bin_str = None
     mime_type = "image/png"
     
+    # Busca especificamente pela imagem informada nos arquivos
+    imagem_fundo = "simulador.png.jpg" if os.path.exists("simulador.png.jpg") else "Tabela de contribuição 2027.png"
+    
     for f in os.listdir("."):
-        if f.lower().endswith(('.png', '.jpg', '.jpeg')):
+        if f == imagem_fundo or f.lower().endswith(('.png', '.jpg', '.jpeg')):
             try:
                 if f.lower().endswith(('.jpg', '.jpeg')):
                     mime_type = "image/jpeg"
