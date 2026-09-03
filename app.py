@@ -400,10 +400,10 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(30, 41, 59)
-    pdf.cell(0, 5, txt_pdf(f"• População (IBGE): {pop_fmt} habitantes"), 0, 1, "L")
-    pdf.cell(0, 5, txt_pdf(f"• RCL 2025: {rcl_fmt}"), 0, 1, "L")
-    pdf.cell(0, 5, txt_pdf(f"• RCL per capita: {receita_per_capita_fmt}"), 0, 1, "L")
-    pdf.cell(0, 5, txt_pdf(f"• Grupo de RCLpc: Decil {grupo_rclpc}"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- População (IBGE): {pop_fmt} habitantes"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- RCL 2025: {rcl_fmt}"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- RCL per capita: {receita_per_capita_fmt}"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- Grupo de RCLpc: Decil {grupo_rclpc}"), 0, 1, "L")
 
     pdf.ln(4)
 
@@ -417,8 +417,8 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.cell(0, 5, txt_pdf("O valor da contribuição é definido a partir do cruzamento de dois indicadores:"), 0, 1, "L")
     pdf.ln(1)
 
-    pdf.cell(0, 5, txt_pdf(f"• RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
-    pdf.cell(0, 5, txt_pdf(f"• RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
 
     pdf.ln(4)
 
