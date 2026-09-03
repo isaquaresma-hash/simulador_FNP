@@ -16,34 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. DADOS DA TABELA FNP 2027 (Fidelidade total à imagem)
-# -----------------------------------------------------------------------------
-DADOS_TABELA_FNP = [
-    {"Faixa": 1, "De": "até", "Ate": "218.758.762", "D1": "40.000", "D2": "40.577", "D3": "44.951", "D4": "48.053", "D5": "65.590", "D6": "66.758", "D7": "67.752", "D8": "68.621", "D9": "69.396", "D10": "70.096"},
-    {"Faixa": 2, "De": "218.758.762", "Ate": "313.554.225", "D1": "41.000", "D2": "41.707", "D3": "47.067", "D4": "50.870", "D5": "72.363", "D6": "73.795", "D7": "75.012", "D8": "76.077", "D9": "77.027", "D10": "77.886"},
-    {"Faixa": 3, "De": "313.554.225", "Ate": "495.853.193", "D1": "42.000", "D2": "42.853", "D3": "49.326", "D4": "53.918", "D5": "79.871", "D6": "81.599", "D7": "83.070", "D8": "84.356", "D9": "85.502", "D10": "86.539"},
-    {"Faixa": 4, "De": "495.853.193", "Ate": "667.214.224", "D1": "43.000", "D2": "48.906", "D3": "51.743", "D4": "57.223", "D5": "88.196", "D6": "90.259", "D7": "92.014", "D8": "93.549", "D9": "94.917", "D10": "96.154"},
-    {"Faixa": 5, "De": "667.214.224", "Ate": "729.195.872", "D1": "44.000", "D2": "50.982", "D3": "54.336", "D4": "60.814", "D5": "97.431", "D6": "99.869", "D7": "101.944", "D8": "103.758", "D9": "105.376", "D10": "106.839"},
-    {"Faixa": 6, "De": "729.195.872", "Ate": "783.885.562", "D1": "45.000", "D2": "53.190", "D3": "57.125", "D4": "64.723", "D5": "107.674", "D6": "110.535", "D7": "112.968", "D8": "115.097", "D9": "116.994", "D10": "118.710"},
-    {"Faixa": 7, "De": "783.885.562", "Ate": "1.039.104.119", "D1": "48.000", "D2": "57.322", "D3": "66.644", "D4": "75.967", "D5": "119.339", "D6": "122.595", "D7": "125.365", "D8": "127.787", "D9": "129.947", "D10": "131.900"},
-    {"Faixa": 8, "De": "1.039.104.119", "Ate": "1.294.322.674", "D1": "50.000", "D2": "60.728", "D3": "71.457", "D4": "82.185", "D5": "132.099", "D6": "135.846", "D7": "139.034", "D8": "141.822", "D9": "144.307", "D10": "146.555"},
-    {"Faixa": 9, "De": "1.294.322.674", "Ate": "1.629.752.775", "D1": "60.000", "D2": "61.970", "D3": "82.853", "D4": "94.280", "D5": "147.442", "D6": "151.433", "D7": "154.828", "D8": "157.797", "D9": "160.444", "D10": "162.839"},
-    {"Faixa": 10, "De": "1.629.752.775", "Ate": "1.968.828.856", "D1": "70.000", "D2": "72.125", "D3": "94.652", "D4": "106.977", "D5": "164.324", "D6": "168.629", "D7": "172.292", "D8": "175.494", "D9": "178.350", "D10": "180.932"},
-    {"Faixa": 11, "De": "1.968.828.856", "Ate": "2.278.737.101", "D1": "75.000", "D2": "77.415", "D3": "95.732", "D4": "108.725", "D5": "182.166", "D6": "187.057", "D7": "191.219", "D8": "194.858", "D9": "198.102", "D10": "201.036"},
-    {"Faixa": 12, "De": "2.278.737.101", "Ate": "2.588.645.348", "D1": "87.000", "D2": "89.613", "D3": "109.432", "D4": "123.491", "D5": "202.955", "D6": "208.247", "D7": "212.750", "D8": "216.688", "D9": "220.198", "D10": "223.373"},
-    {"Faixa": 13, "De": "2.588.645.348", "Ate": "3.463.680.395", "D1": "100.000", "D2": "102.839", "D3": "124.376", "D4": "139.653", "D5": "226.005", "D6": "231.756", "D7": "236.649", "D8": "240.927", "D9": "244.742", "D10": "248.192"},
-    {"Faixa": 14, "De": "3.463.680.395", "Ate": "4.375.175.234", "D1": "122.000", "D2": "173.256", "D3": "175.487", "D4": "274.089", "D5": "309.811", "D6": "311.640", "D7": "317.836", "D8": "320.152", "D9": "420.781", "D10": "435.769"},
-    {"Faixa": 15, "De": "4.375.175.234", "Ate": "5.104.371.106", "D1": "128.000", "D2": "175.739", "D3": "180.359", "D4": "276.967", "D5": "318.414", "D6": "321.997", "D7": "328.666", "D8": "330.315", "D9": "447.167", "D10": "449.411"},
-    {"Faixa": 16, "De": "5.104.371.106", "Ate": "5.833.566.978", "D1": "129.000", "D2": "176.842", "D3": "182.522", "D4": "280.084", "D5": "320.970", "D6": "327.610", "D7": "332.653", "D8": "335.486", "D9": "449.362", "D10": "452.456"},
-    {"Faixa": 17, "De": "5.833.566.978", "Ate": "8.750.350.468", "D1": "145.000", "D2": "188.225", "D3": "189.015", "D4": "291.671", "D5": "325.660", "D6": "391.855", "D7": "410.531", "D8": "427.419", "D9": "452.549", "D10": "457.285"},
-    {"Faixa": 18, "De": "8.750.350.468", "Ate": "11.758.283.441", "D1": "197.700", "D2": "197.700", "D3": "428.350", "D4": "461.300", "D5": "494.250", "D6": "593.100", "D7": "655.705", "D8": "657.682", "D9": "658.341", "D10": "659.000"},
-    {"Faixa": 19, "De": "11.758.283.441", "Ate": "21.875.876.170", "D1": "204.125", "D2": "221.875", "D3": "576.875", "D4": "710.000", "D5": "754.375", "D6": "798.750", "D7": "883.063", "D8": "884.838", "D9": "886.613", "D10": "887.500"},
-    {"Faixa": 20, "De": "21.875.876.170", "Ate": "50.000.000.000", "D1": "1.373.495", "D2": "1.450.875", "D3": "1.547.600", "D4": "1.683.015", "D5": "1.818.430", "D6": "1.837.775", "D7": "1.851.317", "D8": "1.886.138", "D9": "1.901.614", "D10": "1.934.500"},
-    {"Faixa": 21, "De": "50.000.000.000", "Ate": "acima de 50.000.000.000", "D1": "3.692.000", "D2": "3.900.000", "D3": "4.160.000", "D4": "4.524.000", "D5": "4.888.000", "D6": "4.940.000", "D7": "4.976.400", "D8": "5.070.000", "D9": "5.111.600", "D10": "5.200.000"}
-]
-
-# -----------------------------------------------------------------------------
-# 3. CARREGAMENTO E LIMPEZA ROBUSTA DA PLANILHA EXCEL
+# 2. CARREGAMENTO E LIMPEZA ROBUSTA DA PLANILHA EXCEL
 # -----------------------------------------------------------------------------
 def converter_valor_ptbr(valor):
     try:
@@ -182,13 +155,12 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 4. ESTILOS CSS
+# 3. ESTILOS CSS
 # -----------------------------------------------------------------------------
 def set_bg_hack():
     bin_str = None
     mime_type = "image/png"
     
-    # Busca especificamente pela imagem informada nos arquivos
     imagem_fundo = "simulador.png.jpg" if os.path.exists("simulador.png.jpg") else "Tabela de contribuição 2027.png"
     
     for f in os.listdir("."):
@@ -277,12 +249,6 @@ def set_bg_hack():
         .explicacao-card {{ background-color: #FFFFFF; padding: 1rem 1.2rem; border-radius: 8px; border-left: 5px solid #0A3663; margin-top: 1rem; color: #1E293B; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
 
         .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.3rem !important; min-height: 38px !important; text-align: center !important; }}
-        
-        .tabela-fnp-container {{ overflow-x: auto; margin-top: 15px; font-size: 0.75rem; }}
-        .tabela-fnp {{ width: 100%; border-collapse: collapse; text-align: center; }}
-        .tabela-fnp th {{ background-color: #0A3663; color: white; padding: 4px; border: 1px solid #CBD5E0; font-size: 0.7rem; }}
-        .tabela-fnp td {{ padding: 3px; border: 1px solid #CBD5E0; color: #1E293B; }}
-        .tabela-fnp tr:nth-child(even) {{ background-color: #F8FAFC; }}
         </style>
         """
     st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -291,7 +257,7 @@ def set_bg_hack():
 set_bg_hack()
 
 # -----------------------------------------------------------------------------
-# 5. ENQUADRAMENTO DA TABELA MANUAL FNP 2027 (RCL X RCLpc)
+# 4. ENQUADRAMENTO
 # -----------------------------------------------------------------------------
 def obter_grupo_rclpc(rcl_pc):
     if rcl_pc <= 4832.71:
@@ -332,7 +298,7 @@ def obter_valores_validados(row_or_df):
     return val_integral, val_d10, val_d25, val_d50
 
 # -----------------------------------------------------------------------------
-# 6. GERADOR DE PDF
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
@@ -432,7 +398,6 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(6)
 
-    # Formatação de dados
     pop_fmt = formatar_inteiro_ptbr(populacao)
     rcl_fmt = f"R$ {fmt_br(rcl)}" if isinstance(rcl, (int, float)) and rcl > 0 else str(rcl)
     receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita)}" if isinstance(receita_per_capita, (int, float)) else str(receita_per_capita)
@@ -491,40 +456,10 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.ln(5)
 
-    # Bloco 4: Tabela FNP 2027 no PDF
-    pdf.set_font("Arial", "B", 10)
-    pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 6, "TABELA DE CONTRIBUICAO FNP 2027", 0, 1, "C")
-    pdf.ln(2)
-
-    pdf.set_font("Arial", "B", 5)
-    pdf.set_fill_color(10, 54, 99)
-    pdf.set_text_color(255, 255, 255)
-
-    col_w = [8, 18, 18, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14]
-    headers = ["FX", "De (R$)", "Ate (R$)", "1 (D1)", "2", "3", "4", "5", "6", "7", "8", "9", "10 (D10)"]
-
-    for i, h in enumerate(headers):
-        pdf.cell(col_w[i], 5, h, 1, 0, "C", True)
-    pdf.ln()
-
-    pdf.set_font("Arial", "", 5)
-    pdf.set_text_color(0, 0, 0)
-
-    for row in DADOS_TABELA_FNP:
-        pdf.cell(col_w[0], 4, str(row["Faixa"]), 1, 0, "C")
-        pdf.cell(col_w[1], 4, str(row["De"]), 1, 0, "R")
-        pdf.cell(col_w[2], 4, str(row["Ate"]), 1, 0, "R")
-        pdf.cell(col_w[3], 4, str(row["D1"]), 1, 0, "R")
-        pdf.cell(col_w[4], 4, str(row["D2"]), 1, 0, "R")
-        pdf.cell(col_w[5], 4, str(row["D3"]), 1, 0, "R")
-        pdf.cell(col_w[6], 4, str(row["D4"]), 1, 0, "R")
-        pdf.cell(col_w[7], 4, str(row["D5"]), 1, 0, "R")
-        pdf.cell(col_w[8], 4, str(row["D6"]), 1, 0, "R")
-        pdf.cell(col_w[9], 4, str(row["D7"]), 1, 0, "R")
-        pdf.cell(col_w[10], 4, str(row["D8"]), 1, 0, "R")
-        pdf.cell(col_w[11], 4, str(row["D9"]), 1, 0, "R")
-        pdf.cell(col_w[12], 4, str(row["D10"]), 1, 1, "R")
+    # Inclusão direta da imagem exata da tabela no PDF
+    caminho_imagem_tabela = "Tabela de contribuição 2027.png"
+    if os.path.exists(caminho_imagem_tabela):
+        pdf.image(caminho_imagem_tabela, x=10, w=190)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
         temp_filename = tmp_file.name
@@ -539,7 +474,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 7. CABEÇALHO E TOP CARDS
+# 6. CABEÇALHO E TOP CARDS
 # -----------------------------------------------------------------------------
 header_title_col, header_actions_col = st.columns([6.3, 3.7])
 
@@ -568,7 +503,7 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 8. FILTROS INTEGRADOS
+# 7. FILTROS INTEGRADOS
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
 
@@ -646,7 +581,7 @@ with f_col4:
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 9. SIMULADOR E CALCULADORA
+# 8. SIMULADOR E CALCULADORA
 # -----------------------------------------------------------------------------
 has_data = not df_filtrado.empty
 
@@ -708,7 +643,7 @@ if has_data:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
     # -----------------------------------------------------------------------------
-    # 10. SEÇÃO DE EXPLICAÇÃO DO CÁLCULO E TABELA
+    # 9. SEÇÃO DE EXPLICAÇÃO DO CÁLCULO E IMAGEM EXATA DA TABELA
     # -----------------------------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="badge-main">📘 Memória de Cálculo</div>', unsafe_allow_html=True)
@@ -718,27 +653,6 @@ if has_data:
     receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita_val)}" if isinstance(receita_per_capita_val, (int, float)) else str(receita_per_capita_val)
     grupo_rclpc_val = obter_grupo_rclpc(receita_per_capita_val) if isinstance(receita_per_capita_val, (int, float)) else "-"
     rcl_descritiva = formatar_bilhoes_milhoes(rcl_val)
-
-    # Geração da tabela em HTML para visualização em tela
-    linhas_tabela_html = ""
-    for r in DADOS_TABELA_FNP:
-        linhas_tabela_html += f"""
-        <tr>
-            <td><b>{r['Faixa']}</b></td>
-            <td>{r['De']}</td>
-            <td>{r['Ate']}</td>
-            <td>{r['D1']}</td>
-            <td>{r['D2']}</td>
-            <td>{r['D3']}</td>
-            <td>{r['D4']}</td>
-            <td>{r['D5']}</td>
-            <td>{r['D6']}</td>
-            <td>{r['D7']}</td>
-            <td>{r['D8']}</td>
-            <td>{r['D9']}</td>
-            <td>{r['D10']}</td>
-        </tr>
-        """
 
     st.markdown(f"""
     <div class="explicacao-card">
@@ -763,37 +677,15 @@ if has_data:
             Contribuição Anual Integral 2027: R$ {fmt_br(val_integral)}
         </p>
         <hr style="margin: 15px 0; border: 0; border-top: 1px solid #CBD5E0;">
-        <h4 style="color: #0A3663; margin-bottom: 5px;">TABELA DE CONTRIBUIÇÃO FNP 2027: Valor Anual das Contribuições em R$</h4>
-        <p style="font-size: 0.8rem; color: #64748B;">Apuracão (R$) com base no cruzamento entre RCL e RCLpc 2025</p>
-        <div class="tabela-fnp-container">
-            <table class="tabela-fnp">
-                <thead>
-                    <tr>
-                        <th>Faixas de RCL (2025)</th>
-                        <th>De</th>
-                        <th>Até</th>
-                        <th>1 (10% com menor RCL pc)</th>
-                        <th>2</th>
-                        <th>3</th>
-                        <th>4</th>
-                        <th>5</th>
-                        <th>6</th>
-                        <th>7</th>
-                        <th>8</th>
-                        <th>9</th>
-                        <th>10 (10% com maior RCL pc)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {linhas_tabela_html}
-                </tbody>
-            </table>
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Exibe a imagem exata da tabela na tela
+    if os.path.exists("Tabela de contribuição 2027.png"):
+        st.image("Tabela de contribuição 2027.png", use_column_width=True)
+
     # -----------------------------------------------------------------------------
-    # 11. PREPARAÇÃO DOS BOTÕES DE DOWNLOAD DO PDF
+    # 10. PREPARAÇÃO DOS BOTÕES DE DOWNLOAD DO PDF
     # -----------------------------------------------------------------------------
     pdf_bytes_topo = gerar_pdf_simulacao(
         municipio=mun_sel,
