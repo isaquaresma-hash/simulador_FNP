@@ -108,22 +108,10 @@ def carregar_dados():
         st.stop()
 
     colunas_padrao = [
-        "Situação",
-        "Porte",
-        "UF",
-        "Município",
-        "Ranking",
-        "Valor_Integral",
-        "Valor_D10",
-        "Valor_D50",
-        "Valor_D25",
-        "Parcela_12x",
-        "Parcela_D50_x",
-        "Parcela_D25_x",
-        "População",
-        "RCL",
-        "Receita per capita",
-        "Decil"
+        "Situação", "Porte", "UF", "Município", "Ranking",
+        "Valor_Integral", "Valor_D10", "Valor_D50", "Valor_D25",
+        "Parcela_12x", "Parcela_D50_x", "Parcela_D25_x",
+        "População", "RCL", "Receita per capita", "Decil"
     ]
 
     novas_colunas = {}
@@ -246,8 +234,6 @@ def set_bg_hack():
         .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
         .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
 
-        .explicacao-card {{ background-color: #FFFFFF; padding: 1rem 1.2rem; border-radius: 8px; border-left: 5px solid #0A3663; margin-top: 1rem; color: #1E293B; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
-
         .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.3rem !important; min-height: 38px !important; text-align: center !important; }}
         </style>
         """
@@ -257,7 +243,7 @@ def set_bg_hack():
 set_bg_hack()
 
 # -----------------------------------------------------------------------------
-# 4. ENQUADRAMENTO
+# 4. REGRAS E AUXILIARES
 # -----------------------------------------------------------------------------
 def obter_grupo_rclpc(rcl_pc):
     if rcl_pc <= 4832.71:
@@ -387,7 +373,6 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Subtítulo com formato Município/UF
     pdf.set_font("Arial", "B", 14)
     pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 8, f"{municipio}/{uf}", 0, 1, "L")
@@ -403,7 +388,6 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita)}" if isinstance(receita_per_capita, (int, float)) else str(receita_per_capita)
     rcl_descritiva = formatar_bilhoes_milhoes(rcl)
 
-    # Bloco 1: Dados do município
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, "Dados do municipio:", 0, 1, "L")
@@ -418,7 +402,6 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.ln(4)
 
-    # Bloco 2: Metodologia
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, "Metodologia", 0, 1, "L")
@@ -434,7 +417,6 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.ln(4)
 
-    # Bloco 3: Aplicação Específica para o Município
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, f"Para {municipio}:", 0, 1, "L")
@@ -449,14 +431,12 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.ln(3)
 
-    # Destaque do Valor da Contribuição
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, f"Contribuicao Anual Integral 2027: R$ {fmt_br(val_contribuicao)}", 0, 1, "L")
 
     pdf.ln(5)
 
-    # Inclusão direta da imagem exata da tabela no PDF
     caminho_imagem_tabela = "Tabela de contribuição 2027.png"
     if os.path.exists(caminho_imagem_tabela):
         pdf.image(caminho_imagem_tabela, x=10, w=190)
@@ -474,7 +454,24 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 6. CABEÇALHO E TOP CARDS
+# 6. GESTÃO DE ESTADO DOS FILTROS (EXECUTA ANTES DO CABEÇALHO)
+# -----------------------------------------------------------------------------
+if "porte_sel" not in st.session_state:
+    st.session_state.porte_sel = "-"
+if "uf_sel" not in st.session_state:
+    st.session_state.uf_sel = "-"
+if "mun_sel" not in st.session_state:
+    st.session_state.mun_sel = "-"
+
+df_filtrado = pd.DataFrame()
+has_data = False
+
+if st.session_state.mun_sel != "-" and st.session_state.uf_sel != "-":
+    df_filtrado = df_base[(df_base["UF"] == st.session_state.uf_sel) & (df_base["Município"] == st.session_state.mun_sel)]
+    has_data = not df_filtrado.empty
+
+# -----------------------------------------------------------------------------
+# 7. CABEÇALHO COM BOTÕES DE DOWNLOAD
 # -----------------------------------------------------------------------------
 header_title_col, header_actions_col = st.columns([6.3, 3.7])
 
@@ -483,17 +480,63 @@ with header_title_col:
 
 with header_actions_col:
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
-    with b_col1:
-        pdf_placeholder = st.empty()
 
-    with b_col2:
-        pdf_memoria_placeholder = st.empty()
+    if has_data:
+        val_integral_h, val_d10_h, val_d25_h, val_d50_h = obter_valores_validados(df_filtrado)
+        
+        cenario_h = st.session_state.get("cenario_calc", "Desconto 10%")
+        parcelas_h = st.session_state.get("num_parcelas_calc", 12)
+        
+        valor_negociado_h = val_d10_h if cenario_h == "Desconto 10%" else (val_d25_h if cenario_h == "Desconto 25%" else (val_d50_h if cenario_h == "Desconto 50%" else val_integral_h))
+        economia_h = val_integral_h - valor_negociado_h
+        valor_parcela_h = valor_negociado_h / parcelas_h if parcelas_h > 0 else 0.0
+
+        pop_val_h = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
+        rcl_val_h = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else 0.0
+        receita_per_capita_val_h = df_filtrado["Receita per capita"].iloc[0] if "Receita per capita" in df_filtrado.columns else 0.0
+        grupo_rclpc_val_h = obter_grupo_rclpc(receita_per_capita_val_h) if isinstance(receita_per_capita_val_h, (int, float)) else "-"
+
+        pdf_bytes_topo = gerar_pdf_simulacao(
+            municipio=st.session_state.mun_sel,
+            uf=st.session_state.uf_sel,
+            porte=str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-",
+            cenario=cenario_h,
+            parcelas=parcelas_h,
+            val_integral=val_integral_h,
+            valor_total=valor_negociado_h,
+            valor_parcela=valor_parcela_h,
+            economia=economia_h
+        )
+
+        pdf_memoria_bytes = gerar_pdf_memoria_calculo(
+            uf=st.session_state.uf_sel,
+            municipio=st.session_state.mun_sel,
+            populacao=pop_val_h,
+            rcl=rcl_val_h,
+            receita_per_capita=receita_per_capita_val_h,
+            grupo_rclpc=grupo_rclpc_val_h,
+            val_contribuicao=val_integral_h
+        )
+
+        with b_col1:
+            st.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{st.session_state.mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+
+        with b_col2:
+            st.download_button("📊 Memória de Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{st.session_state.mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+    else:
+        with b_col1:
+            st.button("📄 PDF Simulação", disabled=True, use_container_width=True)
+        with b_col2:
+            st.button("📊 Memória de Cálculo", disabled=True, use_container_width=True)
 
     with b_col3:
         if st.button("🔄 Atualizar Base", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
+# -----------------------------------------------------------------------------
+# 8. TOP CARDS
+# -----------------------------------------------------------------------------
 m_col1, m_col2 = st.columns(2)
 with m_col1:
     st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #1E40AF;">🏛️</div><div><div class="top-card-title">CAPITAIS</div><div class="top-card-value">27</div><div class="top-card-sub">Quantidade de capitais no Brasil</div></div></div>', unsafe_allow_html=True)
@@ -503,18 +546,11 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 7. FILTROS INTEGRADOS
+# 9. FILTROS INTEGRADOS
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2.5, 1.2, 3.8, 2.5])
-
-if "porte_sel" not in st.session_state:
-    st.session_state.porte_sel = "-"
-if "uf_sel" not in st.session_state:
-    st.session_state.uf_sel = "-"
-if "mun_sel" not in st.session_state:
-    st.session_state.mun_sel = "-"
 
 porte_opcoes = ["-"] + sorted([str(x) for x in df_base["Porte"].dropna().unique().tolist()]) if "Porte" in df_base.columns else ["-"]
 
@@ -560,19 +596,14 @@ with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
     mun_sel = st.selectbox("", mun_opcoes, index=idx_mun, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
 
-if mun_sel != "-" and uf_sel != "-":
-    df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
-    if not df_filtrado.empty:
-        porte_val = str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-"
-        ranking_val = str(df_filtrado["Ranking"].iloc[0]) if "Ranking" in df_filtrado.columns else "-"
-        pop_val = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
-        rcl_val = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else "-"
-        receita_per_capita_val = df_filtrado["Receita per capita"].iloc[0] if "Receita per capita" in df_filtrado.columns else "-"
-        decil_val = str(df_filtrado["Decil"].iloc[0]) if "Decil" in df_filtrado.columns else "-"
-    else:
-        porte_val, ranking_val, pop_val, rcl_val, receita_per_capita_val, decil_val = "-", "-", "-", "-", "-", "-"
+if has_data:
+    porte_val = str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-"
+    ranking_val = str(df_filtrado["Ranking"].iloc[0]) if "Ranking" in df_filtrado.columns else "-"
+    pop_val = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
+    rcl_val = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else "-"
+    receita_per_capita_val = df_filtrado["Receita per capita"].iloc[0] if "Receita per capita" in df_filtrado.columns else "-"
+    decil_val = str(df_filtrado["Decil"].iloc[0]) if "Decil" in df_filtrado.columns else "-"
 else:
-    df_filtrado = pd.DataFrame()
     porte_val = porte_sel if porte_sel != "-" else "-"
     ranking_val, pop_val, rcl_val, receita_per_capita_val, decil_val = "-", "-", "-", "-", "-"
 
@@ -581,10 +612,8 @@ with f_col4:
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 8. SIMULADOR E CALCULADORA
+# 10. PAINEL DE SIMULAÇÃO E CALCULADORA
 # -----------------------------------------------------------------------------
-has_data = not df_filtrado.empty
-
 if has_data:
     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
@@ -641,77 +670,3 @@ if has_data:
         st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">{sub_cenario}</div></div>', unsafe_allow_html=True)
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
-
-    # -----------------------------------------------------------------------------
-    # 9. SEÇÃO DE EXPLICAÇÃO DO CÁLCULO E IMAGEM EXATA DA TABELA
-    # -----------------------------------------------------------------------------
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="badge-main">📘 Memória de Cálculo</div>', unsafe_allow_html=True)
-
-    pop_fmt = formatar_inteiro_ptbr(pop_val)
-    rcl_fmt = f"R$ {fmt_br(rcl_val)}" if isinstance(rcl_val, (int, float)) and rcl_val > 0 else str(rcl_val)
-    receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita_val)}" if isinstance(receita_per_capita_val, (int, float)) else str(receita_per_capita_val)
-    grupo_rclpc_val = obter_grupo_rclpc(receita_per_capita_val) if isinstance(receita_per_capita_val, (int, float)) else "-"
-    rcl_descritiva = formatar_bilhoes_milhoes(rcl_val)
-
-    st.markdown(f"""
-    <div class="explicacao-card">
-        <h3 style="margin-top: 0; color: #0A3663;">{mun_sel}/{uf_sel}</h3>
-        <p><b>Dados do município:</b></p>
-        <ul>
-            <li><b>População (IBGE):</b> {pop_fmt} habitantes</li>
-            <li><b>RCL 2025:</b> {rcl_fmt}</li>
-            <li><b>RCL per capita:</b> {receita_per_capita_fmt}</li>
-            <li><b>Grupo de RCLpc:</b> Decil {grupo_rclpc_val}</li>
-        </ul>
-        <p><b>Metodologia</b><br>
-        O valor da contribuição é definido a partir do cruzamento de dois indicadores:</p>
-        <ul>
-            <li><b>RCL:</b> determina a faixa de receita do município na tabela;</li>
-            <li><b>RCL per capita (RCL ÷ população):</b> determina o grupo de RCLpc.</li>
-        </ul>
-        <p><b>Para {mun_sel}:</b><br>
-        {rcl_fmt} ÷ {pop_fmt} = {receita_per_capita_fmt} de RCL per capita<br>
-        Com a RCL de {rcl_descritiva} e a RCLpc de {receita_per_capita_fmt} (Decil {grupo_rclpc_val}), o município é enquadrado na tabela da FNP.</p>
-        <p style="font-size: 1.1rem; font-weight: bold; color: #0A3663; margin-top: 10px;">
-            Contribuição Anual Integral 2027: R$ {fmt_br(val_integral)}
-        </p>
-        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #CBD5E0;">
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Exibe a imagem exata da tabela na tela
-    if os.path.exists("Tabela de contribuição 2027.png"):
-        st.image("Tabela de contribuição 2027.png", use_column_width=True)
-
-    # -----------------------------------------------------------------------------
-    # 10. PREPARAÇÃO DOS BOTÕES DE DOWNLOAD DO PDF
-    # -----------------------------------------------------------------------------
-    pdf_bytes_topo = gerar_pdf_simulacao(
-        municipio=mun_sel,
-        uf=uf_sel,
-        porte=porte_val,
-        cenario=cenario,
-        parcelas=num_parcelas,
-        val_integral=val_integral,
-        valor_total=valor_negociado,
-        valor_parcela=valor_parcela,
-        economia=economia
-    )
-
-    pdf_placeholder.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
-
-    pdf_memoria_bytes = gerar_pdf_memoria_calculo(
-        uf=uf_sel,
-        municipio=mun_sel,
-        populacao=pop_val,
-        rcl=rcl_val,
-        receita_per_capita=receita_per_capita_val,
-        grupo_rclpc=grupo_rclpc_val,
-        val_contribuicao=val_integral
-    )
-
-    pdf_memoria_placeholder.download_button("📊 Memória de Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
-else:
-    pdf_placeholder.button("📄 PDF Simulação", disabled=True, use_container_width=True)
-    pdf_memoria_placeholder.button("📊 Memória de Cálculo", disabled=True, use_container_width=True)
