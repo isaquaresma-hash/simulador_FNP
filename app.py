@@ -283,6 +283,11 @@ def obter_valores_validados(row_or_df):
 
     return val_integral, val_d10, val_d25, val_d50
 
+
+def txt_pdf(texto):
+    """Auxiliar para converter caracteres acentuados para Latin-1 (compatível com FPDF)"""
+    return str(texto).encode('latin-1', 'replace').decode('latin-1')
+
 # -----------------------------------------------------------------------------
 # 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
@@ -291,9 +296,9 @@ class PDFSimulacao(FPDF):
         self.set_fill_color(10, 54, 99)
         self.rect(0, 0, 210, 32, "F")
         self.set_y(10)
-        self.set_font("Arial", "B", 14)
+        self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 10, "FNP - SIMULADOR DE CONTRIBUICAO E PARCELAMENTO", 0, 1, "C")
+        self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "C")
         self.set_y(40)
 
 
@@ -302,9 +307,9 @@ class PDFMemoria(FPDF):
         self.set_fill_color(10, 54, 99)
         self.rect(0, 0, 210, 32, "F")
         self.set_y(10)
-        self.set_font("Arial", "B", 16)
+        self.set_font("Arial", "B", 15)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 10, "MEMORIA DE CALCULO DE CONTRIBUICAO", 0, 1, "C")
+        self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
         self.set_y(40)
 
 
@@ -315,11 +320,11 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
 
     pdf.set_font("Arial", "B", 13)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 8, f"RELATORIO DE SIMULACAO - {municipio.upper()} ({uf})", 0, 1, "L")
+    pdf.cell(0, 8, txt_pdf(f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})"), 0, 1, "L")
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(71, 85, 105)
-    pdf.cell(0, 6, f"Porte: {porte}", 0, 1, "L")
+    pdf.cell(0, 6, txt_pdf(f"Porte: {porte}"), 0, 1, "L")
 
     pdf.ln(3)
     pdf.set_draw_color(226, 232, 240)
@@ -329,7 +334,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 7, "DETALHES DO PARCELAMENTO SELECIONADO", 0, 1, "L")
+    pdf.cell(0, 7, txt_pdf("DETALHES DO PARCELAMENTO SELECIONADO"), 0, 1, "L")
     pdf.ln(3)
 
     pdf.set_font("Arial", "", 10)
@@ -342,18 +347,18 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
     dados = [
-        ("Cenario Selecionado:", f"{cenario_pdf}"),
-        ("Numero de Parcelas:", f"{parcelas}x"),
+        ("Cenário Selecionado:", f"{cenario_pdf}"),
+        ("Número de Parcelas:", f"{parcelas}x"),
         ("Valor Integral:", f"R$ {fmt_br(val_integral)}"),
-        ("Valor Total da Negociacao:", f"R$ {fmt_br(valor_total)}"),
+        ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
         ("Valor de Cada Parcela Mensal:", f"R$ {fmt_br(valor_parcela)}"),
-        ("Desconto para o Municipio:", f"R$ {fmt_br(economia)}"),
+        ("Desconto para o Município:", f"R$ {fmt_br(economia)}"),
     ]
 
     col_w1, col_w2, row_height = 95, 95, 9
     for rotulo, valor in dados:
-        pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
-        pdf.cell(col_w2, row_height, f" {valor}", 1, 1, "L")
+        pdf.cell(col_w1, row_height, txt_pdf(f" {rotulo}"), 1, 0, "L")
+        pdf.cell(col_w2, row_height, txt_pdf(f" {valor}"), 1, 1, "L")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
         temp_filename = tmp_file.name
@@ -375,7 +380,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.set_font("Arial", "B", 14)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 8, f"{municipio}/{uf}", 0, 1, "L")
+    pdf.cell(0, 8, txt_pdf(f"{municipio}/{uf}"), 0, 1, "L")
 
     pdf.ln(2)
     pdf.set_draw_color(226, 232, 240)
@@ -390,50 +395,50 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 6, "Dados do municipio:", 0, 1, "L")
+    pdf.cell(0, 6, txt_pdf("Dados do município:"), 0, 1, "L")
     pdf.ln(1)
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(30, 41, 59)
-    pdf.cell(0, 5, f"Populacao (IBGE): {pop_fmt} habitantes", 0, 1, "L")
-    pdf.cell(0, 5, f"RCL 2025: {rcl_fmt}", 0, 1, "L")
-    pdf.cell(0, 5, f"RCL per capita: {receita_per_capita_fmt}", 0, 1, "L")
-    pdf.cell(0, 5, f"Grupo de RCLpc: Decil {grupo_rclpc}", 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"• População (IBGE): {pop_fmt} habitantes"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"• RCL 2025: {rcl_fmt}"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"• RCL per capita: {receita_per_capita_fmt}"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"• Grupo de RCLpc: Decil {grupo_rclpc}"), 0, 1, "L")
 
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 6, "Metodologia", 0, 1, "L")
+    pdf.cell(0, 6, txt_pdf("Metodologia:"), 0, 1, "L")
     pdf.ln(1)
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(30, 41, 59)
-    pdf.cell(0, 5, "O valor da contribuicao e definido a partir do cruzamento de dois indicadores:", 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf("O valor da contribuição é definido a partir do cruzamento de dois indicadores:"), 0, 1, "L")
     pdf.ln(1)
 
-    pdf.cell(0, 5, f"- RCL: determina a faixa de receita do municipio na tabela;", 0, 1, "L")
-    pdf.cell(0, 5, f"- RCL per capita (RCL / populacao): determina o grupo de RCLpc.", 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"• RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"• RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
 
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 6, f"Para {municipio}:", 0, 1, "L")
+    pdf.cell(0, 6, txt_pdf(f"Para {municipio}:"), 0, 1, "L")
     pdf.ln(1)
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(30, 41, 59)
-    pdf.cell(0, 5, f"{rcl_fmt} / {pop_fmt} = {receita_per_capita_fmt} de RCL per capita", 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"{rcl_fmt} / {pop_fmt} = {receita_per_capita_fmt} de RCL per capita"), 0, 1, "L")
     
-    texto_enquadramento = f"Com a RCL de {rcl_descritiva} e a RCLpc de {receita_per_capita_fmt} (Decil {grupo_rclpc}), o municipio e enquadrado na tabela da FNP."
-    pdf.multi_cell(0, 5, texto_enquadramento)
+    texto_enquadramento = f"Com a RCL de {rcl_descritiva} e a RCLpc de {receita_per_capita_fmt} (Decil {grupo_rclpc}), o município é enquadrado na tabela da FNP."
+    pdf.multi_cell(0, 5, txt_pdf(texto_enquadramento))
 
     pdf.ln(3)
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(10, 54, 99)
-    pdf.cell(0, 6, f"Contribuicao Anual Integral 2027: R$ {fmt_br(val_contribuicao)}", 0, 1, "L")
+    pdf.cell(0, 6, txt_pdf(f"Contribuição Anual Integral 2027: R$ {fmt_br(val_contribuicao)}"), 0, 1, "L")
 
     pdf.ln(5)
 
