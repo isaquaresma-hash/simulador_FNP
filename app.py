@@ -95,6 +95,14 @@ def carregar_dados():
             mapeamento[col] = "Município"
         elif any(k in col_upper for k in ["RANKING", "RANK", "CLASSIFICAÇÃO", "CLASSIFICACAO", "POSIÇÃO"]):
             mapeamento[col] = "Ranking"
+        elif "POPU" in col_upper:
+            mapeamento[col] = "População"
+        elif "RCL" in col_upper:
+            mapeamento[col] = "RCL"
+        elif "PER CAPITA" in col_upper or "PERCAPITA" in col_upper:
+            mapeamento[col] = "Per Capita"
+        elif "DECIL" in col_upper:
+            mapeamento[col] = "Decil"
         elif "10%" in col_upper and "Valor_D10" not in mapeamento.values():
             mapeamento[col] = "Valor_D10"
         elif ("50%" in col_upper or "60%" in col_upper) and "Valor_D50" not in mapeamento.values():
@@ -110,7 +118,7 @@ def carregar_dados():
     if "Ranking" in df.columns:
         df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
-    for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50"]:
+    for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50", "RCL", "Per Capita"]:
         if col in df.columns:
             df[col] = [converter_valor_ptbr(v) for v in df[col]]
         else:
@@ -211,7 +219,7 @@ def set_bg_hack():
         .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
         .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
 
-        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.75rem !important; font-weight: 600 !important; padding: 0.2rem 0.6rem !important; min-height: 38px !important; }}
+        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.4rem !important; min-height: 38px !important; text-align: center !important; }}
         </style>
         """
     st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -242,7 +250,7 @@ def obter_valores_validados(row_or_df):
     return val_integral, val_d10, val_d25, val_d50
 
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF
+# 5. GERADORES DE PDF
 # -----------------------------------------------------------------------------
 class PDF(FPDF):
     def header(self):
@@ -255,7 +263,7 @@ class PDF(FPDF):
         self.set_y(40)
 
 
-def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
+def gerar_pdf_simulacao(municipio, uf, porte, populacao, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -266,7 +274,9 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
 
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(71, 85, 105)
-    pdf.cell(0, 6, f"Porte: {porte}", 0, 1, "L")
+    
+    pop_str = f" | População: {populacao}" if populacao and str(populacao) != "-" else ""
+    pdf.cell(0, 6, f"Porte: {porte}{pop_str}", 0, 1, "L")
 
     pdf.ln(3)
     pdf.set_draw_color(226, 232, 240)
@@ -284,7 +294,6 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.set_draw_color(226, 232, 240)
     pdf.set_line_width(0.3)
 
-    # Adiciona a especificação para novo filiado nos descontos de 25% e 50%
     cenario_pdf = cenario
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
@@ -315,21 +324,80 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
 
     return pdf_bytes
 
+
+def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, per_capita, decil, val_contribuicao):
+    pdf = PDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 13)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 8, f"MEMÓRIA DE CÁLCULO - {municipio.upper()} ({uf})", 0, 1, "L")
+
+    pdf.ln(3)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_line_width(0.5)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(8)
+
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 7, "INDICADORES E VALOR DA CONTRIBUIÇÃO", 0, 1, "L")
+    pdf.ln(3)
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(15, 23, 42)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_line_width(0.3)
+
+    rcl_fmt = f"R$ {fmt_br(rcl)}" if isinstance(rcl, (int, float)) and rcl > 0 else str(rcl)
+    per_capita_fmt = f"R$ {per_capita:,.2f}".replace(".", "X").replace(",", ".").replace("X", ",") if isinstance(per_capita, (int, float)) and per_capita > 0 else str(per_capita)
+
+    dados = [
+        ("UF:", str(uf)),
+        ("Município:", str(municipio)),
+        ("População:", str(populacao)),
+        ("RCL (Receita Corrente Líquida):", rcl_fmt),
+        ("Per Capita:", per_capita_fmt),
+        ("Decil:", str(decil)),
+        ("Valor da Contribuição (Integral):", f"R$ {fmt_br(val_contribuicao)}"),
+    ]
+
+    col_w1, col_w2, row_height = 95, 95, 9
+    for rotulo, valor in dados:
+        pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
+        pdf.cell(col_w2, row_height, f" {valor}", 1, 1, "L")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        temp_filename = tmp_file.name
+
+    pdf.output(temp_filename)
+    with open(temp_filename, "rb") as f:
+        pdf_bytes = f.read()
+
+    if os.path.exists(temp_filename):
+        os.remove(temp_filename)
+
+    return pdf_bytes
+
 # -----------------------------------------------------------------------------
 # 6. CABEÇALHO E TOP CARDS
 # -----------------------------------------------------------------------------
-header_title_col, header_actions_col = st.columns([5.5, 4.5])
+header_title_col, header_actions_col = st.columns([6.5, 3.5])
 
 with header_title_col:
     st.markdown('<div class="page-title">Simulador de Contribuição e Parcelamento</div>', unsafe_allow_html=True)
 
 with header_actions_col:
-    b_col1, b_col2 = st.columns(2)
+    b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     with b_col1:
         pdf_placeholder = st.empty()
 
     with b_col2:
-        if st.button("🔄 Atualização Base", use_container_width=True):
+        pdf_memoria_placeholder = st.empty()
+
+    with b_col3:
+        if st.button("🔄 Atualizar", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
@@ -404,13 +472,25 @@ if mun_sel != "-" and uf_sel != "-":
     if not df_filtrado.empty:
         porte_val = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else "-"
         ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns else "-"
+        pop_val = df_filtrado["População"].iloc[0] if "População" in df_filtrado.columns else "-"
+        rcl_val = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else "-"
+        per_capita_val = df_filtrado["Per Capita"].iloc[0] if "Per Capita" in df_filtrado.columns else "-"
+        decil_val = df_filtrado["Decil"].iloc[0] if "Decil" in df_filtrado.columns else "-"
     else:
         porte_val = "-"
         ranking_val = "-"
+        pop_val = "-"
+        rcl_val = "-"
+        per_capita_val = "-"
+        decil_val = "-"
 else:
     df_filtrado = pd.DataFrame()
     porte_val = porte_sel if porte_sel != "-" else "-"
     ranking_val = "-"
+    pop_val = "-"
+    rcl_val = "-"
+    per_capita_val = "-"
+    decil_val = "-"
 
 with f_col4:
     st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
@@ -478,11 +558,12 @@ if has_data:
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
-    # Gera o PDF dinâmico
+    # Gera o PDF dinâmico da Simulação
     pdf_bytes_topo = gerar_pdf_simulacao(
         municipio=mun_sel,
         uf=uf_sel,
         porte=porte_val,
+        populacao=pop_val,
         cenario=cenario,
         parcelas=num_parcelas,
         val_integral=val_integral,
@@ -491,6 +572,20 @@ if has_data:
         economia=economia
     )
 
-    pdf_placeholder.download_button("📄 Baixar Simulação em PDF", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+    pdf_placeholder.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+
+    # Gera o PDF da Memória de Cálculo
+    pdf_memoria_bytes = gerar_pdf_memoria_calculo(
+        uf=uf_sel,
+        municipio=mun_sel,
+        populacao=pop_val,
+        rcl=rcl_val,
+        per_capita=per_capita_val,
+        decil=decil_val,
+        val_contribuicao=val_integral
+    )
+
+    pdf_memoria_placeholder.download_button("📊 Memória Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
 else:
-    pdf_placeholder.button("📄 Baixar Simulação em PDF", disabled=True, use_container_width=True)
+    pdf_placeholder.button("📄 PDF Simulação", disabled=True, use_container_width=True)
+    pdf_memoria_placeholder.button("📊 Memória Cálculo", disabled=True, use_container_width=True)
