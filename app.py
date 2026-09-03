@@ -71,55 +71,69 @@ def carregar_dados():
 
     try:
         if caminho_encontrado.endswith(".csv"):
-            df = pd.read_csv(caminho_encontrado, dtype=str)
+            # header=2 indica que a linha do cabeçalho é a linha 3 no Excel
+            df = pd.read_csv(caminho_encontrado, header=2, dtype=str)
         else:
-            df = pd.read_excel(caminho_encontrado, engine="openpyxl", dtype=str)
+            df = pd.read_excel(caminho_encontrado, header=2, engine="openpyxl", dtype=str)
     except Exception as e:
         st.error(f"Erro ao ler a planilha: {e}")
         st.stop()
 
-    df.columns = df.columns.astype(str).str.strip()
+    # Mapeamento posicional exato conforme imagem (Colunas A até P):
+    # Col A (0): Situação do município
+    # Col B (1): Porte
+    # Col C (2): UF
+    # Col D (3): Município
+    # Col E (4): Ranking 2026
+    # Col F (5): CONTRIBUIÇÃO 2027
+    # Col G (6): CONTRIBUIÇÃO 2027 COM DESCONTO DE 10%
+    # Col H (7): CONTRIBUIÇÃO 2027 COM DESCONTO DE 50%
+    # Col I (8): DESCONTO 25%
+    # Col J (9): PARCELA DA CONTRIBUIÇÃO TOTAL 12X
+    # Col K (10): PARCELA DO DESCONTO DE 50% EM...
+    # Col L (11): PARCELA DO DESCONTO DE 25% EM...
+    # Col M (12): População
+    # Col N (13): RCL
+    # Col O (14): Per Capita
+    # Col P (15): Decil
+    colunas_padrao = [
+        "Situação",        # A
+        "Porte",           # B
+        "UF",              # C
+        "Município",       # D
+        "Ranking",         # E
+        "Valor_Integral",  # F
+        "Valor_D10",       # G
+        "Valor_D50",       # H
+        "Valor_D25",       # I
+        "Parcela_12x",     # J
+        "Parcela_D50_x",   # K
+        "Parcela_D25_x",   # L
+        "População",       # M
+        "RCL",             # N
+        "Per Capita",      # O
+        "Decil"            # P
+    ]
 
-    mapeamento = {}
-    for col in df.columns:
-        col_upper = col.upper()
-        if "PARCELA" in col_upper:
-            continue
-        if "SITUAÇÃO" in col_upper or "SITUACAO" in col_upper:
-            mapeamento[col] = "Situação"
-        elif "PORTE" in col_upper:
-            mapeamento[col] = "Porte"
-        elif "UF" in col_upper:
-            mapeamento[col] = "UF"
-        elif "MUNICÍPIO" in col_upper or "MUNICIPIO" in col_upper:
-            mapeamento[col] = "Município"
-        elif any(k in col_upper for k in ["RANKING", "RANK", "CLASSIFICAÇÃO", "CLASSIFICACAO", "POSIÇÃO"]):
-            mapeamento[col] = "Ranking"
-        # INCLUSÃO: Novos campos mapeados sem alterar os existentes
-        elif "POPU" in col_upper:
-            mapeamento[col] = "População"
-        elif "RCL" in col_upper:
-            mapeamento[col] = "RCL"
-        elif "PER CAPITA" in col_upper or "PERCAPITA" in col_upper:
-            mapeamento[col] = "Per Capita"
-        elif "DECIL" in col_upper:
-            mapeamento[col] = "Decil"
-        elif "10%" in col_upper and "Valor_D10" not in mapeamento.values():
-            mapeamento[col] = "Valor_D10"
-        elif ("50%" in col_upper or "60%" in col_upper) and "Valor_D50" not in mapeamento.values():
-            mapeamento[col] = "Valor_D50"
-        elif "25%" in col_upper and "Valor_D25" not in mapeamento.values():
-            mapeamento[col] = "Valor_D25"
-        elif ("CONTRIBUIÇÃO" in col_upper or "INTEGRAL" in col_upper) and "Valor_Integral" not in mapeamento.values():
-            mapeamento[col] = "Valor_Integral"
+    # Renomeia ordenadamente por posição para eliminar dependência do nome original
+    novas_colunas = {}
+    for i, col_orig in enumerate(df.columns):
+        if i < len(colunas_padrao):
+            novas_colunas[col_orig] = colunas_padrao[i]
+        else:
+            novas_colunas[col_orig] = f"Extra_{i}"
 
-    df = df.rename(columns=mapeamento)
+    df = df.rename(columns=novas_colunas)
     df = df.loc[:, ~df.columns.duplicated()]
+
+    # Limpeza básica de linhas vazias
+    if "Município" in df.columns:
+        df = df.dropna(subset=["Município"])
+        df = df[df["Município"].astype(str).str.strip() != ""]
 
     if "Ranking" in df.columns:
         df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
-    # INCLUSÃO: Trata RCL e Per Capita na conversão monetária
     for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50", "RCL", "Per Capita"]:
         if col in df.columns:
             df[col] = [converter_valor_ptbr(v) for v in df[col]]
@@ -221,7 +235,6 @@ def set_bg_hack():
         .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
         .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
 
-        /* Ajuste de centralização e layout compacto dos botões superiores */
         .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.3rem !important; min-height: 38px !important; text-align: center !important; }}
         </style>
         """
@@ -295,7 +308,6 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.set_draw_color(226, 232, 240)
     pdf.set_line_width(0.3)
 
-    # Adiciona a especificação para novo filiado nos descontos de 25% e 50%
     cenario_pdf = cenario
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
@@ -327,7 +339,6 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     return pdf_bytes
 
 
-# INCLUSÃO: Função para gerar o relatório em PDF da Memória de Cálculo
 def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, per_capita, decil, val_contribuicao):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -386,14 +397,12 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, per_capita, decil, 
 # -----------------------------------------------------------------------------
 # 6. CABEÇALHO E TOP CARDS
 # -----------------------------------------------------------------------------
-# Redução das colunas superiores para otimizar tamanho dos botões e acomodar o 3º botão
 header_title_col, header_actions_col = st.columns([6.3, 3.7])
 
 with header_title_col:
     st.markdown('<div class="page-title">Simulador de Contribuição e Parcelamento</div>', unsafe_allow_html=True)
 
 with header_actions_col:
-    # Divisão em 3 colunas iguais para os 3 botões do topo
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     with b_col1:
         pdf_placeholder = st.empty()
@@ -415,7 +424,7 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 7. FILTROS INTEGRIFICADOS (SINCRONIZAÇÃO AUTOMÁTICA DE PORTE)
+# 7. FILTROS INTEGRADOS
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
 
@@ -428,10 +437,8 @@ if "uf_sel" not in st.session_state:
 if "mun_sel" not in st.session_state:
     st.session_state.mun_sel = "-"
 
-# Listas de opções
-porte_opcoes = ["-"] + sorted(df_base["Porte"].dropna().unique().tolist()) if "Porte" in df_base.columns else ["-"]
+porte_opcoes = ["-"] + sorted([str(x) for x in df_base["Porte"].dropna().unique().tolist()]) if "Porte" in df_base.columns else ["-"]
 
-# Callbacks para sincronização imediata do state
 def on_porte_change():
     st.session_state.uf_sel = "-"
     st.session_state.mun_sel = "-"
@@ -445,57 +452,50 @@ def on_mun_change():
     if mun != "-" and uf != "-":
         match = df_base[(df_base["UF"] == uf) & (df_base["Município"] == mun)]
         if not match.empty and "Porte" in match.columns:
-            st.session_state.porte_sel = match["Porte"].iloc[0]
+            st.session_state.porte_sel = str(match["Porte"].iloc[0])
+
+idx_porte = porte_opcoes.index(st.session_state.porte_sel) if st.session_state.porte_sel in porte_opcoes else 0
 
 with f_col1:
     st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
-    porte_sel = st.selectbox("", porte_opcoes, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
+    porte_sel = st.selectbox("", porte_opcoes, index=idx_porte, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
 
-# Base filtrada por porte se selecionado diretamente
 df_temp = df_base.copy()
 if porte_sel != "-":
     df_temp = df_temp[df_temp["Porte"] == porte_sel]
 
-uf_opcoes = ["-"] + sorted(df_temp["UF"].dropna().unique().tolist()) if "UF" in df_temp.columns else ["-"]
+uf_opcoes = ["-"] + sorted([str(x) for x in df_temp["UF"].dropna().unique().tolist()]) if "UF" in df_temp.columns else ["-"]
+idx_uf = uf_opcoes.index(st.session_state.uf_sel) if st.session_state.uf_sel in uf_opcoes else 0
 
 with f_col2:
     st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
-    uf_sel = st.selectbox("", uf_opcoes, key="uf_sel", on_change=on_uf_change, label_visibility="collapsed")
+    uf_sel = st.selectbox("", uf_opcoes, index=idx_uf, key="uf_sel", on_change=on_uf_change, label_visibility="collapsed")
 
 if uf_sel != "-":
     df_temp = df_temp[df_temp["UF"] == uf_sel]
 
-mun_opcoes = ["-"] + sorted(df_temp["Município"].dropna().unique().tolist()) if "Município" in df_temp.columns else ["-"]
+mun_opcoes = ["-"] + sorted([str(x) for x in df_temp["Município"].dropna().unique().tolist()]) if "Município" in df_temp.columns else ["-"]
+idx_mun = mun_opcoes.index(st.session_state.mun_sel) if st.session_state.mun_sel in mun_opcoes else 0
 
 with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
-    mun_sel = st.selectbox("", mun_opcoes, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
+    mun_sel = st.selectbox("", mun_opcoes, index=idx_mun, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
 
-# INCLUSÃO: Captura dos novos campos adicionais para a Memória de Cálculo
 if mun_sel != "-" and uf_sel != "-":
     df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
     if not df_filtrado.empty:
-        porte_val = df_filtrado["Porte"].iloc[0] if "Porte" in df_filtrado.columns else "-"
-        ranking_val = df_filtrado["Ranking"].iloc[0] if "Ranking" in df_filtrado.columns else "-"
-        pop_val = df_filtrado["População"].iloc[0] if "População" in df_filtrado.columns else "-"
+        porte_val = str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-"
+        ranking_val = str(df_filtrado["Ranking"].iloc[0]) if "Ranking" in df_filtrado.columns else "-"
+        pop_val = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
         rcl_val = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else "-"
         per_capita_val = df_filtrado["Per Capita"].iloc[0] if "Per Capita" in df_filtrado.columns else "-"
-        decil_val = df_filtrado["Decil"].iloc[0] if "Decil" in df_filtrado.columns else "-"
+        decil_val = str(df_filtrado["Decil"].iloc[0]) if "Decil" in df_filtrado.columns else "-"
     else:
-        porte_val = "-"
-        ranking_val = "-"
-        pop_val = "-"
-        rcl_val = "-"
-        per_capita_val = "-"
-        decil_val = "-"
+        porte_val, ranking_val, pop_val, rcl_val, per_capita_val, decil_val = "-", "-", "-", "-", "-", "-"
 else:
     df_filtrado = pd.DataFrame()
     porte_val = porte_sel if porte_sel != "-" else "-"
-    ranking_val = "-"
-    pop_val = "-"
-    rcl_val = "-"
-    per_capita_val = "-"
-    decil_val = "-"
+    ranking_val, pop_val, rcl_val, per_capita_val, decil_val = "-", "-", "-", "-", "-"
 
 with f_col4:
     st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
@@ -563,7 +563,6 @@ if has_data:
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
 
-    # Gera o PDF dinâmico da Simulação
     pdf_bytes_topo = gerar_pdf_simulacao(
         municipio=mun_sel,
         uf=uf_sel,
@@ -578,7 +577,6 @@ if has_data:
 
     pdf_placeholder.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
 
-    # INCLUSÃO: Gera o PDF da Memória de Cálculo
     pdf_memoria_bytes = gerar_pdf_memoria_calculo(
         uf=uf_sel,
         municipio=mun_sel,
