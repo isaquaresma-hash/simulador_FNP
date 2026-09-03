@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. CARREGAMENTO E TRATAMENTO DE DADOS
+# 2. CARREGAMENTO E LIMPEZA ROBUSTA DA PLANILHA EXCEL
 # -----------------------------------------------------------------------------
 def converter_valor_ptbr(valor):
     try:
@@ -49,6 +49,23 @@ def formatar_inteiro_ptbr(valor):
         return f"{val_num:,}".replace(",", ".")
     except Exception:
         return str(valor)
+
+
+def formatar_ranking(valor):
+    if pd.isna(valor) or str(valor).strip().lower() in ["nan", "none", "", "null", "-"]:
+        return "-"
+    val_str = str(valor).strip()
+    if "%" in val_str:
+        return val_str
+    try:
+        val_num = float(val_str.replace(",", "."))
+        if 0 < val_num <= 1:
+            return f"{int(round(val_num * 100))}%"
+        elif val_num.is_integer():
+            return f"{int(val_num)}%"
+    except ValueError:
+        pass
+    return val_str
 
 
 def fmt_br(valor):
@@ -111,6 +128,9 @@ def carregar_dados():
         df = df.dropna(subset=["Município"])
         df = df[df["Município"].astype(str).str.strip() != ""]
 
+    if "Ranking" in df.columns:
+        df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
+
     for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50", "RCL", "Receita per capita"]:
         if col in df.columns:
             df[col] = [converter_valor_ptbr(v) for v in df[col]]
@@ -123,10 +143,110 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. LÓGICA DE ENQUADRAMENTO DA TABELA FNP (MANUAL 2027 V2.0)
+# 3. ESTILOS CSS
+# -----------------------------------------------------------------------------
+def set_bg_hack():
+    bin_str = None
+    mime_type = "image/png"
+    
+    for f in os.listdir("."):
+        if f.lower().endswith(('.png', '.jpg', '.jpeg')):
+            try:
+                if f.lower().endswith(('.jpg', '.jpeg')):
+                    mime_type = "image/jpeg"
+                else:
+                    mime_type = "image/png"
+                    
+                with open(f, "rb") as img_file:
+                    bin_str = base64.b64encode(img_file.read()).decode()
+                break
+            except Exception:
+                pass
+
+    bg_css = f'background-image: url("data:{mime_type};base64,{bin_str}");' if bin_str else 'background-color: #F8FAFC;'
+
+    page_bg_img = f"""
+        <style>
+        .stApp {{
+            {bg_css}
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+        }}
+        .block-container {{ padding-top: 180px !important; padding-bottom: 2rem !important; }}
+        #MainMenu, footer, header {{ visibility: hidden; }}
+
+        @media screen and (max-width: 768px) {{
+            .stApp {{
+                background-size: contain !important;
+                background-position: center top !important;
+                background-color: #0A3663 !important;
+            }}
+            .block-container {{ padding-top: 100px !important; }}
+        }}
+
+        .page-title {{ color: #FFFFFF; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }}
+        .badge-main {{ background-color: #334155; color: #FFFFFF !important; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px; }}
+        .badge-filter {{ background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px; text-align: left; }}
+        .badge-light {{ background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; }}
+        
+        .stSelectbox div[data-baseweb="select"] > div {{ 
+            background-color: #F1F5F9 !important; 
+            color: #0F172A !important; 
+            border-radius: 6px !important; 
+            border: none !important; 
+            min-height: 38px !important; 
+            height: 38px !important; 
+        }}
+        .info-auto-box {{ 
+            background-color: #F1F5F9; 
+            color: #0F172A; 
+            font-weight: 800; 
+            text-align: center; 
+            height: 38px; 
+            min-height: 38px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 6px; 
+            box-shadow: none; 
+            font-size: 0.88rem; 
+            box-sizing: border-box;
+        }}
+        
+        .top-card {{ background-color: #FFFFFF; padding: 6px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px; height: 60px; }}
+        .icon-circle {{ width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; font-weight: bold; flex-shrink: 0; }}
+        .top-card-title {{ color: #718096 !important; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1; }}
+        .top-card-value {{ color: #1A202C !important; font-size: 1.25rem; font-weight: 800; line-height: 1.1; margin: 2px 0; }}
+        .top-card-sub {{ color: #A0AEC0 !important; font-size: 0.58rem; font-weight: 600; line-height: 1; }}
+
+        .sim-card {{ background-color: #FFFFFF; padding: 0.7rem 0.9rem; border-radius: 6px; min-height: 85px; display: flex; flex-direction: column; justify-content: center; }}
+        .sim-title {{ font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.1rem; }}
+        .sim-value {{ color: #1A202C !important; font-size: 1.3rem; font-weight: 800; margin: 0.1rem 0; }}
+        .sim-sub {{ color: #A0AEC0 !important; font-size: 0.65rem; min-height: 1rem; }}
+
+        .res-card-dark {{ background-color: #0A3663; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-card-blue {{ background-color: #3B82F6; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-card-green {{ background-color: #10B981; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-title {{ font-size: 0.65rem; font-weight: 800; color: #FFFFFF !important; text-transform: uppercase; }}
+        .res-val {{ font-size: 1.3rem; font-weight: 800; color: #FFFFFF !important; margin: 0.1rem 0; }}
+        .res-sub {{ font-size: 0.65rem; color: rgba(255,255,255,0.85) !important; }}
+
+        .explicacao-card {{ background-color: #FFFFFF; padding: 1rem 1.2rem; border-radius: 8px; border-left: 5px solid #0A3663; margin-top: 1rem; color: #1E293B; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+
+        .stButton button, .stDownloadButton button {{ background-color: #FFFFFF !important; color: #2D3748 !important; border: 1px solid #CBD5E0 !important; border-radius: 6px !important; font-size: 0.72rem !important; font-weight: 600 !important; padding: 0.2rem 0.3rem !important; min-height: 38px !important; text-align: center !important; }}
+        </style>
+        """
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+
+set_bg_hack()
+
+# -----------------------------------------------------------------------------
+# 4. ENQUADRAMENTO DA TABELA MANUAL FNP 2027 (RCL X RCLpc)
 # -----------------------------------------------------------------------------
 def obter_grupo_rclpc(rcl_pc):
-    """Mapeia a RCL per capita para o grupo correspondente (1 a 10) do manual."""
+    """Mapeia a RCL per capita para o Grupo (1 a 10) de acordo com o Manual 2027 v2.0."""
     if rcl_pc <= 4832.71:
         return 1
     elif rcl_pc <= 5354.64:
@@ -165,28 +285,376 @@ def obter_valores_validados(row_or_df):
     return val_integral, val_d10, val_d25, val_d50
 
 # -----------------------------------------------------------------------------
-# 4. INTERFACE E EXIBIÇÃO DA MEMÓRIA DE CÁLCULO
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
-# [Abaixo você pode inserir esta seção no seu código onde exibe os detalhes do município]
+class PDF(FPDF):
+    def header(self):
+        self.set_fill_color(10, 54, 99)
+        self.rect(0, 0, 210, 32, "F")
+        self.set_y(10)
+        self.set_font("Arial", "B", 14)
+        self.set_text_color(255, 255, 255)
+        self.cell(0, 10, "FNP - SIMULADOR DE CONTRIBUICAO E PARCELAMENTO", 0, 1, "C")
+        self.set_y(40)
 
-def exibir_memoria_calculo_manual(municipio, uf, rcl, populacao, receita_per_capita, valor_integral):
-    grupo_rclpc = obter_grupo_rclpc(receita_per_capita)
-    
-    st.markdown("### 📘 Memória de Cálculo das Contribuições 2027 (Manual v2.0)")
-    
+
+def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
+    pdf = PDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 13)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 8, f"RELATORIO DE SIMULACAO - {municipio.upper()} ({uf})", 0, 1, "L")
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 6, f"Porte: {porte}", 0, 1, "L")
+
+    pdf.ln(3)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_line_width(0.5)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(8)
+
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 7, "DETALHES DO PARCELAMENTO SELECIONADO", 0, 1, "L")
+    pdf.ln(3)
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(15, 23, 42)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_line_width(0.3)
+
+    cenario_pdf = cenario
+    if cenario in ["Desconto 25%", "Desconto 50%"]:
+        cenario_pdf = f"{cenario} (Novo Filiado)"
+
+    dados = [
+        ("Cenario Selecionado:", f"{cenario_pdf}"),
+        ("Numero de Parcelas:", f"{parcelas}x"),
+        ("Valor Integral:", f"R$ {fmt_br(val_integral)}"),
+        ("Valor Total da Negociacao:", f"R$ {fmt_br(valor_total)}"),
+        ("Valor de Cada Parcela Mensal:", f"R$ {fmt_br(valor_parcela)}"),
+        ("Desconto para o Municipio:", f"R$ {fmt_br(economia)}"),
+    ]
+
+    col_w1, col_w2, row_height = 95, 95, 9
+    for rotulo, valor in dados:
+        pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
+        pdf.cell(col_w2, row_height, f" {valor}", 1, 1, "L")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        temp_filename = tmp_file.name
+
+    pdf.output(temp_filename)
+    with open(temp_filename, "rb") as f:
+        pdf_bytes = f.read()
+
+    if os.path.exists(temp_filename):
+        os.remove(temp_filename)
+
+    return pdf_bytes
+
+
+def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita, grupo_rclpc, val_contribuicao):
+    pdf = PDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 13)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 8, f"MEMORIA DE CALCULO - {municipio.upper()} ({uf})", 0, 1, "L")
+
+    pdf.ln(3)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_line_width(0.5)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(8)
+
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 7, "INDICADORES E VALOR DA CONTRIBUICAO (MANUAL 2027 V2.0)", 0, 1, "L")
+    pdf.ln(3)
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(15, 23, 42)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_line_width(0.3)
+
+    pop_fmt = formatar_inteiro_ptbr(populacao)
+    rcl_fmt = f"R$ {fmt_br(rcl)}" if isinstance(rcl, (int, float)) and rcl > 0 else str(rcl)
+    receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita)}" if isinstance(receita_per_capita, (int, float)) else str(receita_per_capita)
+
+    dados = [
+        ("UF:", str(uf)),
+        ("Municipio:", str(municipio)),
+        ("Populacao (IBGE):", pop_fmt),
+        ("RCL (Receita Corrente Liquida 2025):", rcl_fmt),
+        ("RCL per capita (RCLpc):", receita_per_capita_fmt),
+        ("Grupo de RCLpc (Coluna da Tabela):", f"Grupo {grupo_rclpc}"),
+        ("Valor da Contribuicao Anual Integral (2027):", f"R$ {fmt_br(val_contribuicao)}"),
+    ]
+
+    col_w1, col_w2, row_height = 95, 95, 9
+    for rotulo, valor in dados:
+        pdf.cell(col_w1, row_height, f" {rotulo}", 1, 0, "L")
+        pdf.cell(col_w2, row_height, f" {valor}", 1, 1, "L")
+
+    pdf.ln(8)
+    pdf.set_font("Arial", "B", 11)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 7, "METODOLOGIA DE CALCULO APLICADA", 0, 1, "L")
+    pdf.ln(2)
+
+    pdf.set_font("Arial", "", 9)
+    pdf.set_text_color(50, 50, 50)
+    explicacao_texto = (
+        f"Conforme o Manual de calculo das contribuicoes 2027 v2.0.pptx.pdf, o valor da contribuicao anual "
+        f"do municipio de {municipio} ({uf}) e obtido por meio do cruzamento matricial direto (Linha x Coluna):\n\n"
+        f"1. Calculo da RCLpc: A Receita Corrente Liquida (R$ {fmt_br(rcl)}) e dividida pela populacao ({pop_fmt} hab.), "
+        f"resultando na RCL per capita de R$ {fmt_br(receita_per_capita)}.\n"
+        f"2. Grupo de RCLpc (Coluna): Com esse valor, o municipio enquadra-se no Grupo {grupo_rclpc} das colunas da Tabela de Contribuicao.\n"
+        f"3. Faixa de RCL (Linha): O montante da RCL total define a linha correspondente aos intervalos de arrecadacao orcamentaria.\n"
+        f"4. Intersecao: O ponto de encontro entre a Faixa de RCL e o Grupo {grupo_rclpc} determina o valor anual devido de R$ {fmt_br(val_contribuicao)}."
+    )
+    pdf.multi_cell(0, 5, explicacao_texto)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        temp_filename = tmp_file.name
+
+    pdf.output(temp_filename)
+    with open(temp_filename, "rb") as f:
+        pdf_bytes = f.read()
+
+    if os.path.exists(temp_filename):
+        os.remove(temp_filename)
+
+    return pdf_bytes
+
+# -----------------------------------------------------------------------------
+# 6. CABEÇALHO E TOP CARDS
+# -----------------------------------------------------------------------------
+header_title_col, header_actions_col = st.columns([6.3, 3.7])
+
+with header_title_col:
+    st.markdown('<div class="page-title">Simulador de Contribuição e Parcelamento</div>', unsafe_allow_html=True)
+
+with header_actions_col:
+    b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
+    with b_col1:
+        pdf_placeholder = st.empty()
+
+    with b_col2:
+        pdf_memoria_placeholder = st.empty()
+
+    with b_col3:
+        if st.button("🔄 Atualizar Base", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+
+m_col1, m_col2 = st.columns(2)
+with m_col1:
+    st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #1E40AF;">🏛️</div><div><div class="top-card-title">CAPITAIS</div><div class="top-card-value">27</div><div class="top-card-sub">Quantidade de capitais no Brasil</div></div></div>', unsafe_allow_html=True)
+with m_col2:
+    st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #059669;">👥</div><div><div class="top-card-title">MUNICÍPIOS ACIMA DE 80 MIL HABITANTES</div><div class="top-card-value">435</div><div class="top-card-sub">Municípios recorte FNP</div></div></div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# 7. FILTROS INTEGRADOS
+# -----------------------------------------------------------------------------
+st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
+
+f_col1, f_col2, f_col3, f_col4 = st.columns([2.5, 1.2, 3.8, 2.5])
+
+if "porte_sel" not in st.session_state:
+    st.session_state.porte_sel = "-"
+if "uf_sel" not in st.session_state:
+    st.session_state.uf_sel = "-"
+if "mun_sel" not in st.session_state:
+    st.session_state.mun_sel = "-"
+
+porte_opcoes = ["-"] + sorted([str(x) for x in df_base["Porte"].dropna().unique().tolist()]) if "Porte" in df_base.columns else ["-"]
+
+def on_porte_change():
+    st.session_state.uf_sel = "-"
+    st.session_state.mun_sel = "-"
+
+def on_uf_change():
+    st.session_state.mun_sel = "-"
+
+def on_mun_change():
+    mun = st.session_state.mun_sel
+    uf = st.session_state.uf_sel
+    if mun != "-" and uf != "-":
+        match = df_base[(df_base["UF"] == uf) & (df_base["Município"] == mun)]
+        if not match.empty and "Porte" in match.columns:
+            st.session_state.porte_sel = str(match["Porte"].iloc[0])
+
+idx_porte = porte_opcoes.index(st.session_state.porte_sel) if st.session_state.porte_sel in porte_opcoes else 0
+
+with f_col1:
+    st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
+    porte_sel = st.selectbox("", porte_opcoes, index=idx_porte, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
+
+df_temp = df_base.copy()
+if porte_sel != "-":
+    df_temp = df_temp[df_temp["Porte"] == porte_sel]
+
+uf_opcoes = ["-"] + sorted([str(x) for x in df_temp["UF"].dropna().unique().tolist()]) if "UF" in df_temp.columns else ["-"]
+idx_uf = uf_opcoes.index(st.session_state.uf_sel) if st.session_state.uf_sel in uf_opcoes else 0
+
+with f_col2:
+    st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
+    uf_sel = st.selectbox("", uf_opcoes, index=idx_uf, key="uf_sel", on_change=on_uf_change, label_visibility="collapsed")
+
+if uf_sel != "-":
+    df_temp = df_temp[df_temp["UF"] == uf_sel]
+
+mun_opcoes = ["-"] + sorted([str(x) for x in df_temp["Município"].dropna().unique().tolist()]) if "Município" in df_temp.columns else ["-"]
+idx_mun = mun_opcoes.index(st.session_state.mun_sel) if st.session_state.mun_sel in mun_opcoes else 0
+
+with f_col3:
+    st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
+    mun_sel = st.selectbox("", mun_opcoes, index=idx_mun, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
+
+if mun_sel != "-" and uf_sel != "-":
+    df_filtrado = df_base[(df_base["UF"] == uf_sel) & (df_base["Município"] == mun_sel)]
+    if not df_filtrado.empty:
+        porte_val = str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-"
+        ranking_val = str(df_filtrado["Ranking"].iloc[0]) if "Ranking" in df_filtrado.columns else "-"
+        pop_val = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
+        rcl_val = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else "-"
+        receita_per_capita_val = df_filtrado["Receita per capita"].iloc[0] if "Receita per capita" in df_filtrado.columns else "-"
+        decil_val = str(df_filtrado["Decil"].iloc[0]) if "Decil" in df_filtrado.columns else "-"
+    else:
+        porte_val, ranking_val, pop_val, rcl_val, receita_per_capita_val, decil_val = "-", "-", "-", "-", "-", "-"
+else:
+    df_filtrado = pd.DataFrame()
+    porte_val = porte_sel if porte_sel != "-" else "-"
+    ranking_val, pop_val, rcl_val, receita_per_capita_val, decil_val = "-", "-", "-", "-", "-"
+
+with f_col4:
+    st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# 8. SIMULADOR E CALCULADORA
+# -----------------------------------------------------------------------------
+has_data = not df_filtrado.empty
+
+if has_data:
+    st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+
+    situacao_municipio = str(df_filtrado["Situação"].iloc[0]).strip() if "Situação" in df_filtrado.columns else "Filiado"
+    eh_filiado = "filiado" in situacao_municipio.lower() and "não" not in situacao_municipio.lower()
+    status_color = "🟢" if eh_filiado else "🔴"
+
+    st.markdown(f'<div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #FFFFFF;">Painel de Simulação — {mun_sel} <span class="badge-light">{status_color}({situacao_municipio})</span></div>', unsafe_allow_html=True)
+
+    val_integral, val_d10, val_d25, val_d50 = obter_valores_validados(df_filtrado)
+
+    if eh_filiado:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+    else:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+        with c3:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {fmt_br(val_d25)}</div><div class="sim-sub">Para novo filiado</div></div>', unsafe_allow_html=True)
+        with c4:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div><div class="sim-sub">Para novo filiado</div></div>', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
+
+    calc_col1, calc_col2 = st.columns(2)
+
+    with calc_col1:
+        st.markdown('<div class="badge-filter">1. Escolha o cenário de valor base:</div>', unsafe_allow_html=True)
+        opcoes_cenario = ["Desconto 10%", "Valor Integral"] if eh_filiado else ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
+        cenario = st.selectbox("", opcoes_cenario, key="cenario_calc", label_visibility="collapsed")
+
+    opcoes_parcelas = list(range(1, 11)) if cenario in ["Desconto 25%", "Desconto 50%"] else list(range(1, 13))
+
+    with calc_col2:
+        st.markdown('<div class="badge-filter">2. Escolha o número de parcelas desejado:</div>', unsafe_allow_html=True)
+        num_parcelas = st.selectbox("", opcoes_parcelas, index=len(opcoes_parcelas) - 1, format_func=lambda x: f"{x}x", key="num_parcelas_calc", label_visibility="collapsed")
+
+    valor_negociado = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
+    economia = val_integral - valor_negociado
+    valor_parcela = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
+
+    res1, res2, res3 = st.columns(3)
+    with res1:
+        st.markdown(f'<div class="res-card-dark"><div class="res-title">VALOR DE CADA PARCELA</div><div class="res-val">R$ {fmt_br(valor_parcela)}</div><div class="res-sub">Plano em {num_parcelas} parcelas mensais</div></div>', unsafe_allow_html=True)
+    with res2:
+        sub_cenario = f"Cenário: {cenario} (Novo Filiado)" if cenario in ["Desconto 25%", "Desconto 50%"] else f"Cenário: {cenario}"
+        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">{sub_cenario}</div></div>', unsafe_allow_html=True)
+    with res3:
+        st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
+
+    # -----------------------------------------------------------------------------
+    # 9. SEÇÃO DE EXPLICAÇÃO DO CÁLCULO (MANUAL 2027 V2.0)
+    # -----------------------------------------------------------------------------
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="badge-main">📘 Memória e Metodologia de Cálculo (Manual 2027 v2.0)</div>', unsafe_allow_html=True)
+
+    pop_fmt = formatar_inteiro_ptbr(pop_val)
+    rcl_fmt = f"R$ {fmt_br(rcl_val)}" if isinstance(rcl_val, (int, float)) and rcl_val > 0 else str(rcl_val)
+    receita_per_capita_fmt = f"R$ {fmt_br(receita_per_capita_val)}" if isinstance(receita_per_capita_val, (int, float)) else str(receita_per_capita_val)
+    grupo_rclpc_val = obter_grupo_rclpc(receita_per_capita_val) if isinstance(receita_per_capita_val, (int, float)) else "-"
+
     st.markdown(f"""
-    <div style="background-color: #F8FAFC; border-left: 5px solid #0A3663; padding: 1rem; border-radius: 6px; color: #1E293B;">
-        <p><b>Município:</b> {municipio} / {uf}</p>
-        <p><b>1. Apuração da Receita Corrente Líquida per capita (RCLpc):</b><br>
-        Dividindo a RCL total de <b>R$ {fmt_br(rcl)}</b> pela população de <b>{formatar_inteiro_ptbr(populacao)} habitantes</b>, obtém-se a RCLpc de <b>R$ {fmt_br(receita_per_capita)}</b>.</p>
-        
-        <p><b>2. Enquadramento do Grupo de RCLpc (Coluna da Tabela):</b><br>
-        Com o valor de R$ {fmt_br(receita_per_capita)}, o município enquadra-se no <b>Grupo {grupo_rclpc}</b> da tabela de contribuição.</p>
-        
-        <p><b>3. Enquadramento da Faixa de RCL (Linha da Tabela):</b><br>
-        A RCL total de R$ {fmt_br(rcl)} define a linha do intervalo orçamentário correspondente na Tabela de Contribuições FNP 2027.</p>
-        
-        <p><b>4. Valor da Contribuição Apurado:</b><br>
-        Ao cruzar a linha da Faixa de RCL com a coluna do <b>Grupo {grupo_rclpc}</b>, chega-se ao valor de contribuição anual integral de <b>R$ {fmt_br(valor_integral)}</b>.</p>
+    <div class="explicacao-card">
+        <h4 style="margin-top: 0; color: #0A3663;">Como o valor da contribuição de {mun_sel} ({uf_sel}) foi calculado?</h4>
+        <p>De acordo com as diretrizes do <b>Manual de cálculo das contribuições 2027 v2.0.pptx.pdf</b>, a contribuição anual é apurada através de um cruzamento direto de matriz na Tabela de Contribuição (Linha x Coluna) com base nos dados de 2025:</p>
+        <ol>
+            <li><b>Apuração da RCL per capita (RCLpc):</b> Dividindo a Receita Corrente Líquida (<b>{rcl_fmt}</b>) pela população de <b>{pop_fmt} habitantes</b>, obtém-se a RCLpc de <b>{receita_per_capita_fmt}</b>.</li>
+            <li><b>Identificação do Grupo de RCLpc (Coluna):</b> Com uma RCLpc de {receita_per_capita_fmt}, o município enquadra-se no <b>Grupo {grupo_rclpc_val}</b> (das colunas de capacidade fiscal).</li>
+            <li><b>Identificação da Faixa de RCL (Linha):</b> A RCL total de {rcl_fmt} localiza a faixa orçamentária correspondente nas linhas da tabela.</li>
+            <li><b>Cruzamento e Valor Final:</b> O ponto de interseção entre a linha da Faixa de RCL e a coluna do Grupo {grupo_rclpc_val} resulta no valor integral anual devido de <b>R$ {fmt_br(val_integral)}</b>.</li>
+        </ol>
+        <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 0;"><i>Nota: A metodologia FNP concede uma redução progressiva no valor final quanto menor for a RCLpc do município, promovendo equidade fiscal.</i></p>
     </div>
     """, unsafe_allow_html=True)
+
+    # -----------------------------------------------------------------------------
+    # 10. PREPARAÇÃO DOS BOTÕES DE DOWNLOAD DO PDF
+    # -----------------------------------------------------------------------------
+    pdf_bytes_topo = gerar_pdf_simulacao(
+        municipio=mun_sel,
+        uf=uf_sel,
+        porte=porte_val,
+        cenario=cenario,
+        parcelas=num_parcelas,
+        val_integral=val_integral,
+        valor_total=valor_negociado,
+        valor_parcela=valor_parcela,
+        economia=economia
+    )
+
+    pdf_placeholder.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+
+    pdf_memoria_bytes = gerar_pdf_memoria_calculo(
+        uf=uf_sel,
+        municipio=mun_sel,
+        populacao=pop_val,
+        rcl=rcl_val,
+        receita_per_capita=receita_per_capita_val,
+        grupo_rclpc=grupo_rclpc_val,
+        val_contribuicao=val_integral
+    )
+
+    pdf_memoria_placeholder.download_button("📊 Memória de Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+else:
+    pdf_placeholder.button("📄 PDF Simulação", disabled=True, use_container_width=True)
+    pdf_memoria_placeholder.button("📊 Memória de Cálculo", disabled=True, use_container_width=True)
