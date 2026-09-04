@@ -143,34 +143,29 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. ESTILOS CSS - CARREGANDO 'simulador.png.jpg' DO REPOSITÓRIO GITHUB
+# 3. ESTILOS CSS
 # -----------------------------------------------------------------------------
 def set_bg_hack():
     bin_str = None
-    mime_type = "image/jpeg"
+    mime_type = "image/png"
     
-    # Busca explicitamente o arquivo simulador.png.jpg do GitHub
-    arquivo_fundo = "simulador.png.jpg"
+    imagem_fundo = "simulador.png.jpg" if os.path.exists("simulador.png.jpg") else "Tabela de contribuição 2027.png"
     
-    if os.path.exists(arquivo_fundo):
-        try:
-            with open(arquivo_fundo, "rb") as img_file:
-                bin_str = base64.b64encode(img_file.read()).decode()
-        except Exception:
-            pass
-    else:
-        # Busca secundária caso o nome tenha variações no repositório
-        for f in os.listdir("."):
-            if "simulador" in f.lower() and f.lower().endswith(('.png', '.jpg', '.jpeg')):
-                try:
-                    mime_type = "image/png" if f.lower().endswith('.png') else "image/jpeg"
-                    with open(f, "rb") as img_file:
-                        bin_str = base64.b64encode(img_file.read()).decode()
-                    break
-                except Exception:
-                    pass
+    for f in os.listdir("."):
+        if f == imagem_fundo or f.lower().endswith(('.png', '.jpg', '.jpeg')):
+            try:
+                if f.lower().endswith(('.jpg', '.jpeg')):
+                    mime_type = "image/jpeg"
+                else:
+                    mime_type = "image/png"
+                    
+                with open(f, "rb") as img_file:
+                    bin_str = base64.b64encode(img_file.read()).decode()
+                break
+            except Exception:
+                pass
 
-    bg_css = f'background-image: url("data:{mime_type};base64,{bin_str}");' if bin_str else 'background-color: #00243E;'
+    bg_css = f'background-image: url("data:{mime_type};base64,{bin_str}");' if bin_str else 'background-color: #F8FAFC;'
 
     page_bg_img = f"""
         <style>
@@ -187,7 +182,7 @@ def set_bg_hack():
             .stApp {{
                 background-size: contain !important;
                 background-position: center top !important;
-                background-color: #00243E !important;
+                background-color: #0A3663 !important;
             }}
             .block-container {{ padding-top: 100px !important; }}
         }}
@@ -232,7 +227,7 @@ def set_bg_hack():
         .sim-value {{ color: #1A202C !important; font-size: 1.3rem; font-weight: 800; margin: 0.1rem 0; }}
         .sim-sub {{ color: #A0AEC0 !important; font-size: 0.65rem; min-height: 1rem; }}
 
-        .res-card-dark {{ background-color: #00243E; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
+        .res-card-dark {{ background-color: #0A3663; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
         .res-card-blue {{ background-color: #3B82F6; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
         .res-card-green {{ background-color: #10B981; color: #FFFFFF !important; padding: 0.7rem 0.9rem; border-radius: 6px; }}
         .res-title {{ font-size: 0.65rem; font-weight: 800; color: #FFFFFF !important; text-transform: uppercase; }}
@@ -290,64 +285,32 @@ def obter_valores_validados(row_or_df):
 
 
 def txt_pdf(texto):
+    """Auxiliar para converter caracteres acentuados para Latin-1 (compatível com FPDF)"""
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
-
-def encontrar_logo_fnp():
-    nomes_possiveis = ["logo_fnp.png", "logo.png", "fnp_logo.png", "logo_fnp.jpg", "logo.jpg"]
-    for nome in nomes_possiveis:
-        if os.path.exists(nome):
-            return nome
-    for f in os.listdir("."):
-        if "logo" in f.lower() and f.lower().endswith(('.png', '.jpg', '.jpeg')):
-            return f
-    return None
-
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF COM A COR EXACTA DA PLATAFORMA (#00243E)
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
-        self.set_fill_color(0, 36, 62)
-        self.rect(0, 0, 210, 30, "F")
-        
-        logo = encontrar_logo_fnp()
-        if logo:
-            self.image(logo, x=6, y=4, h=14)
-            self.set_y(10)
-            self.set_x(65)
-            self.set_font("Arial", "B", 10)
-            self.set_text_color(255, 255, 255)
-            self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "L")
-        else:
-            self.set_y(10)
-            self.set_font("Arial", "B", 12)
-            self.set_text_color(255, 255, 255)
-            self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "C")
-            
-        self.set_y(38)
+        self.set_fill_color(10, 54, 99)
+        self.rect(0, 0, 210, 32, "F")
+        self.set_y(10)
+        self.set_font("Arial", "B", 13)
+        self.set_text_color(255, 255, 255)
+        self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "C")
+        self.set_y(40)
 
 
 class PDFMemoria(FPDF):
     def header(self):
-        self.set_fill_color(0, 36, 62)
-        self.rect(0, 0, 210, 30, "F")
-        
-        logo = encontrar_logo_fnp()
-        if logo:
-            self.image(logo, x=6, y=4, h=14)
-            self.set_y(10)
-            self.set_x(70)
-            self.set_font("Arial", "B", 11)
-            self.set_text_color(255, 255, 255)
-            self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
-        else:
-            self.set_y(10)
-            self.set_font("Arial", "B", 14)
-            self.set_text_color(255, 255, 255)
-            self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
-            
-        self.set_y(38)
+        self.set_fill_color(10, 54, 99)
+        self.rect(0, 0, 210, 32, "F")
+        self.set_y(10)
+        self.set_font("Arial", "B", 15)
+        self.set_text_color(255, 255, 255)
+        self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
+        self.set_y(40)
 
 
 def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
@@ -356,7 +319,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.add_page()
 
     pdf.set_font("Arial", "B", 13)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 8, txt_pdf(f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})"), 0, 1, "L")
 
     pdf.set_font("Arial", "", 10)
@@ -370,7 +333,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.ln(8)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 7, txt_pdf("DETALHES DO PARCELAMENTO SELECIONADO"), 0, 1, "L")
     pdf.ln(3)
 
@@ -416,7 +379,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.add_page()
 
     pdf.set_font("Arial", "B", 14)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 8, txt_pdf(f"{municipio}/{uf}"), 0, 1, "L")
 
     pdf.ln(2)
@@ -431,7 +394,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     rcl_descritiva = formatar_bilhoes_milhoes(rcl)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, txt_pdf("Dados do município:"), 0, 1, "L")
     pdf.ln(1)
 
@@ -445,7 +408,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, txt_pdf("Metodologia:"), 0, 1, "L")
     pdf.ln(1)
 
@@ -460,7 +423,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, txt_pdf(f"Para {municipio}:"), 0, 1, "L")
     pdf.ln(1)
 
@@ -474,7 +437,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.ln(3)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 36, 62)
+    pdf.set_text_color(10, 54, 99)
     pdf.cell(0, 6, txt_pdf(f"Contribuição Anual Integral 2027: R$ {fmt_br(val_contribuicao)}"), 0, 1, "L")
 
     pdf.ln(5)
