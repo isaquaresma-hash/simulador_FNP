@@ -296,11 +296,11 @@ class PDFSimulacao(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
             
-        self.set_y(10)
-        self.set_x(55)  # Inicia o texto após a logo da imagem
+        self.set_y(11)
+        self.set_x(62)  # Recuo de 62mm para dar espaçamento em relação ao logotipo
         self.set_font("Arial", "B", 12)
         self.set_text_color(255, 255, 255)
-        self.cell(145, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "L")
+        self.cell(138, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "L")
         self.set_y(40)
 
 
@@ -317,11 +317,11 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        self.set_y(10)
-        self.set_x(55)  # Empurra o início do texto para x=55 (abrindo espaço à direita da logo)
+        self.set_y(11.5)  # Ajusta a altura centralizando verticalmente entre as linhas do logotipo
+        self.set_x(62)    # Afasta mais para a direita para separar da logomarca
         self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
-        self.cell(145, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
+        self.cell(138, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
         self.set_y(40)
 
 
