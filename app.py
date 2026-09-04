@@ -288,6 +288,18 @@ def txt_pdf(texto):
     """Auxiliar para converter caracteres acentuados para Latin-1 (compatível com FPDF)"""
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
+
+def encontrar_logo_fnp():
+    """Localiza a imagem do logotipo da FNP no repositório"""
+    nomes_possiveis = ["logo_fnp.png", "logo.png", "fnp_logo.png", "logo_fnp.jpg", "logo.jpg"]
+    for nome in nomes_possiveis:
+        if os.path.exists(nome):
+            return nome
+    for f in os.listdir("."):
+        if "logo" in f.lower() and f.lower().endswith(('.png', '.jpg', '.jpeg')):
+            return f
+    return None
+
 # -----------------------------------------------------------------------------
 # 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
@@ -295,10 +307,22 @@ class PDFSimulacao(FPDF):
     def header(self):
         self.set_fill_color(10, 54, 99)
         self.rect(0, 0, 210, 32, "F")
-        self.set_y(10)
-        self.set_font("Arial", "B", 13)
-        self.set_text_color(255, 255, 255)
-        self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "C")
+        
+        logo = encontrar_logo_fnp()
+        if logo:
+            # Insere a logo no canto esquerdo da faixa azul
+            self.image(logo, x=10, y=5, h=22)
+            self.set_y(11)
+            self.set_x(45)
+            self.set_font("Arial", "B", 11)
+            self.set_text_color(255, 255, 255)
+            self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "L")
+        else:
+            self.set_y(10)
+            self.set_font("Arial", "B", 13)
+            self.set_text_color(255, 255, 255)
+            self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "C")
+            
         self.set_y(40)
 
 
@@ -306,10 +330,22 @@ class PDFMemoria(FPDF):
     def header(self):
         self.set_fill_color(10, 54, 99)
         self.rect(0, 0, 210, 32, "F")
-        self.set_y(10)
-        self.set_font("Arial", "B", 15)
-        self.set_text_color(255, 255, 255)
-        self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
+        
+        logo = encontrar_logo_fnp()
+        if logo:
+            # Insere a logo no canto esquerdo da faixa azul
+            self.image(logo, x=10, y=5, h=22)
+            self.set_y(11)
+            self.set_x(45)
+            self.set_font("Arial", "B", 13)
+            self.set_text_color(255, 255, 255)
+            self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
+        else:
+            self.set_y(10)
+            self.set_font("Arial", "B", 15)
+            self.set_text_color(255, 255, 255)
+            self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
+            
         self.set_y(40)
 
 
