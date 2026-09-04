@@ -289,7 +289,7 @@ def txt_pdf(texto):
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF COM TITULO ALINHADO Á DIREITA DA LOGO DA FNP
+# 5. GERADOR DE PDF COM TÍTULO CENTRALIZADO VERTICALMENTE À LOGO DA FNP
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
@@ -304,11 +304,15 @@ class PDFSimulacao(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
             
-        # Posiciona o cursor ao lado da logo (x=60) e centralizado na faixa azul (y=11)
-        self.set_xy(60, 11)
-        self.set_font("Arial", "B", 12)
+        # Oculta o slogan "Conectando Cidades" da imagem original
+        self.set_fill_color(10, 54, 99)
+        self.rect(90, 2, 115, 28, "F")
+
+        # Alinhamento vertical calibrado no centro exato da logo FNP (y=11.5)
+        self.set_xy(92, 11.5)
+        self.set_font("Arial", "B", 11)
         self.set_text_color(255, 255, 255)
-        self.cell(140, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 0, "L")
+        self.cell(110, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 0, "C")
         self.set_y(40)
 
 
@@ -325,11 +329,15 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        # Posiciona o cursor ao lado da logo (x=60) e centralizado na faixa azul (y=11)
-        self.set_xy(60, 11)
-        self.set_font("Arial", "B", 13)
+        # Oculta o slogan "Conectando Cidades" da imagem original
+        self.set_fill_color(10, 54, 99)
+        self.rect(90, 2, 115, 28, "F")
+
+        # Alinhamento vertical calibrado no centro exato da logo FNP (y=11.5)
+        self.set_xy(92, 11.5)
+        self.set_font("Arial", "B", 12)
         self.set_text_color(255, 255, 255)
-        self.cell(140, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 0, "L")
+        self.cell(110, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 0, "C")
         self.set_y(40)
 
 
@@ -366,7 +374,6 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
-    # Mapeamento e cálculo do período das parcelas iniciando em março/2027
     meses_nomes = ["Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     if parcelas == 1:
         vencimento_txt = "Março de 2027"
