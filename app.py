@@ -129,7 +129,7 @@ def carregar_dados():
         df = df[df["Município"].astype(str).str.strip() != ""]
 
     if "Ranking" in df.columns:
-        df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
+        df["Ranking"] = [formatar_ranking(v) for v Supplier in df["Ranking"]]
 
     for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50", "RCL", "Receita per capita"]:
         if col in df.columns:
@@ -316,8 +316,8 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        # AJUSTE: Afastado para a direita (X=65) e rebaixado verticalmente (Y=12)
-        self.set_xy(65, 12)
+        # AJUSTE: X=65 (afastado à direita) | Y=9 (subido ligeiramente)
+        self.set_xy(65, 9)
         self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
         self.cell(140, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
