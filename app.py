@@ -149,7 +149,7 @@ def set_bg_hack():
     bin_str = None
     mime_type = "image/png"
     
-    imagem_fundo = "imagem.pdf.png" if os.path.exists("imagem.pdf.png") else "Tabela de contribuição 2027.png"
+    imagem_fundo = "simulador.png.jpg" if os.path.exists("simulador.png.jpg") else "Tabela de contribuição 2027.png"
     
     for f in os.listdir("."):
         if f == imagem_fundo or f.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -289,22 +289,12 @@ def txt_pdf(texto):
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF COM CABEÇALHO DA IMAGEM "imagem.pdf.png"
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
-        img_path = "imagem.pdf.png"
-        if os.path.exists(img_path):
-            try:
-                # Insere a imagem cobrindo toda a largura (210mm), exibindo o topo no cabeçalho
-                self.image(img_path, x=0, y=0, w=210)
-            except Exception:
-                self.set_fill_color(10, 54, 99)
-                self.rect(0, 0, 210, 32, "F")
-        else:
-            self.set_fill_color(10, 54, 99)
-            self.rect(0, 0, 210, 32, "F")
-            
+        self.set_fill_color(10, 54, 99)
+        self.rect(0, 0, 210, 32, "F")
         self.set_y(10)
         self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
@@ -314,17 +304,8 @@ class PDFSimulacao(FPDF):
 
 class PDFMemoria(FPDF):
     def header(self):
-        img_path = "imagem.pdf.png"
-        if os.path.exists(img_path):
-            try:
-                self.image(img_path, x=0, y=0, w=210)
-            except Exception:
-                self.set_fill_color(10, 54, 99)
-                self.rect(0, 0, 210, 32, "F")
-        else:
-            self.set_fill_color(10, 54, 99)
-            self.rect(0, 0, 210, 32, "F")
-
+        self.set_fill_color(10, 54, 99)
+        self.rect(0, 0, 210, 32, "F")
         self.set_y(10)
         self.set_font("Arial", "B", 15)
         self.set_text_color(255, 255, 255)
