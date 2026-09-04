@@ -149,7 +149,6 @@ def set_bg_hack():
     bin_str = None
     mime_type = "image/jpeg"
     
-    # Busca direta pelo arquivo anexado
     arquivo_fundo = "simulador.png.jpg"
     
     if os.path.exists(arquivo_fundo):
