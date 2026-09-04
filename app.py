@@ -148,6 +148,8 @@ df_base = carregar_dados()
 def set_bg_hack():
     bin_str = None
     mime_type = "image/jpeg"
+    
+    # Busca direta pelo arquivo anexado
     arquivo_fundo = "simulador.png.jpg"
     
     if os.path.exists(arquivo_fundo):
@@ -280,7 +282,7 @@ def txt_pdf(texto):
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF
+# 5. GERADOR DE PDF COM CABEÇALHO DA IMAGEM "imagem.pdf.png"
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
@@ -315,12 +317,11 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        # AJUSTE DO TÍTULO: Direita (X=55) e Elevado (Y=4)
-        self.set_xy(55, 4)
-        self.set_font("Arial", "B", 13)
+        self.set_y(10)
+        self.set_font("Arial", "B", 15)
         self.set_text_color(255, 255, 255)
-        self.cell(150, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
-        self.set_y(38)
+        self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
+        self.set_y(40)
 
 
 def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
