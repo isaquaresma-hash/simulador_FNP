@@ -129,7 +129,7 @@ def carregar_dados():
         df = df[df["Município"].astype(str).str.strip() != ""]
 
     if "Ranking" in df.columns:
-        df["Ranking"] = [formatar_ranking(v) for v Supplier in df["Ranking"]]
+        df["Ranking"] = [formatar_ranking(v) for v in df["Ranking"]]
 
     for col in ["Valor_Integral", "Valor_D10", "Valor_D25", "Valor_D50", "RCL", "Receita per capita"]:
         if col in df.columns:
@@ -149,6 +149,7 @@ def set_bg_hack():
     bin_str = None
     mime_type = "image/jpeg"
     
+    # Busca direta pelo arquivo anexado
     arquivo_fundo = "simulador.png.jpg"
     
     if os.path.exists(arquivo_fundo):
@@ -316,11 +317,10 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        # AJUSTE: X=65 (afastado à direita) | Y=9 (subido ligeiramente)
-        self.set_xy(65, 9)
-        self.set_font("Arial", "B", 13)
+        self.set_y(10)
+        self.set_font("Arial", "B", 15)
         self.set_text_color(255, 255, 255)
-        self.cell(140, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
+        self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
         self.set_y(40)
 
 
