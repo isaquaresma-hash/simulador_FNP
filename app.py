@@ -280,7 +280,7 @@ def txt_pdf(texto):
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF COM AJUSTE DE POSIÇÃO NO TÍTULO
+# 5. GERADOR DE PDF
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
@@ -315,8 +315,8 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        # AJUSTE DO TÍTULO: Mais para a direita (X=55) e subido (Y=8)
-        self.set_xy(55, 8)
+        # AJUSTE DO TÍTULO: Direita (X=55) e Elevado (Y=4)
+        self.set_xy(55, 4)
         self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
         self.cell(150, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
