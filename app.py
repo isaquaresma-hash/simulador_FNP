@@ -289,14 +289,13 @@ def txt_pdf(texto):
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
 # -----------------------------------------------------------------------------
-# 5. GERADOR DE PDF COM CABEÇALHO DA IMAGEM "imagem.pdf.png"
+# 5. GERADOR DE PDF COM TITULO ALINHADO Á DIREITA DA LOGO DA FNP
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
         img_path = "imagem.pdf.png"
         if os.path.exists(img_path):
             try:
-                # Insere a imagem cobrindo toda a largura (210mm), exibindo o topo no cabeçalho
                 self.image(img_path, x=0, y=0, w=210)
             except Exception:
                 self.set_fill_color(10, 54, 99)
@@ -305,10 +304,11 @@ class PDFSimulacao(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
             
-        self.set_y(10)
-        self.set_font("Arial", "B", 13)
+        # Posiciona o cursor ao lado da logo (x=60) e centralizado na faixa azul (y=11)
+        self.set_xy(60, 11)
+        self.set_font("Arial", "B", 12)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 10, txt_pdf("FNP - SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "C")
+        self.cell(140, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 0, "L")
         self.set_y(40)
 
 
@@ -325,10 +325,11 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        self.set_y(10)
-        self.set_font("Arial", "B", 15)
+        # Posiciona o cursor ao lado da logo (x=60) e centralizado na faixa azul (y=11)
+        self.set_xy(60, 11)
+        self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "C")
+        self.cell(140, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 0, "L")
         self.set_y(40)
 
 
