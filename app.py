@@ -296,7 +296,7 @@ class PDFSimulacao(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
             
-        self.set_y(8.5)   # Subiu de 11 para 8.5
+        self.set_y(6.0)   # Ajustado de 8.5 para 6.0 (subiu mais um pouco)
         self.set_x(62)
         self.set_font("Arial", "B", 12)
         self.set_text_color(255, 255, 255)
@@ -317,7 +317,7 @@ class PDFMemoria(FPDF):
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
 
-        self.set_y(8.5)   # Subiu de 11.5 para 8.5
+        self.set_y(6.0)   # Ajustado de 8.5 para 6.0 (subiu mais um pouco)
         self.set_x(62)
         self.set_font("Arial", "B", 13)
         self.set_text_color(255, 255, 255)
