@@ -143,29 +143,23 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. ESTILOS CSS
+# 3. ESTILOS CSS - CARREGAMENTO DA IMAGEM DE FUNDO (simulador.png.jpg)
 # -----------------------------------------------------------------------------
 def set_bg_hack():
     bin_str = None
-    mime_type = "image/png"
+    mime_type = "image/jpeg"
     
-    imagem_fundo = "imagem.pdf.png" if os.path.exists("imagem.pdf.png") else "Tabela de contribuição 2027.png"
+    # Busca direta pelo arquivo anexado
+    arquivo_fundo = "simulador.png.jpg"
     
-    for f in os.listdir("."):
-        if f == imagem_fundo or f.lower().endswith(('.png', '.jpg', '.jpeg')):
-            try:
-                if f.lower().endswith(('.jpg', '.jpeg')):
-                    mime_type = "image/jpeg"
-                else:
-                    mime_type = "image/png"
-                    
-                with open(f, "rb") as img_file:
-                    bin_str = base64.b64encode(img_file.read()).decode()
-                break
-            except Exception:
-                pass
+    if os.path.exists(arquivo_fundo):
+        try:
+            with open(arquivo_fundo, "rb") as img_file:
+                bin_str = base64.b64encode(img_file.read()).decode()
+        except Exception:
+            pass
 
-    bg_css = f'background-image: url("data:{mime_type};base64,{bin_str}");' if bin_str else 'background-color: #F8FAFC;'
+    bg_css = f'background-image: url("data:{mime_type};base64,{bin_str}");' if bin_str else 'background-color: #0A3663;'
 
     page_bg_img = f"""
         <style>
@@ -285,7 +279,6 @@ def obter_valores_validados(row_or_df):
 
 
 def txt_pdf(texto):
-    """Auxiliar para converter caracteres acentuados para Latin-1 (compatível com FPDF)"""
     return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
 # -----------------------------------------------------------------------------
@@ -296,7 +289,6 @@ class PDFSimulacao(FPDF):
         img_path = "imagem.pdf.png"
         if os.path.exists(img_path):
             try:
-                # Insere a imagem cobrindo toda a largura (210mm), exibindo o topo no cabeçalho
                 self.image(img_path, x=0, y=0, w=210)
             except Exception:
                 self.set_fill_color(10, 54, 99)
@@ -365,7 +357,6 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
-    # Mapeamento e cálculo do período das parcelas iniciando em março/2027
     meses_nomes = ["Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     if parcelas == 1:
         vencimento_txt = "Março de 2027"
@@ -487,7 +478,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 6. GESTÃO DE ESTADO DOS FILTROS (EXECUTA ANTES DO CABEÇALHO)
+# 6. GESTÃO DE ESTADO DOS FILTROS
 # -----------------------------------------------------------------------------
 if "porte_sel" not in st.session_state:
     st.session_state.porte_sel = "-"
@@ -689,7 +680,9 @@ if has_data:
 
     with calc_col2:
         st.markdown('<div class="badge-filter">2. Escolha o número de parcelas desejado:</div>', unsafe_allow_html=True)
-        num_parcelas = st.selectbox("", opcoes_parcelas, index=len(opcoes_parcelas) - 1, format_func=lambda x: f"{x}x", key="num_parcelas_calc", label_visibility="collapsed")
+        num_parcelas_atual = st.session_state.get("num_parcelas_calc", len(opcoes_parcelas))
+        idx_parcela = opcoes_parcelas.index(num_parcelas_atual) if num_parcelas_atual in opcoes_parcelas else (len(opcoes_parcelas) - 1)
+        num_parcelas = st.selectbox("", opcoes_parcelas, index=idx_parcela, format_func=lambda x: f"{x}x", key="num_parcelas_calc", label_visibility="collapsed")
 
     valor_negociado = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
     economia = val_integral - valor_negociado
