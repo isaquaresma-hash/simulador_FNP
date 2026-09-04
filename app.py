@@ -305,14 +305,14 @@ def encontrar_logo_fnp():
 # -----------------------------------------------------------------------------
 class PDFSimulacao(FPDF):
     def header(self):
-        # Tom de azul exato da marca FNP: RGB(0, 75, 141)
-        self.set_fill_color(0, 75, 141)
+        # Cor de fundo exata da imagem da logo: RGB(0, 52, 108)
+        self.set_fill_color(0, 52, 108)
         self.rect(0, 0, 210, 30, "F")
         
         logo = encontrar_logo_fnp()
         if logo:
-            # Logo menor (h=14), mais à esquerda (x=6) e mais para cima (y=8)
-            self.image(logo, x=6, y=8, h=14)
+            # Logo posicionada mais acima (y=4)
+            self.image(logo, x=6, y=4, h=14)
             self.set_y(10)
             self.set_x(65)
             self.set_font("Arial", "B", 10)
@@ -329,14 +329,14 @@ class PDFSimulacao(FPDF):
 
 class PDFMemoria(FPDF):
     def header(self):
-        # Tom de azul exato da marca FNP: RGB(0, 75, 141)
-        self.set_fill_color(0, 75, 141)
+        # Cor de fundo exata da imagem da logo: RGB(0, 52, 108)
+        self.set_fill_color(0, 52, 108)
         self.rect(0, 0, 210, 30, "F")
         
         logo = encontrar_logo_fnp()
         if logo:
-            # Logo menor (h=14), mais à esquerda (x=6) e mais para cima (y=8)
-            self.image(logo, x=6, y=8, h=14)
+            # Logo posicionada mais acima (y=4)
+            self.image(logo, x=6, y=4, h=14)
             self.set_y(10)
             self.set_x(70)
             self.set_font("Arial", "B", 11)
@@ -357,7 +357,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.add_page()
 
     pdf.set_font("Arial", "B", 13)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 8, txt_pdf(f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})"), 0, 1, "L")
 
     pdf.set_font("Arial", "", 10)
@@ -371,7 +371,7 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     pdf.ln(8)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 7, txt_pdf("DETALHES DO PARCELAMENTO SELECIONADO"), 0, 1, "L")
     pdf.ln(3)
 
@@ -417,7 +417,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.add_page()
 
     pdf.set_font("Arial", "B", 14)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 8, txt_pdf(f"{municipio}/{uf}"), 0, 1, "L")
 
     pdf.ln(2)
@@ -432,7 +432,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     rcl_descritiva = formatar_bilhoes_milhoes(rcl)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 6, txt_pdf("Dados do município:"), 0, 1, "L")
     pdf.ln(1)
 
@@ -446,7 +446,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 6, txt_pdf("Metodologia:"), 0, 1, "L")
     pdf.ln(1)
 
@@ -461,7 +461,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 6, txt_pdf(f"Para {municipio}:"), 0, 1, "L")
     pdf.ln(1)
 
@@ -475,7 +475,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.ln(3)
 
     pdf.set_font("Arial", "B", 11)
-    pdf.set_text_color(0, 75, 141)
+    pdf.set_text_color(0, 52, 108)
     pdf.cell(0, 6, txt_pdf(f"Contribuição Anual Integral 2027: R$ {fmt_br(val_contribuicao)}"), 0, 1, "L")
 
     pdf.ln(5)
