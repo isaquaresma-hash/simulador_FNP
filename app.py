@@ -143,7 +143,7 @@ def carregar_dados():
 df_base = carregar_dados()
 
 # -----------------------------------------------------------------------------
-# 3. ESTILOS CSS CONCATENADOS (EVITA ERROS DE SINTAXE)
+# 3. ESTILOS CSS CONCATENADOS
 # -----------------------------------------------------------------------------
 def set_bg_hack():
     bin_str = None
@@ -204,4 +204,97 @@ def obter_grupo_rclpc(rcl_pc):
         return 2
     elif rcl_pc <= 5846.24:
         return 3
-    elif rcl_pc <=
+    elif rcl_pc <= 6295.10:
+        return 4
+    elif rcl_pc <= 6787.76:
+        return 5
+    elif rcl_pc <= 7421.25:
+        return 6
+    elif rcl_pc <= 8275.17:
+        return 7
+    elif rcl_pc <= 8454.71:
+        return 8
+    elif rcl_pc <= 11968.65:
+        return 9
+    else:
+        return 10
+
+
+def obter_valores_validados(row_or_df):
+    val_integral = row_or_df["Valor_Integral"].sum()
+    val_d10 = row_or_df["Valor_D10"].sum()
+    val_d25 = row_or_df["Valor_D25"].sum()
+    val_d50 = row_or_df["Valor_D50"].sum()
+
+    if val_d10 <= 0 or val_d10 >= val_integral:
+        val_d10 = val_integral * 0.90
+    if val_d25 <= 0 or val_d25 >= val_integral:
+        val_d25 = val_integral * 0.75
+    if val_d50 <= 0 or val_d50 >= val_integral:
+        val_d50 = val_integral * 0.50
+
+    return val_integral, val_d10, val_d25, val_d50
+
+
+def txt_pdf(texto):
+    return str(texto).encode('latin-1', 'replace').decode('latin-1')
+
+# -----------------------------------------------------------------------------
+# 5. GERADOR DE PDF
+# -----------------------------------------------------------------------------
+class PDFSimulacao(FPDF):
+    def header(self):
+        img_path = "imagem.pdf.png"
+        if os.path.exists(img_path):
+            try:
+                self.image(img_path, x=0, y=0, w=210)
+            except Exception:
+                self.set_fill_color(10, 54, 99)
+                self.rect(0, 0, 210, 32, "F")
+        else:
+            self.set_fill_color(10, 54, 99)
+            self.rect(0, 0, 210, 32, "F")
+            
+        self.set_y(6.0)
+        self.set_x(62)
+        self.set_font("Arial", "B", 12)
+        self.set_text_color(255, 255, 255)
+        self.cell(138, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "L")
+        self.set_y(40)
+
+
+class PDFMemoria(FPDF):
+    def header(self):
+        img_path = "imagem.pdf.png"
+        if os.path.exists(img_path):
+            try:
+                self.image(img_path, x=0, y=0, w=210)
+            except Exception:
+                self.set_fill_color(10, 54, 99)
+                self.rect(0, 0, 210, 32, "F")
+        else:
+            self.set_fill_color(10, 54, 99)
+            self.rect(0, 0, 210, 32, "F")
+
+        self.set_y(6.0)
+        self.set_x(62)
+        self.set_font("Arial", "B", 13)
+        self.set_text_color(255, 255, 255)
+        self.cell(138, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
+        self.set_y(40)
+
+
+def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia, mes_inicio="Janeiro", desc_50_prop=False, eh_filiado=True):
+    pdf = PDFSimulacao()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 13)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 8, txt_pdf(f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})"), 0, 1, "L")
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 6, txt_pdf(f"Porte: {porte}"), 0, 1, "L")
+
+    pdf.ln(3)
