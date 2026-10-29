@@ -551,10 +551,15 @@ with header_actions_col:
         
         meses_vigentes_h = dict(MESES_ANO).get(mes_inicio_nome_h, 12)
         
+        # Lógica de cálculo ajustada
         val_base_h = val_d10_h if cenario_h == "Desconto 10%" else (val_d25_h if cenario_h == "Desconto 25%" else (val_d50_h if cenario_h == "Desconto 50%" else val_integral_h))
-        valor_negociado_h = (val_base_h / 12) * meses_vigentes_h
+        
+        mensalidade_base_h = val_base_h / parcelas_h if parcelas_h > 0 else 0.0
+        
         if aplicar_50_prop_h:
-            valor_negociado_h = valor_negociado_h * 0.50
+            valor_negociado_h = (mensalidade_base_h * meses_vigentes_h) * 0.50
+        else:
+            valor_negociado_h = (val_base_h / 12) * meses_vigentes_h
 
         economia_h = val_integral_h - valor_negociado_h
         valor_parcela_h = valor_negociado_h / parcelas_h if parcelas_h > 0 else 0.0
@@ -732,18 +737,20 @@ if has_data:
         desc_50_str = st.selectbox("", ["Não", "Sim"], index=0, key="aplicar_50_prop_sel", label_visibility="collapsed")
         aplicar_50_prop = (desc_50_str == "Sim")
 
-    # Cálculos dinâmicos
+    # Quantidade de meses entre o mês de adesão e Dezembro
     meses_vigentes = dict(MESES_ANO).get(mes_inicio_calc, 12)
     val_base = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
 
-    # Cálculo Proporcional aos meses restantes
-    valor_proporcional = (val_base / 12) * meses_vigentes
+    # 1. Valor da mensalidade base considerando a quantidade de parcelas escolhida
+    mensalidade_base = val_base / num_parcelas if num_parcelas > 0 else 0.0
 
-    # Se selecionado "Sim" no quarto bloco
+    # 2. Se selecionar "Sim" na proporcionalidade com 50%:
     if aplicar_50_prop:
-        valor_negociado = valor_proporcional * 0.50
+        # Multiplica a mensalidade base pelo número de meses vigentes (mês de adesão a Dezembro) e aplica 50% de desconto
+        valor_negociado = (mensalidade_base * meses_vigentes) * 0.50
     else:
-        valor_negociado = valor_proporcional
+        # Caso padrão: aplica a fração proporcional padrão (meses / 12) sobre o valor base
+        valor_negociado = (val_base / 12) * meses_vigentes
 
     economia = val_integral - valor_negociado
     valor_parcela = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
@@ -753,7 +760,7 @@ if has_data:
     # Exibição dos resultados
     res1, res2, res3 = st.columns(3)
     
-    sub_prop_info = f"Adesão a partir de {mes_inicio_calc} ({meses_vigentes}/12 meses)"
+    sub_prop_info = f"Adesão a partir de {mes_inicio_calc} ({meses_vigentes} meses de vigência)"
     if aplicar_50_prop:
         sub_prop_info += " + 50% desc."
 
