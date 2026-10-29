@@ -477,7 +477,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 6. GESTÃO DE ESTADO DOS FILTROS (BUSCA INDEPENDENTE E FLUIDA)
+# 6. GESTÃO DE ESTADO DOS FILTROS
 # -----------------------------------------------------------------------------
 if "porte_sel" not in st.session_state:
     st.session_state.porte_sel = "-"
@@ -522,7 +522,6 @@ if st.session_state.mun_sel != "-":
         df_filtrado = df_filtrado[df_filtrado["UF"] == st.session_state.uf_sel]
     has_data = not df_filtrado.empty
 
-# Lista de meses para contribuição proporcional
 MESES_ANO = [
     ("Janeiro", 12), ("Fevereiro", 11), ("Março", 10), ("Abril", 9),
     ("Maio", 8), ("Junho", 7), ("Julho", 6), ("Agosto", 5),
@@ -546,9 +545,10 @@ with header_actions_col:
         cenario_h = st.session_state.get("cenario_calc", "Desconto 10%")
         parcelas_h = st.session_state.get("num_parcelas_calc", 12)
         mes_inicio_nome_h = st.session_state.get("mes_inicio_calc", "Janeiro")
-        aplicar_50_prop_h = st.session_state.get("aplicar_50_prop", False)
         
-        # Mapear meses vigentes
+        desc_50_str_h = st.session_state.get("aplicar_50_prop_sel", "Não")
+        aplicar_50_prop_h = (desc_50_str_h == "Sim")
+        
         meses_vigentes_h = dict(MESES_ANO).get(mes_inicio_nome_h, 12)
         
         val_base_h = val_d10_h if cenario_h == "Desconto 10%" else (val_d25_h if cenario_h == "Desconto 25%" else (val_d50_h if cenario_h == "Desconto 50%" else val_integral_h))
@@ -616,7 +616,7 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 9. FILTROS INTEGRADOS (SELEÇÃO DE MUNICÍPIO LIVRE)
+# 9. FILTROS INTEGRADOS
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
 
@@ -673,7 +673,7 @@ with f_col4:
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 10. PAINEL DE SIMULAÇÃO E CALCULADORA (COM CONTRIBUIÇÃO PROPORCIONAL)
+# 10. PAINEL DE SIMULAÇÃO E CALCULADORA
 # -----------------------------------------------------------------------------
 if has_data:
     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
@@ -706,7 +706,7 @@ if has_data:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento e adesão proporcional</div>', unsafe_allow_html=True)
 
-    # 4 Colunas para acomodar os 4 parâmetros da calculadora
+    # 4 Colunas para os seletores
     calc_col1, calc_col2, calc_col3, calc_col4 = st.columns([2.5, 2.2, 2.5, 2.8])
 
     with calc_col1:
@@ -729,16 +729,17 @@ if has_data:
 
     with calc_col4:
         st.markdown('<div class="badge-filter">4. Aplicar desc. 50% proporcional:</div>', unsafe_allow_html=True)
-        aplicar_50_prop = st.checkbox("Ativar desconto de 50%", value=False, key="aplicar_50_prop")
+        desc_50_str = st.selectbox("", ["Não", "Sim"], index=0, key="aplicar_50_prop_sel", label_visibility="collapsed")
+        aplicar_50_prop = (desc_50_str == "Sim")
 
     # Cálculos dinâmicos
     meses_vigentes = dict(MESES_ANO).get(mes_inicio_calc, 12)
     val_base = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
 
-    # Cálculo Proporcional aos meses restantes do ano
+    # Cálculo Proporcional aos meses restantes
     valor_proporcional = (val_base / 12) * meses_vigentes
 
-    # Se ativou os 50% adicionais na adesão proporcional
+    # Se selecionado "Sim" no quarto bloco
     if aplicar_50_prop:
         valor_negociado = valor_proporcional * 0.50
     else:
