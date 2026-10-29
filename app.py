@@ -694,4 +694,82 @@ if has_data:
     if eh_filiado:
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color
+            html_card1 = '<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {}</div><div class="sim-sub"></div></div>'.format(fmt_br(val_integral))
+            st.markdown(html_card1, unsafe_allow_html=True)
+        with c2:
+            html_card2 = '<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {}</div><div class="sim-sub"></div></div>'.format(fmt_br(val_d10))
+            st.markdown(html_card2, unsafe_allow_html=True)
+    else:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            html_card1 = '<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {}</div><div class="sim-sub"></div></div>'.format(fmt_br(val_integral))
+            st.markdown(html_card1, unsafe_allow_html=True)
+        with c2:
+            html_card2 = '<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {}</div><div class="sim-sub"></div></div>'.format(fmt_br(val_d10))
+            st.markdown(html_card2, unsafe_allow_html=True)
+        with c3:
+            html_card3 = '<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {}</div><div class="sim-sub">Para novo filiado</div></div>'.format(fmt_br(val_d25))
+            st.markdown(html_card3, unsafe_allow_html=True)
+        with c4:
+            html_card4 = '<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {}</div><div class="sim-sub">Para novo filiado</div></div>'.format(fmt_br(val_d50))
+            st.markdown(html_card4, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento e adesão proporcional</div>', unsafe_allow_html=True)
+
+    if eh_filiado:
+        st.session_state.mes_inicio_calc = "Janeiro"
+        st.session_state.aplicar_50_prop_sel = "Não"
+
+    calc_col1, calc_col2, calc_col3, calc_col4 = st.columns([2.5, 2.2, 2.5, 2.8])
+
+    with calc_col1:
+        st.markdown('<div class="badge-filter">1. Cenário de valor base:</div>', unsafe_allow_html=True)
+        opcoes_cenario = ["Desconto 10%", "Valor Integral"] if eh_filiado else ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
+        cenario = st.selectbox("", opcoes_cenario, key="cenario_calc", label_visibility="collapsed")
+
+    with calc_col2:
+        st.markdown('<div class="badge-filter">2. N° de Parcelas:</div>', unsafe_allow_html=True)
+        num_parcelas = st.selectbox("", [12, 10, 8, 6, 4, 2, 1], key="num_parcelas_calc", label_visibility="collapsed")
+
+    with calc_col3:
+        st.markdown('<div class="badge-filter">3. Mês de início da adesão:</div>', unsafe_allow_html=True)
+        nomes_meses = [m[0] for m in MESES_ANO]
+        idx_mes = 0 if eh_filiado else (nomes_meses.index(st.session_state.get("mes_inicio_calc", "Janeiro")) if st.session_state.get("mes_inicio_calc") in nomes_meses else 0)
+        mes_inicio = st.selectbox("", nomes_meses, index=idx_mes, key="mes_inicio_calc", disabled=eh_filiado, label_visibility="collapsed")
+
+    with calc_col4:
+        st.markdown('<div class="badge-filter">4. Aplicar Desc. 50% Prop.:</div>', unsafe_allow_html=True)
+        idx_prop = 0 if eh_filiado else (["Não", "Sim"].index(st.session_state.get("aplicar_50_prop_sel", "Não")) if st.session_state.get("aplicar_50_prop_sel") in ["Não", "Sim"] else 0)
+        aplicar_50_prop = st.selectbox("", ["Não", "Sim"], index=idx_prop, key="aplicar_50_prop_sel", disabled=eh_filiado, label_visibility="collapsed")
+
+    if eh_filiado:
+        st.caption("ℹ️ A adesão proporcional e desconto proporcional de 50% são exclusivos para municípios **não filiados**.")
+
+    # Cálculos Finais do Painel
+    meses_vigentes = dict(MESES_ANO).get(mes_inicio, 12)
+    val_base = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
+    mensalidade_base = val_base / num_parcelas if num_parcelas > 0 else 0.0
+
+    if aplicar_50_prop == "Sim" and not eh_filiado:
+        valor_negociado = (mensalidade_base * meses_vigentes) * 0.50
+    else:
+        valor_negociado = (val_base / 12) * meses_vigentes
+
+    economia_total = val_integral - valor_negociado
+    valor_parcela_calculado = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    res_col1, res_col2, res_col3 = st.columns(3)
+
+    with res_col1:
+        res_html1 = '<div class="res-card-dark"><div class="res-title">VALOR TOTAL NEGOCIADO</div><div class="res-val">R$ {}</div><div class="res-sub">Adesão em {} ({} meses)</div></div>'.format(fmt_br(valor_negociado), mes_inicio, meses_vigentes)
+        st.markdown(res_html1, unsafe_allow_html=True)
+
+    with res_col2:
+        res_html2 = '<div class="res-card-blue"><div class="res-title">VALOR DA PARCELA ({}X)</div><div class="res-val">R$ {}</div><div class="res-sub">Parcelamento em {} vezes</div></div>'.format(num_parcelas, fmt_br(valor_parcela_calculado), num_parcelas)
+        st.markdown(res_html2, unsafe_allow_html=True)
+
+    with res_col3:
+        res_html3 = '<div class="res-card-green"><div class="res-title">ECONOMIA ESTIMADA</div><div class="res-val">R$ {}</div><div class="res-sub">Em relação ao valor integral</div></div>'.format(fmt_br(economia_total))
+        st.markdown(res_html3, unsafe_allow_html=True)
