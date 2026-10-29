@@ -358,13 +358,14 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
-    prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
-    if desc_50_prop:
-        prop_txt += " + Desconto 50%"
-
     eh_proporcional = (mes_inicio != "Janeiro") or desc_50_prop
 
+    # Se for proporcional, exibe detalhes da modalidade e oculta parcelas/mensalidade
     if eh_proporcional:
+        prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
+        if desc_50_prop:
+            prop_txt += " + Desconto 50%"
+
         dados = [
             ("Cenário Selecionado:", f"{cenario_pdf}"),
             ("Mês de Início da Adesão:", f"{mes_inicio}"),
@@ -374,10 +375,10 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
             ("Desconto para o Município:", f"R$ {fmt_br(economia)}"),
         ]
     else:
+        # Padrão normal (sem proporcionalidade)
         dados = [
             ("Cenário Selecionado:", f"{cenario_pdf}"),
             ("Mês de Início da Adesão:", f"{mes_inicio}"),
-            ("Modalidade Proporcional:", f"{prop_txt}"),
             ("Número de Parcelas:", f"{parcelas}x"),
             ("Valor Integral Anual:", f"R$ {fmt_br(val_integral)}"),
             ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
