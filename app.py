@@ -358,15 +358,14 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
-    prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
-    if desc_50_prop:
-        prop_txt += " + Desconto 50%"
-
-    # Identifica se é simulação proporcional
     eh_proporcional = (mes_inicio != "Janeiro") or desc_50_prop
 
-    # Monta a estrutura de dados omitindo "Número de Parcelas" e "Valor de Cada Parcela Mensal" no caso proporcional
+    # Se for proporcional, exibe detalhes da modalidade e oculta parcelas/mensalidade
     if eh_proporcional:
+        prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
+        if desc_50_prop:
+            prop_txt += " + Desconto 50%"
+
         dados = [
             ("Cenário Selecionado:", f"{cenario_pdf}"),
             ("Mês de Início da Adesão:", f"{mes_inicio}"),
@@ -376,10 +375,10 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
             ("Desconto para o Município:", f"R$ {fmt_br(economia)}"),
         ]
     else:
+        # Padrão normal (sem proporcionalidade)
         dados = [
             ("Cenário Selecionado:", f"{cenario_pdf}"),
             ("Mês de Início da Adesão:", f"{mes_inicio}"),
-            ("Modalidade Proporcional:", f"{prop_txt}"),
             ("Número de Parcelas:", f"{parcelas}x"),
             ("Valor Integral Anual:", f"R$ {fmt_br(val_integral)}"),
             ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
@@ -449,8 +448,8 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.cell(0, 5, txt_pdf("O valor da contribuição é definido a partir do cruzamento de dois indicadores:"), 0, 1, "L")
     pdf.ln(1)
 
-    pdf.cell(0, 5, txt_pdf(f"- RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
-    pdf.cell(0, 5, txt_pdf(f"- RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf("- RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf("- RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
 
     pdf.ln(4)
 
@@ -640,7 +639,6 @@ st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allo
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2.5, 1.2, 3.8, 2.5])
 
-# 1. Opções de Porte
 porte_opcoes = ["-"] + sorted([str(x) for x in df_base["Porte"].dropna().unique().tolist()]) if "Porte" in df_base.columns else ["-"]
 idx_porte = porte_opcoes.index(st.session_state.porte_sel) if st.session_state.porte_sel in porte_opcoes else 0
 
@@ -648,7 +646,6 @@ with f_col1:
     st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
     st.selectbox("", porte_opcoes, index=idx_porte, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
 
-# 2. Opções de UF
 df_uf_context = df_base.copy()
 if st.session_state.porte_manual and st.session_state.porte_sel != "-":
     df_uf_context = df_uf_context[df_uf_context["Porte"] == st.session_state.porte_sel]
@@ -660,7 +657,6 @@ with f_col2:
     st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
     st.selectbox("", uf_opcoes, index=idx_uf, key="uf_sel", on_change=on_uf_change, label_visibility="collapsed")
 
-# 3. Opções de Município
 df_mun_context = df_base.copy()
 if st.session_state.porte_manual and st.session_state.porte_sel != "-":
     df_mun_context = df_mun_context[df_mun_context["Porte"] == st.session_state.porte_sel]
@@ -674,7 +670,6 @@ with f_col3:
     st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
     st.selectbox("", mun_opcoes, index=idx_mun, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
 
-# Valores de exibição
 if has_data:
     porte_val = str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-"
     ranking_val = str(df_filtrado["Ranking"].iloc[0]) if "Ranking" in df_filtrado.columns else "-"
@@ -724,7 +719,6 @@ if has_data:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento e adesão proporcional</div>', unsafe_allow_html=True)
 
-    # 4 Colunas para os seletores
     calc_col1, calc_col2, calc_col3, calc_col4 = st.columns([2.5, 2.2, 2.5, 2.8])
 
     with calc_col1:
