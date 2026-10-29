@@ -262,4 +262,71 @@ def obter_valores_validados(row_or_df):
 
     if val_d10 <= 0 or val_d10 >= val_integral:
         val_d10 = val_integral * 0.90
-    if val_d25 <=
+    if val_d25 <= 0 or val_d25 >= val_integral:
+        val_d25 = val_integral * 0.75
+    if val_d50 <= 0 or val_d50 >= val_integral:
+        val_d50 = val_integral * 0.50
+
+    return val_integral, val_d10, val_d25, val_d50
+
+
+def txt_pdf(texto):
+    return str(texto).encode('latin-1', 'ignore').decode('latin-1')
+
+# -----------------------------------------------------------------------------
+# 5. GERADOR DE PDF
+# -----------------------------------------------------------------------------
+class PDFSimulacao(FPDF):
+    def header(self):
+        img_path = "imagem.pdf.png"
+        if os.path.exists(img_path):
+            try:
+                self.image(img_path, x=0, y=0, w=210)
+            except Exception:
+                self.set_fill_color(10, 54, 99)
+                self.rect(0, 0, 210, 32, "F")
+        else:
+            self.set_fill_color(10, 54, 99)
+            self.rect(0, 0, 210, 32, "F")
+            
+        self.set_y(6.0)
+        self.set_x(62)
+        self.set_font("Arial", "B", 12)
+        self.set_text_color(255, 255, 255)
+        self.cell(138, 10, txt_pdf("SIMULADOR DE CONTRIBUIÇÃO E PARCELAMENTO"), 0, 1, "L")
+        self.set_y(40)
+
+
+class PDFMemoria(FPDF):
+    def header(self):
+        img_path = "imagem.pdf.png"
+        if os.path.exists(img_path):
+            try:
+                self.image(img_path, x=0, y=0, w=210)
+            except Exception:
+                self.set_fill_color(10, 54, 99)
+                self.rect(0, 0, 210, 32, "F")
+        else:
+            self.set_fill_color(10, 54, 99)
+            self.rect(0, 0, 210, 32, "F")
+
+        self.set_y(6.0)
+        self.set_x(62)
+        self.set_font("Arial", "B", 13)
+        self.set_text_color(255, 255, 255)
+        self.cell(138, 10, txt_pdf("MEMÓRIA DE CÁLCULO DE CONTRIBUIÇÃO"), 0, 1, "L")
+        self.set_y(40)
+
+
+def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia, mes_inicio="Janeiro", desc_50_prop=False):
+    pdf = PDFSimulacao()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 13)
+    pdf.set_text_color(10, 54, 99)
+    pdf.cell(0, 8, txt_pdf(f"RELATÓRIO DE SIMULAÇÃO - {municipio.upper()} ({uf})"), 0, 1, "L")
+
+    pdf.set_font("Arial", "", 10)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 6, txt_pdf(f"Porte: {porte}"), 0, 1,
