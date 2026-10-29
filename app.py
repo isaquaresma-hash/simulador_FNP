@@ -669,7 +669,7 @@ with f_col4:
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 10. PAINEL DE SIMULAÇÃO E CALCULADORA (FINALIZAÇÃO DO CÓDIGO)
+# 10. PAINEL DE SIMULAÇÃO E CALCULADORA
 # -----------------------------------------------------------------------------
 if has_data:
     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
@@ -705,44 +705,4 @@ if has_data:
     calc_col1, calc_col2, calc_col3, calc_col4 = st.columns([2.5, 2.2, 2.5, 2.8])
 
     with calc_col1:
-        st.markdown('<div class="badge-filter">1. Cenário de valor base:</div>', unsafe_allow_html=True)
-        opcoes_cenario = ["Desconto 10%", "Valor Integral"] if eh_filiado else ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
-        cenario = st.selectbox("", opcoes_cenario, key="cenario_calc", label_visibility="collapsed")
-
-    with calc_col2:
-        st.markdown('<div class="badge-filter">2. N° de Parcelas:</div>', unsafe_allow_html=True)
-        num_parcelas = st.selectbox("", [12, 10, 8, 6, 4, 2, 1], key="num_parcelas_calc", label_visibility="collapsed")
-
-    with calc_col3:
-        st.markdown('<div class="badge-filter">3. Mês de Início:</div>', unsafe_allow_html=True)
-        nomes_meses = [m[0] for m in MESES_ANO]
-        mes_inicio = st.selectbox("", nomes_meses, key="mes_inicio_calc", label_visibility="collapsed")
-
-    with calc_col4:
-        st.markdown('<div class="badge-filter">4. Aplicar Desc. 50% Prop.:</div>', unsafe_allow_html=True)
-        aplicar_50_prop = st.selectbox("", ["Não", "Sim"], key="aplicar_50_prop_sel", label_visibility="collapsed")
-
-    # Cálculos Finais do Painel
-    meses_vigentes = dict(MESES_ANO).get(mes_inicio, 12)
-    val_base = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
-    mensalidade_base = val_base / num_parcelas if num_parcelas > 0 else 0.0
-
-    if aplicar_50_prop == "Sim":
-        valor_negociado = (mensalidade_base * meses_vigentes) * 0.50
-    else:
-        valor_negociado = (val_base / 12) * meses_vigentes
-
-    economia_total = val_integral - valor_negociado
-    valor_parcela_calculado = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    res_col1, res_col2, res_col3 = st.columns(3)
-
-    with res_col1:
-        st.markdown(f'<div class="res-card-dark"><div class="res-title">VALOR TOTAL NEGOCIADO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">Adesão em {mes_inicio} ({meses_vigentes} meses)</div></div>', unsafe_allow_html=True)
-
-    with res_col2:
-        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR DA PARCELA ({num_parcelas}X)</div><div class="res-val">R$ {fmt_br(valor_parcela_calculado)}</div><div class="res-sub">Parcelamento em {num_parcelas} vezes</div></div>', unsafe_allow_html=True)
-
-    with res_col3:
-        st.markdown(f'<div class="res-card-green"><div class="res-title">ECONOMIA ESTIMADA</div><div class="res-val">R$ {fmt_br(economia_total)}</div><div class="res-sub">Em relação ao valor integral</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="badge-filter">1. Cenário de valor base:
