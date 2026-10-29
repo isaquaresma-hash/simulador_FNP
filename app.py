@@ -149,7 +149,7 @@ def set_bg_hack():
     bin_str = None
     mime_type = "image/jpeg"
     arquivo_fundo = "simulador.png.jpg"
-
+    
     if os.path.exists(arquivo_fundo):
         try:
             with open(arquivo_fundo, "rb") as img_file:
@@ -183,31 +183,31 @@ def set_bg_hack():
         .badge-main { background-color: #334155; color: #FFFFFF !important; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: inline-block; margin-bottom: 8px; }
         .badge-filter { background-color: #475569; color: #FFFFFF !important; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px; text-align: left; }
         .badge-light { background-color: #FFFFFF; color: #1A202C !important; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; }
-
-        .stSelectbox div[data-baseweb="select"] > div {
-            background-color: #F1F5F9 !important;
-            color: #0F172A !important;
-            border-radius: 6px !important;
-            border: none !important;
-            min-height: 38px !important;
-            height: 38px !important;
+        
+        .stSelectbox div[data-baseweb="select"] > div { 
+            background-color: #F1F5F9 !important; 
+            color: #0F172A !important; 
+            border-radius: 6px !important; 
+            border: none !important; 
+            min-height: 38px !important; 
+            height: 38px !important; 
         }
-        .info-auto-box {
-            background-color: #F1F5F9;
-            color: #0F172A;
-            font-weight: 800;
-            text-align: center;
-            height: 38px;
+        .info-auto-box { 
+            background-color: #F1F5F9; 
+            color: #0F172A; 
+            font-weight: 800; 
+            text-align: center; 
+            height: 38px; 
             min-height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            box-shadow: none;
-            font-size: 0.88rem;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 6px; 
+            box-shadow: none; 
+            font-size: 0.88rem; 
             box-sizing: border-box;
         }
-
+        
         .top-card { background-color: #FFFFFF; padding: 6px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px; height: 60px; }
         .icon-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; font-weight: bold; flex-shrink: 0; }
         .top-card-title { color: #718096 !important; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1; }
@@ -295,7 +295,7 @@ class PDFSimulacao(FPDF):
         else:
             self.set_fill_color(10, 54, 99)
             self.rect(0, 0, 210, 32, "F")
-
+            
         self.set_y(6.0)
         self.set_x(62)
         self.set_font("Arial", "B", 12)
@@ -358,14 +358,15 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
+    prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
+    if desc_50_prop:
+        prop_txt += " + Desconto 50%"
+
+    # Identifica se é simulação proporcional
     eh_proporcional = (mes_inicio != "Janeiro") or desc_50_prop
 
-    # Se for proporcional, exibe detalhes da modalidade e oculta parcelas/mensalidade
+    # Monta a estrutura de dados omitindo "Número de Parcelas" e "Valor de Cada Parcela Mensal" no caso proporcional
     if eh_proporcional:
-        prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
-        if desc_50_prop:
-            prop_txt += " + Desconto 50%"
-
         dados = [
             ("Cenário Selecionado:", f"{cenario_pdf}"),
             ("Mês de Início da Adesão:", f"{mes_inicio}"),
@@ -375,10 +376,10 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
             ("Desconto para o Município:", f"R$ {fmt_br(economia)}"),
         ]
     else:
-        # Padrão normal (sem proporcionalidade)
         dados = [
             ("Cenário Selecionado:", f"{cenario_pdf}"),
             ("Mês de Início da Adesão:", f"{mes_inicio}"),
+            ("Modalidade Proporcional:", f"{prop_txt}"),
             ("Número de Parcelas:", f"{parcelas}x"),
             ("Valor Integral Anual:", f"R$ {fmt_br(val_integral)}"),
             ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
@@ -448,8 +449,8 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.cell(0, 5, txt_pdf("O valor da contribuição é definido a partir do cruzamento de dois indicadores:"), 0, 1, "L")
     pdf.ln(1)
 
-    pdf.cell(0, 5, txt_pdf("- RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
-    pdf.cell(0, 5, txt_pdf("- RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- RCL: determina a faixa de receita do município na tabela;"), 0, 1, "L")
+    pdf.cell(0, 5, txt_pdf(f"- RCL per capita (RCL / população): determina o grupo de RCLpc."), 0, 1, "L")
 
     pdf.ln(4)
 
@@ -461,7 +462,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(30, 41, 59)
     pdf.cell(0, 5, txt_pdf(f"{rcl_fmt} / {pop_fmt} = {receita_per_capita_fmt} de RCL per capita"), 0, 1, "L")
-
+    
     texto_enquadramento = f"Com a RCL de {rcl_descritiva} e a RCLpc de {receita_per_capita_fmt} (Decil {grupo_rclpc}), o município é enquadrado na tabela da FNP."
     pdf.multi_cell(0, 5, txt_pdf(texto_enquadramento))
 
@@ -554,20 +555,20 @@ with header_actions_col:
 
     if has_data:
         val_integral_h, val_d10_h, val_d25_h, val_d50_h = obter_valores_validados(df_filtrado)
-
+        
         cenario_h = st.session_state.get("cenario_calc", "Desconto 10%")
         parcelas_h = st.session_state.get("num_parcelas_calc", 12)
         mes_inicio_nome_h = st.session_state.get("mes_inicio_calc", "Janeiro")
-
+        
         desc_50_str_h = st.session_state.get("aplicar_50_prop_sel", "Não")
         aplicar_50_prop_h = (desc_50_str_h == "Sim")
-
+        
         meses_vigentes_h = dict(MESES_ANO).get(mes_inicio_nome_h, 12)
-
+        
         val_base_h = val_d10_h if cenario_h == "Desconto 10%" else (val_d25_h if cenario_h == "Desconto 25%" else (val_d50_h if cenario_h == "Desconto 50%" else val_integral_h))
-
+        
         mensalidade_base_h = val_base_h / parcelas_h if parcelas_h > 0 else 0.0
-
+        
         if aplicar_50_prop_h:
             valor_negociado_h = (mensalidade_base_h * meses_vigentes_h) * 0.50
         else:
@@ -575,3 +576,204 @@ with header_actions_col:
 
         economia_h = val_integral_h - valor_negociado_h
         valor_parcela_h = valor_negociado_h / parcelas_h if parcelas_h > 0 else 0.0
+
+        pop_val_h = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
+        rcl_val_h = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else 0.0
+        receita_per_capita_val_h = df_filtrado["Receita per capita"].iloc[0] if "Receita per capita" in df_filtrado.columns else 0.0
+        grupo_rclpc_val_h = obter_grupo_rclpc(receita_per_capita_val_h) if isinstance(receita_per_capita_val_h, (int, float)) else "-"
+
+        pdf_bytes_topo = gerar_pdf_simulacao(
+            municipio=st.session_state.mun_sel,
+            uf=st.session_state.uf_sel,
+            porte=str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-",
+            cenario=cenario_h,
+            parcelas=parcelas_h,
+            val_integral=val_integral_h,
+            valor_total=valor_negociado_h,
+            valor_parcela=valor_parcela_h,
+            economia=economia_h,
+            mes_inicio=mes_inicio_nome_h,
+            desc_50_prop=aplicar_50_prop_h
+        )
+
+        pdf_memoria_bytes = gerar_pdf_memoria_calculo(
+            uf=st.session_state.uf_sel,
+            municipio=st.session_state.mun_sel,
+            populacao=pop_val_h,
+            rcl=rcl_val_h,
+            receita_per_capita=receita_per_capita_val_h,
+            grupo_rclpc=grupo_rclpc_val_h,
+            val_contribuicao=val_integral_h
+        )
+
+        with b_col1:
+            st.download_button("📄 PDF Simulação", data=pdf_bytes_topo, file_name=f"simulacao_{st.session_state.mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+
+        with b_col2:
+            st.download_button("📊 Memória de Cálculo", data=pdf_memoria_bytes, file_name=f"memoria_calculo_{st.session_state.mun_sel}.pdf", mime="application/pdf", use_container_width=True)
+    else:
+        with b_col1:
+            st.button("📄 PDF Simulação", disabled=True, use_container_width=True)
+        with b_col2:
+            st.button("📊 Memória de Cálculo", disabled=True, use_container_width=True)
+
+    with b_col3:
+        if st.button("🔄 Atualizar Base", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+
+# -----------------------------------------------------------------------------
+# 8. TOP CARDS
+# -----------------------------------------------------------------------------
+m_col1, m_col2 = st.columns(2)
+with m_col1:
+    st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #1E40AF;">🏛️</div><div><div class="top-card-title">CAPITAIS</div><div class="top-card-value">27</div><div class="top-card-sub">Quantidade de capitais no Brasil</div></div></div>', unsafe_allow_html=True)
+with m_col2:
+    st.markdown('<div class="top-card"><div class="icon-circle" style="background-color: #059669;">👥</div><div><div class="top-card-title">MUNICÍPIOS ACIMA DE 80 MIL HABITANTES</div><div class="top-card-value">435</div><div class="top-card-sub">Municípios recorte FNP</div></div></div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# 9. FILTROS INTEGRADOS
+# -----------------------------------------------------------------------------
+st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
+
+f_col1, f_col2, f_col3, f_col4 = st.columns([2.5, 1.2, 3.8, 2.5])
+
+# 1. Opções de Porte
+porte_opcoes = ["-"] + sorted([str(x) for x in df_base["Porte"].dropna().unique().tolist()]) if "Porte" in df_base.columns else ["-"]
+idx_porte = porte_opcoes.index(st.session_state.porte_sel) if st.session_state.porte_sel in porte_opcoes else 0
+
+with f_col1:
+    st.markdown('<div class="badge-filter">Porte</div>', unsafe_allow_html=True)
+    st.selectbox("", porte_opcoes, index=idx_porte, key="porte_sel", on_change=on_porte_change, label_visibility="collapsed")
+
+# 2. Opções de UF
+df_uf_context = df_base.copy()
+if st.session_state.porte_manual and st.session_state.porte_sel != "-":
+    df_uf_context = df_uf_context[df_uf_context["Porte"] == st.session_state.porte_sel]
+
+uf_opcoes = ["-"] + sorted([str(x) for x in df_uf_context["UF"].dropna().unique().tolist()]) if "UF" in df_uf_context.columns else ["-"]
+idx_uf = uf_opcoes.index(st.session_state.uf_sel) if st.session_state.uf_sel in uf_opcoes else 0
+
+with f_col2:
+    st.markdown('<div class="badge-filter">UF</div>', unsafe_allow_html=True)
+    st.selectbox("", uf_opcoes, index=idx_uf, key="uf_sel", on_change=on_uf_change, label_visibility="collapsed")
+
+# 3. Opções de Município
+df_mun_context = df_base.copy()
+if st.session_state.porte_manual and st.session_state.porte_sel != "-":
+    df_mun_context = df_mun_context[df_mun_context["Porte"] == st.session_state.porte_sel]
+if st.session_state.uf_manual and st.session_state.uf_sel != "-":
+    df_mun_context = df_mun_context[df_mun_context["UF"] == st.session_state.uf_sel]
+
+mun_opcoes = ["-"] + sorted([str(x) for x in df_mun_context["Município"].dropna().unique().tolist()]) if "Município" in df_mun_context.columns else ["-"]
+idx_mun = mun_opcoes.index(st.session_state.mun_sel) if st.session_state.mun_sel in mun_opcoes else 0
+
+with f_col3:
+    st.markdown('<div class="badge-filter">Município</div>', unsafe_allow_html=True)
+    st.selectbox("", mun_opcoes, index=idx_mun, key="mun_sel", on_change=on_mun_change, label_visibility="collapsed")
+
+# Valores de exibição
+if has_data:
+    porte_val = str(df_filtrado["Porte"].iloc[0]) if "Porte" in df_filtrado.columns else "-"
+    ranking_val = str(df_filtrado["Ranking"].iloc[0]) if "Ranking" in df_filtrado.columns else "-"
+    pop_val = str(df_filtrado["População"].iloc[0]) if "População" in df_filtrado.columns else "-"
+    rcl_val = df_filtrado["RCL"].iloc[0] if "RCL" in df_filtrado.columns else "-"
+    receita_per_capita_val = df_filtrado["Receita per capita"].iloc[0] if "Receita per capita" in df_filtrado.columns else "-"
+    decil_val = str(df_filtrado["Decil"].iloc[0]) if "Decil" in df_filtrado.columns else "-"
+else:
+    porte_val = st.session_state.porte_sel if st.session_state.porte_sel != "-" else "-"
+    ranking_val, pop_val, rcl_val, receita_per_capita_val, decil_val = "-", "-", "-", "-", "-"
+
+with f_col4:
+    st.markdown('<div class="badge-filter">Classificação</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# 10. PAINEL DE SIMULAÇÃO E CALCULADORA
+# -----------------------------------------------------------------------------
+if has_data:
+    st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+
+    situacao_municipio = str(df_filtrado["Situação"].iloc[0]).strip() if "Situação" in df_filtrado.columns else "Filiado"
+    eh_filiado = "filiado" in situacao_municipio.lower() and "não" not in situacao_municipio.lower()
+    status_color = "🟢" if eh_filiado else "🔴"
+
+    st.markdown(f'<div style="margin-bottom: 0.6rem; font-size: 1.4rem; font-weight: 800; color: #FFFFFF;">Painel de Simulação — {st.session_state.mun_sel} <span class="badge-light">{status_color}({situacao_municipio})</span></div>', unsafe_allow_html=True)
+
+    val_integral, val_d10, val_d25, val_d50 = obter_valores_validados(df_filtrado)
+
+    if eh_filiado:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+    else:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #1E3A8A;"><div class="sim-title" style="color: #4A5568;">VALOR INTEGRAL</div><div class="sim-value">R$ {fmt_br(val_integral)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #2563EB;"><div class="sim-title" style="color: #2563EB;">DESCONTO 10%</div><div class="sim-value">R$ {fmt_br(val_d10)}</div><div class="sim-sub"></div></div>', unsafe_allow_html=True)
+        with c3:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #7C3AED;"><div class="sim-title" style="color: #7C3AED;">DESCONTO 25%</div><div class="sim-value">R$ {fmt_br(val_d25)}</div><div class="sim-sub">Para novo filiado</div></div>', unsafe_allow_html=True)
+        with c4:
+            st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div><div class="sim-sub">Para novo filiado</div></div>', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento e adesão proporcional</div>', unsafe_allow_html=True)
+
+    # 4 Colunas para os seletores
+    calc_col1, calc_col2, calc_col3, calc_col4 = st.columns([2.5, 2.2, 2.5, 2.8])
+
+    with calc_col1:
+        st.markdown('<div class="badge-filter">1. Cenário de valor base:</div>', unsafe_allow_html=True)
+        opcoes_cenario = ["Desconto 10%", "Valor Integral"] if eh_filiado else ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
+        cenario = st.selectbox("", opcoes_cenario, key="cenario_calc", label_visibility="collapsed")
+
+    opcoes_parcelas = list(range(1, 11)) if cenario in ["Desconto 25%", "Desconto 50%"] else list(range(1, 13))
+
+    with calc_col2:
+        st.markdown('<div class="badge-filter">2. Número de parcelas:</div>', unsafe_allow_html=True)
+        num_parcelas_atual = st.session_state.get("num_parcelas_calc", len(opcoes_parcelas))
+        idx_parcela = opcoes_parcelas.index(num_parcelas_atual) if num_parcelas_atual in opcoes_parcelas else (len(opcoes_parcelas) - 1)
+        num_parcelas = st.selectbox("", opcoes_parcelas, index=idx_parcela, format_func=lambda x: f"{x}x", key="num_parcelas_calc", label_visibility="collapsed")
+
+    with calc_col3:
+        st.markdown('<div class="badge-filter">3. Mês de início da adesão:</div>', unsafe_allow_html=True)
+        nomes_meses = [m[0] for m in MESES_ANO]
+        mes_inicio_calc = st.selectbox("", nomes_meses, index=0, key="mes_inicio_calc", label_visibility="collapsed")
+
+    with calc_col4:
+        st.markdown('<div class="badge-filter">4. Aplicar desc. 50% proporcional:</div>', unsafe_allow_html=True)
+        desc_50_str = st.selectbox("", ["Não", "Sim"], index=0, key="aplicar_50_prop_sel", label_visibility="collapsed")
+        aplicar_50_prop = (desc_50_str == "Sim")
+
+    meses_vigentes = dict(MESES_ANO).get(mes_inicio_calc, 12)
+    val_base = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
+
+    mensalidade_base = val_base / num_parcelas if num_parcelas > 0 else 0.0
+
+    if aplicar_50_prop:
+        valor_negociado = (mensalidade_base * meses_vigentes) * 0.50
+    else:
+        valor_negociado = (val_base / 12) * meses_vigentes
+
+    economia = val_integral - valor_negociado
+    valor_parcela = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    res1, res2, res3 = st.columns(3)
+    
+    sub_prop_info = f"Adesão a partir de {mes_inicio_calc} ({meses_vigentes} meses de vigência)"
+    if aplicar_50_prop:
+        sub_prop_info += " + 50% desc."
+
+    with res1:
+        st.markdown(f'<div class="res-card-dark"><div class="res-title">VALOR DE CADA PARCELA</div><div class="res-val">R$ {fmt_br(valor_parcela)}</div><div class="res-sub">Plano em {num_parcelas} parcelas mensais</div></div>', unsafe_allow_html=True)
+    with res2:
+        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">{sub_prop_info}</div></div>', unsafe_allow_html=True)
+    with res3:
+        st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
