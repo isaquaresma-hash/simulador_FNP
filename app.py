@@ -479,7 +479,7 @@ def gerar_pdf_memoria_calculo(uf, municipio, populacao, rcl, receita_per_capita,
     return pdf_bytes
 
 # -----------------------------------------------------------------------------
-# 6. GESTÃO DE ESTADO DOS FILTROS (BUSCA INDEPENDENTE)
+# 6. GESTÃO DE ESTADO DOS FILTROS (BUSCA INDEPENDENTE E FLUIDA)
 # -----------------------------------------------------------------------------
 if "porte_sel" not in st.session_state:
     st.session_state.porte_sel = "-"
@@ -488,11 +488,19 @@ if "uf_sel" not in st.session_state:
 if "mun_sel" not in st.session_state:
     st.session_state.mun_sel = "-"
 
+if "porte_manual" not in st.session_state:
+    st.session_state.porte_manual = False
+if "uf_manual" not in st.session_state:
+    st.session_state.uf_manual = False
+
 def on_porte_change():
+    st.session_state.porte_manual = (st.session_state.porte_sel != "-")
     st.session_state.uf_sel = "-"
     st.session_state.mun_sel = "-"
+    st.session_state.uf_manual = False
 
 def on_uf_change():
+    st.session_state.uf_manual = (st.session_state.uf_sel != "-")
     st.session_state.mun_sel = "-"
 
 def on_mun_change():
@@ -504,6 +512,8 @@ def on_mun_change():
                 st.session_state.uf_sel = str(match["UF"].iloc[0])
             if "Porte" in match.columns:
                 st.session_state.porte_sel = str(match["Porte"].iloc[0])
+            st.session_state.porte_manual = False
+            st.session_state.uf_manual = False
 
 df_filtrado = pd.DataFrame()
 has_data = False
@@ -590,7 +600,7 @@ with m_col2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 9. FILTROS INTEGRADOS (BUSCA INDEPENDENTE)
+# 9. FILTROS INTEGRADOS (SELEÇÃO DE MUNICÍPIO LIVRE)
 # -----------------------------------------------------------------------------
 st.markdown('<div class="badge-main">🔍 Consulta e Filtros</div>', unsafe_allow_html=True)
 
@@ -606,7 +616,7 @@ with f_col1:
 
 # 2. Opções de UF
 df_uf_context = df_base.copy()
-if st.session_state.porte_sel != "-":
+if st.session_state.porte_manual and st.session_state.porte_sel != "-":
     df_uf_context = df_uf_context[df_uf_context["Porte"] == st.session_state.porte_sel]
 
 uf_opcoes = ["-"] + sorted([str(x) for x in df_uf_context["UF"].dropna().unique().tolist()]) if "UF" in df_uf_context.columns else ["-"]
@@ -618,9 +628,9 @@ with f_col2:
 
 # 3. Opções de Município
 df_mun_context = df_base.copy()
-if st.session_state.porte_sel != "-":
+if st.session_state.porte_manual and st.session_state.porte_sel != "-":
     df_mun_context = df_mun_context[df_mun_context["Porte"] == st.session_state.porte_sel]
-if st.session_state.uf_sel != "-":
+if st.session_state.uf_manual and st.session_state.uf_sel != "-":
     df_mun_context = df_mun_context[df_mun_context["UF"] == st.session_state.uf_sel]
 
 mun_opcoes = ["-"] + sorted([str(x) for x in df_mun_context["Município"].dropna().unique().tolist()]) if "Município" in df_mun_context.columns else ["-"]
