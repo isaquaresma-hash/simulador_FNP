@@ -325,7 +325,7 @@ class PDFMemoria(FPDF):
         self.set_y(40)
 
 
-def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia):
+def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, valor_total, valor_parcela, economia, mes_inicio="Janeiro", desc_50_prop=False):
     pdf = PDFSimulacao()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -358,24 +358,22 @@ def gerar_pdf_simulacao(municipio, uf, porte, cenario, parcelas, val_integral, v
     if cenario in ["Desconto 25%", "Desconto 50%"]:
         cenario_pdf = f"{cenario} (Novo Filiado)"
 
-    meses_nomes = ["Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-    if parcelas == 1:
-        vencimento_txt = "Março de 2027"
-    else:
-        mes_final = meses_nomes[min(parcelas - 1, len(meses_nomes) - 1)]
-        vencimento_txt = f"Março a {mes_final} de 2027"
+    prop_txt = f"Proporcional ({mes_inicio} a Dez/2027)"
+    if desc_50_prop:
+        prop_txt += " + Desconto 50%"
 
     dados = [
         ("Cenário Selecionado:", f"{cenario_pdf}"),
+        ("Mês de Início da Adesão:", f"{mes_inicio}"),
+        ("Modalidade Proporcional:", f"{prop_txt}"),
         ("Número de Parcelas:", f"{parcelas}x"),
-        ("Mês Inicial / Vencimento:", f"{vencimento_txt}"),
-        ("Valor Integral:", f"R$ {fmt_br(val_integral)}"),
+        ("Valor Integral Anual:", f"R$ {fmt_br(val_integral)}"),
         ("Valor Total da Negociação:", f"R$ {fmt_br(valor_total)}"),
         ("Valor de Cada Parcela Mensal:", f"R$ {fmt_br(valor_parcela)}"),
         ("Desconto para o Município:", f"R$ {fmt_br(economia)}"),
     ]
 
-    col_w1, col_w2, row_height = 95, 95, 9
+    col_w1, col_w2, row_height = 95, 95, 8.5
     for rotulo, valor in dados:
         pdf.cell(col_w1, row_height, txt_pdf(f" {rotulo}"), 1, 0, "L")
         pdf.cell(col_w2, row_height, txt_pdf(f" {valor}"), 1, 1, "L")
@@ -524,6 +522,13 @@ if st.session_state.mun_sel != "-":
         df_filtrado = df_filtrado[df_filtrado["UF"] == st.session_state.uf_sel]
     has_data = not df_filtrado.empty
 
+# Lista de meses para contribuição proporcional
+MESES_ANO = [
+    ("Janeiro", 12), ("Fevereiro", 11), ("Março", 10), ("Abril", 9),
+    ("Maio", 8), ("Junho", 7), ("Julho", 6), ("Agosto", 5),
+    ("Setembro", 4), ("Outubro", 3), ("Novembro", 2), ("Dezembro", 1)
+]
+
 # -----------------------------------------------------------------------------
 # 7. CABEÇALHO COM BOTÕES DE DOWNLOAD
 # -----------------------------------------------------------------------------
@@ -540,8 +545,17 @@ with header_actions_col:
         
         cenario_h = st.session_state.get("cenario_calc", "Desconto 10%")
         parcelas_h = st.session_state.get("num_parcelas_calc", 12)
+        mes_inicio_nome_h = st.session_state.get("mes_inicio_calc", "Janeiro")
+        aplicar_50_prop_h = st.session_state.get("aplicar_50_prop", False)
         
-        valor_negociado_h = val_d10_h if cenario_h == "Desconto 10%" else (val_d25_h if cenario_h == "Desconto 25%" else (val_d50_h if cenario_h == "Desconto 50%" else val_integral_h))
+        # Mapear meses vigentes
+        meses_vigentes_h = dict(MESES_ANO).get(mes_inicio_nome_h, 12)
+        
+        val_base_h = val_d10_h if cenario_h == "Desconto 10%" else (val_d25_h if cenario_h == "Desconto 25%" else (val_d50_h if cenario_h == "Desconto 50%" else val_integral_h))
+        valor_negociado_h = (val_base_h / 12) * meses_vigentes_h
+        if aplicar_50_prop_h:
+            valor_negociado_h = valor_negociado_h * 0.50
+
         economia_h = val_integral_h - valor_negociado_h
         valor_parcela_h = valor_negociado_h / parcelas_h if parcelas_h > 0 else 0.0
 
@@ -559,7 +573,9 @@ with header_actions_col:
             val_integral=val_integral_h,
             valor_total=valor_negociado_h,
             valor_parcela=valor_parcela_h,
-            economia=economia_h
+            economia=economia_h,
+            mes_inicio=mes_inicio_nome_h,
+            desc_50_prop=aplicar_50_prop_h
         )
 
         pdf_memoria_bytes = gerar_pdf_memoria_calculo(
@@ -657,7 +673,7 @@ with f_col4:
     st.markdown(f'<div class="info-auto-box">{ranking_val}</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 10. PAINEL DE SIMULAÇÃO E CALCULADORA
+# 10. PAINEL DE SIMULAÇÃO E CALCULADORA (COM CONTRIBUIÇÃO PROPORCIONAL)
 # -----------------------------------------------------------------------------
 if has_data:
     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
@@ -688,32 +704,61 @@ if has_data:
             st.markdown(f'<div class="sim-card" style="border-left: 4px solid #10B981;"><div class="sim-title" style="color: #10B981;">DESCONTO 50%</div><div class="sim-value">R$ {fmt_br(val_d50)}</div><div class="sim-sub">Para novo filiado</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento</div>', unsafe_allow_html=True)
+    st.markdown('<div class="badge-main">⚙️ Calculadora de parcelamento e adesão proporcional</div>', unsafe_allow_html=True)
 
-    calc_col1, calc_col2 = st.columns(2)
+    # 4 Colunas para acomodar os 4 parâmetros da calculadora
+    calc_col1, calc_col2, calc_col3, calc_col4 = st.columns([2.5, 2.2, 2.5, 2.8])
 
     with calc_col1:
-        st.markdown('<div class="badge-filter">1. Escolha o cenário de valor base:</div>', unsafe_allow_html=True)
+        st.markdown('<div class="badge-filter">1. Cenário de valor base:</div>', unsafe_allow_html=True)
         opcoes_cenario = ["Desconto 10%", "Valor Integral"] if eh_filiado else ["Desconto 10%", "Desconto 25%", "Desconto 50%", "Valor Integral"]
         cenario = st.selectbox("", opcoes_cenario, key="cenario_calc", label_visibility="collapsed")
 
     opcoes_parcelas = list(range(1, 11)) if cenario in ["Desconto 25%", "Desconto 50%"] else list(range(1, 13))
 
     with calc_col2:
-        st.markdown('<div class="badge-filter">2. Escolha o número de parcelas desejado:</div>', unsafe_allow_html=True)
+        st.markdown('<div class="badge-filter">2. Número de parcelas:</div>', unsafe_allow_html=True)
         num_parcelas_atual = st.session_state.get("num_parcelas_calc", len(opcoes_parcelas))
         idx_parcela = opcoes_parcelas.index(num_parcelas_atual) if num_parcelas_atual in opcoes_parcelas else (len(opcoes_parcelas) - 1)
         num_parcelas = st.selectbox("", opcoes_parcelas, index=idx_parcela, format_func=lambda x: f"{x}x", key="num_parcelas_calc", label_visibility="collapsed")
 
-    valor_negociado = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
+    with calc_col3:
+        st.markdown('<div class="badge-filter">3. Mês de início da adesão:</div>', unsafe_allow_html=True)
+        nomes_meses = [m[0] for m in MESES_ANO]
+        mes_inicio_calc = st.selectbox("", nomes_meses, index=0, key="mes_inicio_calc", label_visibility="collapsed")
+
+    with calc_col4:
+        st.markdown('<div class="badge-filter">4. Aplicar desc. 50% proporcional:</div>', unsafe_allow_html=True)
+        aplicar_50_prop = st.checkbox("Ativar desconto de 50%", value=False, key="aplicar_50_prop")
+
+    # Cálculos dinâmicos
+    meses_vigentes = dict(MESES_ANO).get(mes_inicio_calc, 12)
+    val_base = val_d10 if cenario == "Desconto 10%" else (val_d25 if cenario == "Desconto 25%" else (val_d50 if cenario == "Desconto 50%" else val_integral))
+
+    # Cálculo Proporcional aos meses restantes do ano
+    valor_proporcional = (val_base / 12) * meses_vigentes
+
+    # Se ativou os 50% adicionais na adesão proporcional
+    if aplicar_50_prop:
+        valor_negociado = valor_proporcional * 0.50
+    else:
+        valor_negociado = valor_proporcional
+
     economia = val_integral - valor_negociado
     valor_parcela = valor_negociado / num_parcelas if num_parcelas > 0 else 0.0
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Exibição dos resultados
     res1, res2, res3 = st.columns(3)
+    
+    sub_prop_info = f"Adesão a partir de {mes_inicio_calc} ({meses_vigentes}/12 meses)"
+    if aplicar_50_prop:
+        sub_prop_info += " + 50% desc."
+
     with res1:
         st.markdown(f'<div class="res-card-dark"><div class="res-title">VALOR DE CADA PARCELA</div><div class="res-val">R$ {fmt_br(valor_parcela)}</div><div class="res-sub">Plano em {num_parcelas} parcelas mensais</div></div>', unsafe_allow_html=True)
     with res2:
-        sub_cenario = f"Cenário: {cenario} (Novo Filiado)" if cenario in ["Desconto 25%", "Desconto 50%"] else f"Cenário: {cenario}"
-        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">{sub_cenario}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card-blue"><div class="res-title">VALOR TOTAL DA NEGOCIAÇÃO</div><div class="res-val">R$ {fmt_br(valor_negociado)}</div><div class="res-sub">{sub_prop_info}</div></div>', unsafe_allow_html=True)
     with res3:
         st.markdown(f'<div class="res-card-green"><div class="res-title">DESCONTO PARA O MUNICÍPIO</div><div class="res-val">R$ {fmt_br(economia)}</div><div class="res-sub">Em relação ao valor integral de R$ {fmt_br(val_integral)}</div></div>', unsafe_allow_html=True)
